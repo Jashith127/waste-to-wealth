@@ -1,0 +1,36 @@
+{
+  "s03": {
+    "files": [
+      {
+        "type": "image",
+        "key": "s03_bg",
+        "url": "assets/stations/s03/bg.png"
+      },
+      {
+        "type": "image",
+        "key": "s03_attendant_idle",
+        "url": "assets/stations/s03/attendant_idle.png"
+      },
+      {
+        "type": "image",
+        "key": "s03_attendant_type",
+        "url": "assets/stations/s03/attendant_type.png"
+      },
+      {
+        "type": "image",
+        "key": "s03_crate",
+        "url": "assets/stations/s03/crate.png"
+      },
+      {
+        "type": "image",
+        "key": "s03_crate_shadow",
+        "url": "assets/stations/s03/crate_shadow.png"
+      },
+      {
+        "type": "image",
+        "key": "s03_riyaz_idle",
+        "url": "assets/stations/s03/riyaz_idle.png"
+      }
+    ]
+  }
+}
