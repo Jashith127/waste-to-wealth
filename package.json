@@ -1,0 +1,21 @@
+{
+  "name": "waste-to-wealth",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Waste to Wealth: a 2.5D browser game about one kilo of meat waste in Shivajinagar.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --config vite/config.dev.mjs",
+    "build": "tsc --noEmit && vite build --config vite/config.prod.mjs",
+    "preview": "vite preview --config vite/config.prod.mjs --port 8080"
+  },
+  "dependencies": {
+    "phaser": "4.2.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.55.0",
+    "terser": "5.39.0",
+    "typescript": "5.7.3",
+    "vite": "6.3.5"
+  }
+}

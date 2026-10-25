@@ -67,9 +67,9 @@ We don't know where on Cockburn Road the stall is, and we don't record it, becau
 
 To add Tier B photos, run `python tools/fetch_commons.py "Category:<name>"`. Files and credits are added; nothing is overwritten.
 
-### ⚠ Open question: façade colour
+### Decided: façade colour
 
-X03 (2020) shows Russell Market pink-terracotta, the colour the spec describes. X04 (Nov 2023) shows it painted white after what looks like a repaint. The game is set in 2026, so **white is probably current**, but we have no photo of our own. Until someone decides, the art bible uses **white masonry with a faint pink ghost in the worn patches**. That's true to both photos and keeps the warm palette. Our next field visit should photograph it.
+X03 (2020) shows Russell Market pink-terracotta, as the spec describes. X04 (Nov 2023) shows it painted white. **Decision (2026-10-25): white masonry with a faint pink ghost in the worn patches.** Our next field visit should photograph it to confirm.
 
 ---
 
@@ -164,7 +164,7 @@ These match the concept note and our sample of the deck pages at 110 dpi (within
 | `ui.ink` | `#1C1714` | Deck text and outlines | All UI text and outlines |
 | `ui.brown` | `#7A4B2C` | Deck accent with no meaning | UI only, for secondary chips. Never in the world |
 
-**Open question:** the spec gives Chamber A green but no colour for **Chamber B** or for the sorted-waste crates. I suggest Chamber B and its crates use `mean.offsite` blue, because their contents leave the market. Please confirm.
+**Decided (2026-10-25): Chamber B and its sorted-waste crates use `mean.offsite` blue**, because their contents leave the market. Chamber A is `mean.income` green, as in the spec.
 
 ### 3.3 Rules that keep meaning colours meaningful
 
@@ -348,4 +348,5 @@ This is what step 2 builds, with each item's source.
 
 ### Change log
 
-- 0.1: first draft, from the deck photos and five Commons photos. Open questions: the façade colour (§0) and the colour of Chamber B (§3.2).
+- 0.1: first draft, from the deck photos and five Commons photos.
+- 0.2: approved. Façade is white with a pink ghost; Chamber B is blue.
