@@ -49,12 +49,12 @@ The day render must not show the leftovers. Hide `PROP_leftovers` in day beats f
 
 ## Acceptance criteria
 
-- [ ] `?run=1&beat=2` opens the night beat directly. Walking Run 1 from the start reaches it after s02.
-- [ ] Night frame: the tube light, bulb and cooler glow are all off (`--power-cut`), and the sky is the night preset. The cooler does not flicker.
-- [ ] The leftovers tray reads as a steel tray of meat at 1280×720, and its "Lost" tag hangs beside it, never over it.
-- [ ] `→` goes to the "Run 2 · With the hub" card, then s01 in its day state with the kilo tag cleared.
-- [ ] Day beats of s01 look exactly as before (compare with `review/s01/1920x1080-01-start.png`).
-- [ ] `python tools/check_palette.py s01` passes.
+- [x] `?run=1&beat=2` opens the night beat directly. Walking Run 1 from the start reaches it after s02.
+- [x] Night frame: the tube light, bulb and cooler glow are all off (`--power-cut`), and the sky is the night preset. The cooler does not flicker.
+- [x] The leftovers tray reads as a steel tray of meat at 1280×720, and its "Lost" tag hangs beside it, never over it.
+- [x] `→` goes to the "Run 2 · With the hub" card, then s01 in its day state with the kilo tag cleared.
+- [x] Day beats of s01 look exactly as before (compare with `review/s01/1920x1080-01-start.png`).
+- [x] `python tools/check_palette.py s01` passes.
 
 ## Screenshots
 
@@ -67,5 +67,9 @@ Sound (task 19), and any change to the HUD clock (task 09).
 ## Questions
 
 ## Notes
+
+- Changed: added the s01 night variant (power-cut set, night Riyaz, leftover tray, Lost tag, Run 2 exit), its Blender prop, and the night/day layer renders.
+- Check: at 1280×720 the tray is dim but readable beside the Lost card; `→` shows the Run 2 card and s01 returns with the kilo tag cleared.
+- Uncertain: the tray sits at x −0.04 rather than +0.05 so it clears the kilo and block; the night frame is deliberately very dark.
 
 ## Blocked

@@ -31,6 +31,9 @@ COUNTER_TOP = 1.0
 COUNTER = dict(x0=-0.95, x1=0.85, y0=2.25, y1=2.85)
 KILO_CENTRE = Vector((-0.5, 2.55, 1.12))
 BLOCK = Vector((0.42, 2.6, COUNTER_TOP))
+# The night beat's tray: between the kilo spot and the block, clear of both (kilo r ~0.20,
+# block r 0.24, so the tray's right edge stops at x 0.17).
+LEFTOVERS = Vector((-0.04, 2.40, COUNTER_TOP))
 RIYAZ_AT = (0.55, 3.12, FLOOR_IN)        # in the doorway, so the awning never hides him (overhang rule)
 
 
@@ -133,6 +136,30 @@ def riyaz(st):
     st.anchor("riyaz_head", (RIYAZ_AT[0], RIYAZ_AT[1], FLOOR_IN + 1.7))
 
 
+def leftovers(st, m):
+    """The leftovers tray for the night beat (Run 1): unsold cut meat left on the counter,
+    which spoils when the power goes out (deck pp. 22-23). Steel tray form per the kitchen
+    racks and trays in F03; three cut pieces in the same meat material as the block. A PROP_
+    collection, so the day beats simply never place the layer."""
+    col = st.prop("leftovers")
+    x, y, top = LEFTOVERS.x, LEFTOVERS.y, COUNTER_TOP
+    w, d, h, t = 0.42, 0.28, 0.05, 0.012
+    geo.box("LEFTOVERS_tray", (x - w / 2, y - d / 2, top), (x + w / 2, y + d / 2, top + 0.018),
+            m["steel"], col, 0.008)
+    for name, lo, hi in (
+        ("front", (x - w / 2, y - d / 2, top + 0.012), (x + w / 2, y - d / 2 + t, top + h)),
+        ("back", (x - w / 2, y + d / 2 - t, top + 0.012), (x + w / 2, y + d / 2, top + h)),
+        ("left", (x - w / 2, y - d / 2, top + 0.012), (x - w / 2 + t, y + d / 2, top + h)),
+        ("right", (x + w / 2 - t, y - d / 2, top + 0.012), (x + w / 2, y + d / 2, top + h)),
+    ):
+        geo.box(f"LEFTOVERS_rim_{name}", lo, hi, m["steel"], col, 0.005)
+    for i, (dx, dy, rot) in enumerate(((-0.10, -0.02, 0.0), (0.0, 0.04, 0.4), (0.10, -0.02, -0.3))):
+        geo.sphere(f"LEFTOVERS_piece{i}", (x + dx, y + dy, top + 0.05), 0.055, (1.3, 1.0, 0.5),
+                   m["meat"], col, rot=(0, 0, rot))
+    kit.shadow_catcher("LEFTOVERS_shadow_catcher", (x, y, top + 0.001), (w + 0.08, d + 0.08), m, col)
+    st.anchor("leftovers_centre", (x, y, top + 0.1))
+
+
 def build():
     st = station.begin("s01")
     m = st.m
@@ -157,6 +184,7 @@ def build():
     _, knot = kit.kilo_bag("KILO_bag", KILO_CENTRE, COUNTER_TOP, m, kilo)
     kit.shadow_catcher("KILO_shadow_catcher", (KILO_CENTRE.x + 0.1, (COUNTER["y0"] + COUNTER["y1"]) / 2, COUNTER_TOP + 0.001),
                        (1.1, COUNTER["y1"] - COUNTER["y0"]), m, kilo)
+    leftovers(st, m)
     riyaz(st)
 
     st.anchor("kilo_knot", knot)

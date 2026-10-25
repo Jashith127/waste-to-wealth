@@ -37,7 +37,7 @@ Rename the file to `NN-name-blocked.md`, write what blocked you and what you tri
 
 | # | Task | Phase |
 |---|---|---|
-| 01 | [s01 night variant (Run 1 ending)](01-s01-night-variant.md) | Grey box |
+| 01 | [s01 night variant (Run 1 ending)](01-s01-night-variant-done.md) | Grey box |
 | 02 | [s02 The walk, both runs](02-s02-walk-greybox.md) | Grey box |
 | 03 | [s03 Weigh-in and payment](03-s03-weigh-in-greybox.md) | Grey box |
 | 04 | [s04 Cold room](04-s04-cold-room-greybox.md) | Grey box |

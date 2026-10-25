@@ -13,8 +13,23 @@
       },
       {
         "type": "image",
+        "key": "s01_bg_night",
+        "url": "assets/stations/s01/bg_night.png"
+      },
+      {
+        "type": "image",
+        "key": "s01_fx_fridge_glow_night",
+        "url": "assets/stations/s01/fx_fridge_glow_night.png"
+      },
+      {
+        "type": "image",
         "key": "s01_kilo",
         "url": "assets/stations/s01/kilo.png"
+      },
+      {
+        "type": "image",
+        "key": "s01_kilo_night",
+        "url": "assets/stations/s01/kilo_night.png"
       },
       {
         "type": "image",
@@ -23,8 +38,38 @@
       },
       {
         "type": "image",
+        "key": "s01_kilo_shadow_night",
+        "url": "assets/stations/s01/kilo_shadow_night.png"
+      },
+      {
+        "type": "image",
+        "key": "s01_leftovers",
+        "url": "assets/stations/s01/leftovers.png"
+      },
+      {
+        "type": "image",
+        "key": "s01_leftovers_night",
+        "url": "assets/stations/s01/leftovers_night.png"
+      },
+      {
+        "type": "image",
+        "key": "s01_leftovers_shadow",
+        "url": "assets/stations/s01/leftovers_shadow.png"
+      },
+      {
+        "type": "image",
+        "key": "s01_leftovers_shadow_night",
+        "url": "assets/stations/s01/leftovers_shadow_night.png"
+      },
+      {
+        "type": "image",
         "key": "s01_riyaz_down",
         "url": "assets/stations/s01/riyaz_down.png"
+      },
+      {
+        "type": "image",
+        "key": "s01_riyaz_down_night",
+        "url": "assets/stations/s01/riyaz_down_night.png"
       },
       {
         "type": "image",
@@ -33,8 +78,18 @@
       },
       {
         "type": "image",
+        "key": "s01_riyaz_idle_night",
+        "url": "assets/stations/s01/riyaz_idle_night.png"
+      },
+      {
+        "type": "image",
         "key": "s01_riyaz_up",
         "url": "assets/stations/s01/riyaz_up.png"
+      },
+      {
+        "type": "image",
+        "key": "s01_riyaz_up_night",
+        "url": "assets/stations/s01/riyaz_up_night.png"
       }
     ]
   }

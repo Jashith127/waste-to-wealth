@@ -1,11 +1,12 @@
 // Station 1 · The stall, Cockburn Road. Finish the morning cut, pick up the kilo, take it out.
+// Run 1 ends here too, as "s01:night": the same stall in a power cut, a tray of leftovers spoiling.
 import { GameObjects, Math as PMath } from 'phaser';
-import { setState } from '../../state';
+import { setState, type KiloTagState } from '../../state';
 import { colour, css, font, motion } from '../../theme';
 import { KiloTag } from '../../ui/KiloTag';
 import { StationScene } from '../StationScene';
 
-type Phase = 'cut' | 'pickup' | 'leave';
+type Phase = 'cut' | 'pickup' | 'leave' | 'night' | 'night_leave';
 
 export default class Station01 extends StationScene {
     private phase: Phase = 'cut';
@@ -31,6 +32,8 @@ export default class Station01 extends StationScene {
         this.busy = false;
         this.queued = false;
 
+        if (this.variant === 'night') return this.buildNight();
+
         this.layer('bg');
         const glow = this.layer('fx_fridge_glow');
         this.flicker(glow);
@@ -48,6 +51,58 @@ export default class Station01 extends StationScene {
 
         this.prompt.show(this.prompts().cut, 'Space');
         this.ring = this.hint(block.x, block.y - 10, 92);
+    }
+
+    /** Run 1's ending: the same stall at night, the grid down, a tray of leftovers on the counter. */
+    private buildNight() {
+        this.phase = 'night';
+        this.layer('bg_night');
+        this.layer('riyaz_idle_night');
+        const tray = this.layer('leftovers_night');
+
+        const kb = this.input.keyboard!;
+        kb.on('keydown-RIGHT', () => { if (this.phase === 'night_leave') this.leave(); });
+        kb.on('keydown-ENTER', () => { if (this.phase === 'night_leave') this.leave(); });
+
+        this.prompt.show(this.prompts().night);
+        const spoil = () => this.spoil(tray);
+        if (this.state.reducedMotion) this.time.delayedCall(1200, spoil);
+        else this.cameras.main.once('camerafadeincomplete', () => this.time.delayedCall(1200, spoil));
+    }
+
+    /** The leftovers dull and the "Lost" tag swings in: no power, so the meat spoils overnight. */
+    private spoil(tray: GameObjects.Image) {
+        this.phase = 'night_leave';
+        tray.setTint(0xB8A89A);                                     // the spoiling cue; no gore
+        if (this.state.reducedMotion) tray.setAlpha(0.85);
+        else this.tweens.add({ targets: tray, alpha: 0.85, duration: 600, ease: 'Sine.easeOut' });
+
+        const c = this.anchor('leftovers_centre');
+        const tagData = this.params().leftovers.tag;
+        const tag = new KiloTag(this, c.x, c.y, tagData, this.state.reducedMotion, { dx: -150, dy: 0 }).setDepth(30);
+        if (this.state.reducedMotion) tag.setAlpha(1);
+        else {
+            tag.setAlpha(0);
+            this.tweens.add({ targets: tag, alpha: 1, duration: motion.normal, onStart: () => tag.appear() });
+        }
+
+        this.prompt.show(this.prompts().night_leave, '→');
+        const go = this.arrowButton();
+        if (this.state.reducedMotion) go.setAlpha(1);
+        else {
+            go.setAlpha(0);
+            this.tweens.add({ targets: go, alpha: 1, duration: motion.normal });
+        }
+    }
+
+    /** The night's exit: a small → button, above the blueprint line. */
+    private arrowButton() {
+        const g = this.add.graphics();
+        g.fillStyle(colour.ink, 0.92).fillRoundedRect(-36, -36, 72, 72, 18);
+        const label = this.add.text(0, -2, '→', { fontFamily: font.display, fontSize: 36, fontStyle: '700', color: css.cream }).setOrigin(0.5);
+        const b = this.add.container(1700, 600, [g, label]).setSize(72, 72).setDepth(45);
+        b.setInteractive({ useHandCursor: true }).on('pointerup', () => this.leave());
+        return b;
     }
 
     private act() {
@@ -132,7 +187,11 @@ export default class Station01 extends StationScene {
     }
 
     private params() {
-        return this.stationData.params as { cut: { chops: number }; fridge: { flicker: boolean } };
+        return this.stationData.params as {
+            cut: { chops: number };
+            fridge: { flicker: boolean };
+            leftovers: { tag: KiloTagState };
+        };
     }
 
     /** The cooler light stutters: mostly on, with bursts of drop-outs (unreliable power, deck p. 22). */
