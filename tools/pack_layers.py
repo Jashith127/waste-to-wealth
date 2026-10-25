@@ -11,6 +11,7 @@ public/assets/stations/<id>/:
   layers.json         where each layer sits in the 1920x1080 frame, plus anchors
 """
 import json
+import shutil
 import sys
 from pathlib import Path
 
@@ -42,8 +43,12 @@ def glow_overlay(on, off, noise=10, gain=8):
 
 def main(station):
     src = ROOT / "art" / "build" / "renders" / station
-    out = ROOT / "public" / "assets" / "stations" / station
-    out.mkdir(parents=True, exist_ok=True)
+    final = ROOT / "public" / "assets" / "stations" / station
+    # write into a staging folder and swap it in at the end, so a running game never loads a
+    # half-written station (it crashed on a missing layers.json mid-repack)
+    out = final.with_name(station + ".packing")
+    shutil.rmtree(out, ignore_errors=True)
+    out.mkdir(parents=True)
     layers, files = {}, []
 
     def emit(name, im, box):
@@ -83,6 +88,12 @@ def main(station):
 
     (out / "layers.json").write_text(json.dumps({"frame": FRAME, "layers": layers, "anchors": anchors}, indent=2), encoding="utf-8")
     (out / "pack.json").write_text(json.dumps({station: {"files": files}}, indent=2), encoding="utf-8")
+    old = final.with_name(station + ".old")
+    shutil.rmtree(old, ignore_errors=True)
+    if final.exists():
+        final.rename(old)
+    out.rename(final)
+    shutil.rmtree(old, ignore_errors=True)
 
 
 if __name__ == "__main__":
