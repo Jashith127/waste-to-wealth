@@ -35,7 +35,8 @@ export const layout = {
     blueprintTop: 660,          // nothing the player needs sits below this line
     blueprintHeight: 420,
     evidenceButton: { x: 1830, y: 56, r: 30 },
-    prompt: { x: 48, y: 56 },
+    prompt: { x: 316, y: 56 },   // after the HUD clock card (48 + 252 + 16)
+    clock: { x: 48, y: 56, w: 252, h: 60 },
     gutter: 48,
 } as const;
 

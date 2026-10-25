@@ -46,7 +46,9 @@ export interface Source {
     proposed?: boolean;
 }
 
-export interface RunInfo { title: string; subtitle: string; beats: string[]; target_seconds?: number; proposed?: boolean; evidence: string[] }
+export type ClockPhase = 'morning' | 'evening' | 'night';
+
+export interface RunInfo { title: string; subtitle: string; beats: string[]; target_seconds?: number; proposed?: boolean; evidence: string[]; clock?: Record<string, ClockPhase> }
 
 const files = import.meta.glob<StationData>('../data/stations/*.json', { eager: true, import: 'default' });
 const stations: Record<string, StationData> = Object.fromEntries(Object.values(files).map((s) => [s.id, s]));
@@ -57,6 +59,11 @@ export function station(id: string): StationData {
     const s = stations[id];
     if (!s) throw new Error(`no station data for ${id} (add src/data/stations/${id}.json)`);
     return s;
+}
+
+/** False until a station task adds src/data/stations/<id>.json; the grey-box placeholder still plays the beat. */
+export function hasStation(id: string): boolean {
+    return id in stations;
 }
 
 export function runData(s: StationData, run: Run): RunData {

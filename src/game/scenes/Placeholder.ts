@@ -1,7 +1,7 @@
 // Grey-box stand-in for any beat whose scene is not built yet, so both runs can be walked end to end.
 // A station task replaces it by adding src/game/scenes/stations/StationNN.ts.
 import { Scene } from 'phaser';
-import { runData, station } from '../content';
+import { hasStation, runData, station } from '../content';
 import { goNext, type Beat } from '../flow';
 import { getState } from '../state';
 import { colour, css, font, FRAME, layout } from '../theme';
@@ -27,10 +27,10 @@ export class Placeholder extends Scene {
         quad([iso(-5, 3), iso(5, 3), iso(5, 3, 4.5), iso(-5, 3, 4.5)], 0xb4aea6);     // frontage
 
         const isEnd = beat.station === 'end';
-        const s = isEnd ? null : station(beat.station);
+        const s = isEnd || !hasStation(beat.station) ? null : station(beat.station);
         const run = s ? runData(s, state.run) : {};
         g.fillStyle(colour.ink, 0.9).fillRoundedRect(FRAME.width / 2 - 560, 760, 1120, 250, 18);
-        this.add.text(FRAME.width / 2, 820, s ? `${s.number} · ${s.title}${beat.variant ? ` (${beat.variant})` : ''}` : 'End card', {
+        this.add.text(FRAME.width / 2, 820, s ? `${s.number} · ${s.title}${beat.variant ? ` (${beat.variant})` : ''}` : isEnd ? 'End card' : beat.station, {
             fontFamily: font.display, fontSize: 52, fontStyle: '800', color: css.cream,
         }).setOrigin(0.5);
         this.add.text(FRAME.width / 2, 890, `${run.summary ?? ''}${run.proposed ? '  · Proposed' : ''}`, {

@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "hud.schema.json",
+  "title": "HUD",
+  "description": "HUD text. The clock shows a phase word per beat (runs.json \"clock\"), never a clock time.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["clock"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "clock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["phases"],
+      "properties": {
+        "phases": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["morning", "evening", "night"],
+          "properties": {
+            "morning": { "$ref": "#/$defs/phase" },
+            "evening": { "$ref": "#/$defs/phase" },
+            "night": { "$ref": "#/$defs/phase" }
+          }
+        },
+        "note": { "type": "string" },
+        "check": { "type": "string", "description": "Open sourcing question; not shown in the game." }
+      }
+    }
+  },
+  "$defs": {
+    "phase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["label", "evidence"],
+      "properties": {
+        "label": { "type": "string", "pattern": "^[^0-9]*$", "description": "No digits: the clock never shows a time." },
+        "evidence": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}

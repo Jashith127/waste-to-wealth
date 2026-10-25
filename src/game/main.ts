@@ -1,6 +1,8 @@
 import { AUTO, Game, Scale, type Scene, Types } from 'phaser';
 import { runs } from './content';
 import { Boot } from './scenes/Boot';
+import { EndCard } from './scenes/EndCard';
+import { Hud } from './scenes/Hud';
 import { Placeholder } from './scenes/Placeholder';
 import { StationCard } from './scenes/StationCard';
 import { initState } from './state';
@@ -21,7 +23,7 @@ const config: Types.Core.GameConfig = {
         mode: Scale.FIT,
         autoCenter: Scale.CENTER_BOTH,
     },
-    scene: [Boot, ...stationScenes, StationCard, Placeholder],
+    scene: [Boot, ...stationScenes, StationCard, Placeholder, EndCard, Hud],   // Hud last: it draws over every scene
 };
 
 const StartGame = (parent: string) => {

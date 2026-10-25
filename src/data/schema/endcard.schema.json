@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "endcard.schema.json",
+  "title": "End card",
+  "description": "After Run 2: the kilo's ledger for both runs, then the four before → after beliefs.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["title", "ledger", "payout_note", "beliefs", "beliefs_evidence", "replay"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "title": { "type": "string" },
+    "ledger": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["1", "2"],
+      "properties": { "1": { "$ref": "#/$defs/column" }, "2": { "$ref": "#/$defs/column" } }
+    },
+    "payout_note": { "type": "string" },
+    "beliefs": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["before", "after"],
+        "properties": { "before": { "type": "string" }, "after": { "type": "string" } }
+      }
+    },
+    "beliefs_evidence": { "type": "array", "items": { "type": "string" } },
+    "check": { "type": "string", "description": "Open decision; never shown on the card." },
+    "replay": { "type": "string" },
+    "blueprint": { "type": "string" }
+  },
+  "$defs": {
+    "column": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["heading", "lines"],
+      "properties": {
+        "heading": { "type": "string" },
+        "proposed": { "type": "boolean" },
+        "lines": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["text", "value", "meaning", "evidence"],
+            "properties": {
+              "text": { "type": "string" },
+              "value": { "type": "string" },
+              "meaning": { "enum": ["cost", "income", "pay", "offsite"] },
+              "evidence": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        }
+      }
+    }
+  }
+}

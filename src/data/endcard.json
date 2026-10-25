@@ -1,0 +1,25 @@
+{
+  "$schema": "./schema/endcard.schema.json",
+  "title": "The same kilo",
+  "ledger": {
+    "1": { "heading": "Run 1 · Today", "lines": [
+      { "text": "Waste collection fee", "value": "−₹5", "meaning": "cost", "evidence": ["C-fee-southfirst", "C-fee-tnm"] },
+      { "text": "Leftover meat in the power cut", "value": "Lost", "meaning": "cost", "evidence": ["D-p22"] }
+    ] },
+    "2": { "heading": "Run 2 · With the hub", "proposed": true, "lines": [
+      { "text": "Sorted waste at the hub", "value": "+₹[__]", "meaning": "income", "evidence": ["SPEC-journey"] },
+      { "text": "Leftover meat in Chamber A", "value": "Kept", "meaning": "income", "evidence": ["SPEC-journey"] }
+    ] }
+  },
+  "payout_note": "₹[__]/kg: the payout is not set. No source shows a renderer paying vendors; in the Kerala precedent, shops pay.",
+  "beliefs": [
+    { "before": "Waste is my problem to dump cheaply", "after": "My waste is worth money if I keep it clean" },
+    { "before": "Anything official will cost me money", "after": "The hub is the market's own" },
+    { "before": "A fridge isn't worth it with these power cuts", "after": "I can keep stock cold without buying one" },
+    { "before": "Leftover meat is a loss I just take", "after": "Leftovers wait overnight in Chamber A, free" }
+  ],
+  "beliefs_evidence": ["SPEC-journey", "D-p22", "D-p19"],
+  "check": "pending approval (spec Open decisions)",
+  "replay": "Play again",
+  "blueprint": "Open the full blueprint"
+}

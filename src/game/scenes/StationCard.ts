@@ -1,6 +1,6 @@
 // Between beats: "Run 2 · With the hub" when the run changes, then "2 · The walk", then the beat.
 import { Scene } from 'phaser';
-import { runs, station } from '../content';
+import { hasStation, runs, station } from '../content';
 import { sceneFor, type Beat } from '../flow';
 import { css, font, FRAME, motion } from '../theme';
 
@@ -13,7 +13,7 @@ export class StationCard extends Scene {
         this.add.tileSprite(0, 0, FRAME.width, FRAME.height, 'lattice').setOrigin(0);
         const cards: [string, string][] = [];
         if (runChanged) cards.push([runs[beat.run].title, runs[beat.run].subtitle]);
-        if (beat.station !== 'end') {
+        if (beat.station !== 'end' && hasStation(beat.station)) {
             const s = station(beat.station);
             cards.push([`${s.number} · ${s.title}${s.label ? ` · ${s.label}` : ''}`, beat.variant === 'night' ? `${s.place} · that night` : s.place]);
         }

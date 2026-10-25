@@ -14,7 +14,12 @@
       "C-fee-southfirst",
       "C-fee-tnm",
       "D-p22"
-    ]
+    ],
+    "clock": {
+      "s01": "morning",
+      "s02": "morning",
+      "s01:night": "night"
+    }
   },
   "2": {
     "title": "Run 2 · With the hub",
@@ -32,6 +37,15 @@
     "proposed": true,
     "evidence": [
       "SPEC-journey"
-    ]
+    ],
+    "clock": {
+      "s01": "morning",
+      "s02": "morning",
+      "s03": "morning",
+      "s04": "evening",
+      "s05": "night",
+      "s06": "night",
+      "s07": "night"
+    }
   }
 }

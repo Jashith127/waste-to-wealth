@@ -26,6 +26,12 @@
           "items": { "type": "string", "pattern": "^(s0[1-7](:[a-z]+)?|end)$" }
         },
         "proposed": { "type": "boolean" },
+        "clock": {
+          "type": "object",
+          "description": "HUD clock phase per beat, keyed by beat (\"s01\", \"s01:night\"). Phase words live in hud.json; never a clock time.",
+          "propertyNames": { "pattern": "^s0[1-7](:[a-z]+)?$" },
+          "additionalProperties": { "enum": ["morning", "evening", "night"] }
+        },
         "evidence": { "type": "array", "items": { "type": "string" } }
       }
     }

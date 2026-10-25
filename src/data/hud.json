@@ -1,0 +1,12 @@
+{
+  "$schema": "./schema/hud.schema.json",
+  "clock": {
+    "phases": {
+      "morning": { "label": "Morning cut", "evidence": ["SPEC-journey"] },
+      "evening": { "label": "Evening rush", "evidence": ["SPEC-journey"] },
+      "night": { "label": "Night", "evidence": ["SPEC-journey", "D-p22"] }
+    },
+    "note": "Shows the part of the day, never a clock time. Morning cut and the hub's drop times: docs/game-concept.md (journey, truth rules: drop times are Proposed). Night: the power cut (D-p22). Which beat shows which phase is runs.json \"clock\".",
+    "check": "Evening rush: docs/game-concept.md mentions the rush (UPI by sound) but gives no evening peak; needs a source before final."
+  }
+}
