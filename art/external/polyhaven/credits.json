@@ -1,0 +1,212 @@
+{
+  "trashbag": {
+    "name": "Trashbag",
+    "authors": [
+      "Benny Weimer"
+    ],
+    "licence": "CC0",
+    "source": "https://polyhaven.com/a/trashbag",
+    "use": "pile",
+    "gltf": "trashbag/trashbag_1k.gltf"
+  },
+  "compost_bags": {
+    "name": "Compost Bags",
+    "authors": [
+      "James Ray Cock"
+    ],
+    "licence": "CC0",
+    "source": "https://polyhaven.com/a/compost_bags",
+    "use": "pile",
+    "gltf": "compost_bags/compost_bags_1k.gltf"
+  },
+  "cement_bag": {
+    "name": "Cement Bag",
+    "authors": [
+      "PierreB3D"
+    ],
+    "licence": "CC0",
+    "source": "https://polyhaven.com/a/cement_bag",
+    "use": "pile",
+    "gltf": "cement_bag/cement_bag_1k.gltf"
+  },
+  "cardboard_box_01": {
+    "name": "Cardboard Box 01",
+    "authors": [
+      "Rahul Chaudhary"
+    ],
+    "licence": "CC0",
+    "source": "https://polyhaven.com/a/cardboard_box_01",
+    "use": "pile",
+    "gltf": "cardboard_box_01/cardboard_box_01_1k.gltf"
+  },
+  "street_rat": {
+    "name": "Street Rat",
+    "authors": [
+      "Sean Buckley"
+    ],
+    "licence": "CC0",
+    "source": "https://polyhaven.com/a/street_rat",
+    "use": "pile",
+    "gltf": "street_rat/street_rat_1k.gltf"
+  },
+  "water_manhole_cover": {
+    "name": "Water Manhole Cover",
+    "authors": [
+      "Raunox"
+    ],
+    "licence": "CC0",
+    "source": "https://polyhaven.com/a/water_manhole_cover",
+    "use": "pile",
+    "gltf": "water_manhole_cover/water_manhole_cover_1k.gltf"
+  },
+  "plastic_monobloc_chair_01": {
+    "name": "Plastic Monobloc Chair 01",
+    "authors": [
+      "Kuutti Siitonen"
+    ],
+    "licence": "CC0",
+    "source": "https://polyhaven.com/a/plastic_monobloc_chair_01",
+    "use": "street",
+    "gltf": "plastic_monobloc_chair_01/plastic_monobloc_chair_01_1k.gltf"
+  },
+  "plastic_crate_01": {
+    "name": "Plastic Crate 01",
+    "authors": [
+      "PierreB3D"
+    ],
+    "licence": "CC0",
+    "source": "https://polyhaven.com/a/plastic_crate_01",
+    "use": "street",
+    "gltf": "plastic_crate_01/plastic_crate_01_1k.gltf"
+  },
+  "plastic_crate_03": {
+    "name": "Plastic Crate 03",
+    "authors": [
+      "Pacific Penguin"
+    ],
+    "licence": "CC0",
+    "source": "https://polyhaven.com/a/plastic_crate_03",
+    "use": "street",
+    "gltf": "plastic_crate_03/plastic_crate_03_1k.gltf"
+  },
+  "wooden_crate_01": {
+    "name": "Wooden Crate 01",
+    "authors": [
+      "James Ray Cock"
+    ],
+    "licence": "CC0",
+    "source": "https://polyhaven.com/a/wooden_crate_01",
+    "use": "street",
+    "gltf": "wooden_crate_01/wooden_crate_01_1k.gltf"
+  },
+  "wicker_basket_01": {
+    "name": "Wicker Basket 01",
+    "authors": [
+      "Kuutti Siitonen"
+    ],
+    "licence": "CC0",
+    "source": "https://polyhaven.com/a/wicker_basket_01",
+    "use": "street",
+    "gltf": "wicker_basket_01/wicker_basket_01_1k.gltf"
+  },
+  "Barrel_01": {
+    "name": "Barrel_01",
+    "authors": [
+      "Jorge Camacho"
+    ],
+    "licence": "CC0",
+    "source": "https://polyhaven.com/a/Barrel_01",
+    "use": "street",
+    "gltf": "Barrel_01/Barrel_01_1k.gltf"
+  },
+  "metal_trash_can": {
+    "name": "Metal Trash Can",
+    "authors": [
+      "GurJas Studios"
+    ],
+    "licence": "CC0",
+    "source": "https://polyhaven.com/a/metal_trash_can",
+    "use": "street",
+    "gltf": "metal_trash_can/metal_trash_can_1k.gltf"
+  },
+  "small_lpg_tank": {
+    "name": "Small Lpg Tank",
+    "authors": [
+      "Ulan Cabanilla"
+    ],
+    "licence": "CC0",
+    "source": "https://polyhaven.com/a/small_lpg_tank",
+    "use": "street",
+    "gltf": "small_lpg_tank/small_lpg_tank_1k.gltf"
+  },
+  "modular_electricity_poles": {
+    "name": "Modular Electricity Poles",
+    "authors": [
+      "James Ray Cock"
+    ],
+    "licence": "CC0",
+    "source": "https://polyhaven.com/a/modular_electricity_poles",
+    "use": "street",
+    "gltf": "modular_electricity_poles/modular_electricity_poles_1k.gltf"
+  },
+  "modular_electric_cables": {
+    "name": "Modular Electric Cables",
+    "authors": [
+      "Kuutti Siitonen"
+    ],
+    "licence": "CC0",
+    "source": "https://polyhaven.com/a/modular_electric_cables",
+    "use": "street",
+    "gltf": "modular_electric_cables/modular_electric_cables_1k.gltf"
+  },
+  "hand_truck": {
+    "name": "Hand Truck",
+    "authors": [
+      "Mutanzom3D"
+    ],
+    "licence": "CC0",
+    "source": "https://polyhaven.com/a/hand_truck",
+    "use": "hub",
+    "gltf": "hand_truck/hand_truck_1k.gltf"
+  },
+  "steel_frame_shelves_01": {
+    "name": "Steel Frame Shelves 01",
+    "authors": [
+      "James Ray Cock"
+    ],
+    "licence": "CC0",
+    "source": "https://polyhaven.com/a/steel_frame_shelves_01",
+    "use": "hub",
+    "gltf": "steel_frame_shelves_01/steel_frame_shelves_01_1k.gltf"
+  },
+  "garden_hose_wall_mounted_01": {
+    "name": "Garden Hose Wall Mounted 01",
+    "authors": [
+      "Kuutti Siitonen"
+    ],
+    "licence": "CC0",
+    "source": "https://polyhaven.com/a/garden_hose_wall_mounted_01",
+    "use": "hub",
+    "gltf": "garden_hose_wall_mounted_01/garden_hose_wall_mounted_01_1k.gltf"
+  },
+  "portable_generator": {
+    "name": "Portable Generator",
+    "authors": [
+      "James Ray Cock"
+    ],
+    "licence": "CC0",
+    "source": "https://polyhaven.com/a/portable_generator",
+    "use": "hub",
+    "gltf": "portable_generator/portable_generator_1k.gltf"
+  },
+  "plastic_jerrycan": {
+    "name": "Plastic Jerrycan",
+    "authors": [
+      "Ulan Cabanilla"
+    ],
+    "licence": "CC0",
+    "source": "https://polyhaven.com/a/plastic_jerrycan",
+    "use": "hub",
+    "gltf": "plastic_jerrycan/plastic_jerrycan_1k.gltf"
+  }
+}
