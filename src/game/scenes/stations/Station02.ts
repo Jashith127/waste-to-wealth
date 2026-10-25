@@ -61,14 +61,16 @@ export default class Station02 extends StationScene {
 
         this.layer('bg');
         if (this.state.run === 1) {
-            this.layer('litter_shadow');
+            if (this.layers?.layers['litter_shadow']) this.layer('litter_shadow');
             this.layer('litter');
         }
         this.layer('anthony_idle');
         this.layer('arif_idle');
 
         // the handcart (mini-game): it rolls out from the shopfront mid-walk; let it pass
-        const cartShadow = this.layer('cart_shadow'), cartImg = this.layer('cart');
+        // a faint contact shadow can pack to nothing: then the cart simply has none
+        const cartShadow = this.layers?.layers['cart_shadow'] ? this.layer('cart_shadow') : this.add.image(0, 0, '__DEFAULT').setVisible(false);
+        const cartImg = this.layer('cart');
         this.cart = {
             img: cartImg, shadow: cartShadow, home: { x: cartImg.x, y: cartImg.y },
             off: { x: cartShadow.x - cartImg.x, y: cartShadow.y - cartImg.y }, k: -1,

@@ -20,8 +20,22 @@ STEP = 3               # sample every 3rd pixel each way
 ALLOW = {
     "s03/crate.png": {"offsite": 1.0},                    # task 14: the sealed crate is Chamber B blue
     "s04/crate.png": {"offsite": 1.0},                    # the same crate, going into Chamber B
+    "s03/bg.png": {"income": 0.01, "offsite": 0.01},     # door bands and the queueing vendors' sealed crates
+    "s05/crate_0.png": {"offsite": 1.0},                  # sealed Chamber B crates for the pickup
+    "s05/crate_1.png": {"offsite": 1.0},                  # sealed Chamber B crates for the pickup
+    "s05/crate_2.png": {"offsite": 1.0},                  # sealed Chamber B crates for the pickup
+    "s05/crate_3.png": {"offsite": 1.0},                  # sealed Chamber B crates for the pickup
+    "s05/crate_4.png": {"offsite": 1.0},                  # sealed Chamber B crates for the pickup
+    "s05/crate_5.png": {"offsite": 1.0},                  # sealed Chamber B crates for the pickup
     "s04/bg.png": {"income": 0.01, "offsite": 0.01},     # Chamber A/B door bands (lead, 2026-10-25); Phaser adds the words
-    "s04/fx_chamber_light_night.png": {"income": 0.03, "offsite": 0.03},   # the same bands, lit by the chamber windows
+    "s04/door_a.png": {"income": 0.12, "offsite": 0.12},      # each door layer carries its chamber band
+    "s04/door_a_open.png": {"income": 0.12, "offsite": 0.12},      # each door layer carries its chamber band
+    "s04/door_a_night.png": {"income": 0.12, "offsite": 0.12},      # each door layer carries its chamber band
+    "s04/door_a_open_night.png": {"income": 0.12, "offsite": 0.12},      # each door layer carries its chamber band
+    "s04/door_b.png": {"income": 0.12, "offsite": 0.12},      # each door layer carries its chamber band
+    "s04/door_b_open.png": {"income": 0.12, "offsite": 0.12},      # each door layer carries its chamber band
+    "s04/door_b_night.png": {"income": 0.12, "offsite": 0.12},      # each door layer carries its chamber band
+    "s04/door_b_open_night.png": {"income": 0.12, "offsite": 0.12},      # each door layer carries its chamber band
 }
 
 

@@ -8,9 +8,9 @@ import { StationScene } from '../StationScene';
 
 type Phase = 'cut' | 'pickup' | 'leave' | 'night' | 'night_leave';
 
-const BEAT_MS = 800;          // one sweep of the timing ring
-const BEAT_TARGET = 70;       // px: the target circle's radius
-const BEAT_WINDOW = 16;       // px either side that counts as clean
+const BEAT_MS = 800;          // half a breath of the circle: 1.6 s from wide to tight and back
+const BEAT_TARGET = 70;       // px: the circle's radius at rest
+const BEAT_TIGHT = 0.82;      // the circle breathes in to this scale; Space near it is a clean cut
 const WIND_UP_MS = 170;       // the cleaver held high before it falls
 
 export default class Station01 extends StationScene {
@@ -57,12 +57,11 @@ export default class Station01 extends StationScene {
         this.input.keyboard!.on('keydown-RIGHT', () => this.phase === 'leave' && this.leave());
 
         this.prompt.show(this.prompts().cut, 'Space');
-        this.ring = this.add.circle(block.x, block.y - 10, BEAT_TARGET).setStrokeStyle(4, colour.cream, 0.95).setDepth(40);
+        // one circle round the block, breathing slowly: Space as it draws in tight is a clean cut
+        // (a gentle timing game; a press at any other time still cuts, so nobody gets stuck)
+        this.ring = this.beat = this.add.circle(block.x, block.y - 10, BEAT_TARGET).setStrokeStyle(4, colour.cream, 0.95).setDepth(40);
         if (!this.state.reducedMotion) {
-            // the timing ring: Space as it meets the target circle is a clean cut (a mini-game; a
-            // miss still cuts, so nobody gets stuck)
-            this.beat = this.add.circle(block.x, block.y - 10, 150).setStrokeStyle(3, colour.cream, 0.6).setDepth(40);
-            this.tweens.add({ targets: this.beat, radius: 40, duration: BEAT_MS, repeat: -1, ease: 'Linear' });
+            this.tweens.add({ targets: this.beat, scale: BEAT_TIGHT, duration: BEAT_MS, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
         }
         const n = this.params().cut.chops ?? 3;
         this.pips = Array.from({ length: n }, (_, i) =>
@@ -137,7 +136,7 @@ export default class Station01 extends StationScene {
             return;
         }
         this.busy = true;
-        const clean = !this.beat || Math.abs(this.beat.radius - BEAT_TARGET) <= BEAT_WINDOW;
+        const clean = !this.beat || this.state.reducedMotion || this.beat.scale <= BEAT_TIGHT + 0.05;
         this.pose('up');
         const up = this.riyaz.up, y0 = up.y;
         if (!this.state.reducedMotion) this.tweens.add({ targets: up, y: y0 - 5, duration: WIND_UP_MS, ease: 'Sine.easeOut' });

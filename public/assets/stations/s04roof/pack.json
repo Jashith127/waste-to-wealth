@@ -1,0 +1,21 @@
+{
+  "s04roof": {
+    "files": [
+      {
+        "type": "image",
+        "key": "s04roof_bg",
+        "url": "assets/stations/s04roof/bg.png"
+      },
+      {
+        "type": "image",
+        "key": "s04roof_bg_dusk",
+        "url": "assets/stations/s04roof/bg_dusk.png"
+      },
+      {
+        "type": "image",
+        "key": "s04roof_bg_night",
+        "url": "assets/stations/s04roof/bg_night.png"
+      }
+    ]
+  }
+}

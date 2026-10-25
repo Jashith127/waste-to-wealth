@@ -38,7 +38,7 @@ import rig  # noqa: E402
 import s03_art_build as s03  # noqa: E402  (Russell Market masonry, arches, posters, as at the hub)
 import safety  # noqa: E402
 import station  # noqa: E402
-from mathutils import Vector  # noqa: E402
+from mathutils import Matrix, Vector  # noqa: E402
 
 TARGET = (0.0, 3.0, 1.0)                 # camera focal point: the start of the walk
 PLATE_W, PLATE_H = 3200, 1920             # the street plate: 1920x1080 start frame plus the pan
@@ -76,8 +76,8 @@ def materials(m):
         sign_a=M.image("MAT_s02_sign_a", signs / "s01-neighbour_left.png", box_uv=True) if (signs / "s01-neighbour_left.png").exists() else m["board_faded_a"],
         sign_b=M.image("MAT_s02_sign_b", signs / "s01-neighbour_right.png", box_uv=True) if (signs / "s01-neighbour_right.png").exists() else m["board_faded_b"],
         sack_white=M.plastic("MAT_sack_dirty_white", "#BDB5A6", 0.5),
-        sack_black=M.plastic("MAT_sack_black", "#2E2B2A", 0.35),
-        sack_grey=M.plastic("MAT_sack_grey", "#6E6A65", 0.45),
+        sack_black=M.plastic("MAT_sack_black", "#1F1D1C", 0.22),         # garbage-bag plastic: dark, with a sheen
+        sack_grey=M.plastic("MAT_sack_grey", "#4A4E52", 0.25),
         bone=M.matte("MAT_bone", "#E3D2BE", 0.6),
         cardboard=M.matte("MAT_cardboard", "#8C7558", 0.85),
         leaf=M.matte("MAT_leaf_dry", "#6E6A45", 0.7),
@@ -192,10 +192,10 @@ def street_props(st):
     kit.scooter(m, col, (-3.0, 1.15, 0), heading=-15)
     for i, (x, y, z, r) in enumerate(((1.0, 2.55, 0, 0), (1.02, 2.55, 0.3, 8), (1.5, 2.6, 0, -6), (9.2, 2.5, 0, 12))):
         kit.ph(f"PROP_crate{i}", "plastic_crate_01", (x, y, z), r, 1.0, col)                       # F03, R13
-    kit.ph("PROP_barrel", "Barrel_01", (9.75, 2.55, 0), 0, 1.0, col)                              # F03 drum
+    geo.cylinder("PROP_drum", (9.2, 2.65, 0), 0.28, 0.85, m["drum"], col)                       # F03 blue drum
     kit.ph("PROP_chair_a", "plastic_monobloc_chair_01", (4.3, 1.9, 0), 200, 1.0, col)            # R08
     kit.ph("PROP_chair_b", "plastic_monobloc_chair_01", (8.9, 1.6, 0), 150, 1.0, col)
-    kit.ph("PROP_bin", "metal_trash_can", (10.4, 2.6, 0), 0, 1.0, col)
+
     # Anthony's stall: a steel counter with crates of produce (F05 density, muted)
     geo.box("STALL_counter", (2.45, 2.5, 0), (3.85, 2.95, 0.88), m["steel_dark"], col, 0.02)
     geo.box("STALL_top", (2.42, 2.46, 0.88), (3.88, 2.98, 0.94), m["steel"], col, 0.01)
@@ -215,20 +215,21 @@ def dress(st):
     the kerb, projecting flex boards and a banner, a stove cart, a tarp heap, pedestrians; at the
     market end the pink-over-stone boundary wall, the rain tree, bollards and pavement vendors."""
     s, m, col = st.street, st.m, st.props
-    kit.two_wheeler_row("BIKE_a", -4.4, -1.9, 2.15, m, col)
-    kit.two_wheeler_row("BIKE_b", 5.3, 7.9, 2.2, m, col)
-    for i, (x, h) in enumerate(((6.9, 0), (9.8, 0))):                         # an auto rank at the kerb (V02)
-        kit.autorickshaw(f"AUTO_{i}", (x, 0.75, 0), h, m, col)
+    kit.two_wheeler_row("BIKE_a", -4.4, -3.6, 2.0, m, col, step=0.8, heading=180)          # a few nose-in at the shops
+    kit.two_wheeler_row("BIKE_b", 8.6, 9.4, 2.0, m, col, step=0.8, heading=180)
+    kit.two_wheeler_row("BIKE_kerb_a", -4.2, 0.4, -0.6, m, col, step=2.1, heading=90, z=kit.ROAD_Z)   # the rest along the kerb
+    kit.two_wheeler_row("BIKE_kerb_b", 10.2, 12.4, -0.6, m, col, step=2.1, heading=90, z=kit.ROAD_Z)
+    for i, (x, y) in enumerate(((2.6, -1.2), (6.4, -1.25), (8.9, -2.3))):        # autos on the road (V02, V03)
+        kit.autorickshaw(f"AUTO_{i}", (x, y, kit.ROAD_Z), 0, m, col)
     for i, (x, z, mat) in enumerate(((-1.55, 3.35, "flex_red"), (1.85, 3.45, "flex_yellow"), (4.95, 3.3, "flex_blue"), (8.15, 3.45, "flex_red"))):
         kit.flex_board(f"FLEX_{i}", x, z, 1.1, s, m, m[mat], col)
     kit.banner("BANNER_0", 0.4, 4.6, 6.6, 0.9, s, m["flex_yellow"], col)
     kit.banner("BANNER_1", 6.2, 4.5, 6.2, 0.8, s, m["flex_blue"], col)
     kit.stove_cart("STOVE_cart", (-0.6, 1.75, 0), m, col)
-    kit.ph("STOVE_lpg", "small_lpg_tank", (-0.2, 1.4, 0), 0, 1.0, col)
+    kit.ph("STOVE_lpg", "small_lpg_tank", (-1.45, 1.75, 0), 0, 1.0, col)
     kit.ph("MANHOLE", "water_manhole_cover", (8.2, 1.6, 0.002), 0, 1.0, col)
     kit.tarp_heap("TARP_heap", (-4.2, 2.55, 0), m, col)
-    for i, (x, y, h, k, stride) in enumerate(((-2.6, 1.3, 80, 0, 0.15), (2.4, 1.15, -100, 1, -0.15), (6.6, 1.35, 95, 2, 0.12),
-                                              (9.6, 1.6, -80, 0, 0.0), (13.0, 0.95, 180, 3, 0.0))):
+    for i, (x, y, h, k, stride) in enumerate(((-1.8, 0.75, 80, 0, 0.15), (1.6, 0.9, -100, 1, -0.15), (8.4, 0.8, 95, 2, 0.12))):
         kit.pedestrian(f"PED_{i}", (x, y, 0), h, col, kind=k, stride=stride)
     # the market end (V05): boundary wall, pink plaster over a stone base, under a rain tree
     geo.box("BWALL_base", (11.45, 2.55, 0), (15.0, 2.8, 0.7), m["stone_base"], col, 0.02)
@@ -236,10 +237,7 @@ def dress(st):
     geo.box("BWALL_coping", (11.4, 2.52, 2.3), (15.0, 2.83, 2.4), m["stone_base"], col, 0.02)
     kit.rain_tree("TREE", 14.3, 1.6, m, col)
     kit.bollards("BOLLARD", (11.6, 12.4, 13.9, 14.6), 0.95, m, col)
-    for i, x in enumerate((14.5, 11.7)):
-        geo.box(f"VENDOR_stand{i}", (x - 0.45, 1.15, 0), (x + 0.45, 1.75, 0.75), m["flex_red"], col, 0.01)
-        kit.ph(f"VENDOR_basket{i}", "wicker_basket_01", (x - 0.2, 1.45, 0.75), 20 * i, 1.0, col)
-        kit.ph(f"VENDOR_crate{i}", "wooden_crate_01", (x + 0.2, 1.45, 0.75), -15, 0.8, col)
+    # (the pavement vendors of V05 stay out of the pile's corner: it reads better uncrowded)
 
 
 def cart(st):
@@ -265,13 +263,14 @@ def litter(st):
     cardboard, a dry leaf, wet stains, two crows. It is a PROP so Run 2 can show the clean pavement."""
     m, col = st.m, st.prop("litter")
     c = LITTER_AT
-    sacks = ((-0.5, 0.05, "sack_white", 1.5), (0.05, -0.2, "sack_black", 1.6), (0.5, 0.1, "sack_grey", 1.4),
-             (0.0, 0.35, "sack_white", 1.3), (-0.75, -0.3, "bag_waste", 1.0))
+    sacks = ((-0.5, 0.05, "sack_black", 1.5), (0.05, -0.2, "sack_black", 1.6), (0.5, 0.1, "sack_grey", 1.4),
+             (0.0, 0.35, "sack_grey", 1.3), (-0.75, -0.3, "bag_waste", 1.0), (0.75, -0.35, "bag_waste", 0.9))
     for i, (dx, dy, mat, k) in enumerate(sacks):
         root = geo.empty(f"LITTER_sack{i}_root", (c.x + dx, c.y + dy, 0), col)
         objs, _ = kit.kilo_bag(f"LITTER_sack{i}", (c.x + dx, c.y + dy, 0.12), 0.0, {"bag": m[mat]}, col)
-        for o in objs:
-            geo.parent_keep(o, root)
+        for o in objs:                               # scale about the sack's base, not the world origin
+            o.parent = root
+            o.matrix_parent_inverse = Matrix.Translation(-root.location)
         root.scale = (k, k, k)                    # sacks, not carry bags: scaled about their base
     # the split sack spills bone and offal onto the paving
     for i in range(7):
@@ -280,16 +279,13 @@ def litter(st):
                    (2.2, 0.8, 0.7), m["bone"], col, rot=(0, 0, a))
     for i in range(4):
         geo.sphere(f"LITTER_offal{i}", (c.x + 0.25 + i * 0.12, c.y - 0.45 - (i % 2) * 0.08, 0.03), 0.05, (1.3, 1.0, 0.45), m["meat"], col)
-    for i, (model, dx, dy, r, k) in enumerate((("trashbag", 0.8, 0.25, 30, 1.2), ("trashbag", -0.95, 0.35, -40, 1.1),
-                                                ("compost_bags", 0.35, 0.55, 10, 0.9), ("cement_bag", -0.3, -0.75, 70, 1.0),
-                                                ("cardboard_box_01", 0.95, -0.35, 18, 1.0))):
-        kit.ph(f"LITTER_{model}{i}", model, (c.x + dx, c.y + dy, 0), r, k, col)
+    kit.ph("LITTER_cardboard", "cardboard_box_01", (c.x + 0.95, c.y - 0.3, 0), 18, 1.0, col)
     kit.ph("LITTER_rat", "street_rat", (c.x - 1.2, c.y - 0.8, 0), -60, 1.0, col)
     geo.box("LITTER_leaf", (c.x - 1.1, c.y - 0.1, 0.0), (c.x - 0.6, c.y + 0.25, 0.008), m["leaf"], col, 0)
     for i, (dx, dy, r) in enumerate(((0.0, -0.4, 0.75), (-0.9, 0.2, 0.4), (0.9, -0.6, 0.35))):
         p = geo.cylinder(f"LITTER_stain{i}", (c.x + dx, c.y + dy, 0.0), r, 0.004, m["stain"], col, segments=28, bevel=0)
         p.scale = (1.6, 0.9, 1.0)
-    for i, (dx, dy, z, rot) in enumerate(((0.2, 0.0, 0.48, 30), (-0.95, -0.55, 0.0, -50))):
+    for i, (dx, dy, z, rot) in enumerate(((-1.25, -0.45, 0.0, 20), (1.2, -0.75, 0.0, -50))):
         crow(f"LITTER_crow{i}", Vector((c.x + dx, c.y + dy, z)), rot, m, col)
     kit.shadow_catcher("LITTER_shadow_catcher", (c.x, c.y, 0.002), (2.6, 1.7), m, col)
     st.anchor("litter_centre", (c.x, c.y, PILE_TOP))
@@ -344,6 +340,7 @@ def build():
     st = station.begin("s02")
     materials(st.m)
     kit.plinth(st.street, st.m, st.set)
+    kit.road(st.street, st.m, st.set)
     facade(st)
     market_corner(st)
     kit.kit_materials(st.m)

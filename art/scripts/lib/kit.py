@@ -368,7 +368,7 @@ def autorickshaw(name, origin, heading, m, col):
         geo.box(f"{name}_tub", (-0.9, -0.62, 0.32), (0.75, 0.62, 0.95), m["auto_body"], col, 0.08),
         geo.box(f"{name}_nose", (0.75, -0.3, 0.3), (1.25, 0.3, 1.0), m["auto_body"], col, 0.1),
         geo.box(f"{name}_seat", (-0.75, -0.55, 0.95), (-0.2, 0.55, 1.05), m["auto_dark"], col, 0.03),
-        geo.box(f"{name}_canopy", (-0.98, -0.68, 1.55), (0.92, 0.68, 1.78), m["auto_top"], col, 0, subsurf=2),
+        geo.box(f"{name}_canopy", (-0.98, -0.68, 1.6), (0.92, 0.68, 1.76), m["auto_top"], col, 0.07),
         geo.box(f"{name}_screen", (0.86, -0.42, 1.0), (0.9, 0.42, 1.55), m["window_glass"], col, 0.01),
         geo.box(f"{name}_back", (-0.97, -0.6, 0.95), (-0.9, 0.6, 1.62), m["auto_top"], col, 0.02),
     ]
@@ -383,13 +383,14 @@ def autorickshaw(name, origin, heading, m, col):
     return root
 
 
-def two_wheeler_row(prefix, x0, x1, y, m, col, step=0.75, heading=-70):
-    """Scooters and bikes nose-in along a shopfront (V01, V04), every `step` metres."""
+def two_wheeler_row(prefix, x0, x1, y, m, col, step=0.75, heading=-70, z=0.0):
+    """Two-wheelers every `step` metres: nose-in along a shopfront (heading 180, V01, V04), or parked
+    along the kerb on the road (heading 90, z = ROAD_Z)."""
     shades = ("#7B8790", "#8E3E38", "#3A4A5A", "#C9C6BC", "#2E2B2A")
     x, i = x0, 0
     while x <= x1:
         mat = m.setdefault(f"scooter_{i % 5}", M.plastic(f"MAT_scooter_{i % 5}", shades[i % 5], 0.35))
-        scooter({**m, "scooter": mat}, col, (x, y, 0), heading=heading + (i % 3 - 1) * 6, name=f"{prefix}_{i}")
+        scooter({**m, "scooter": mat}, col, (x, y, z), heading=heading, name=f"{prefix}_{i}")
         x += step
         i += 1
 
@@ -425,12 +426,11 @@ def bollards(prefix, xs, y, m, col):
 
 
 def stove_cart(name, origin, m, col):
-    """A pavement food cart (V04, F01): steel box on wheels, a burner, a red gas cylinder below."""
+    """A pavement food cart (V04, F01): steel box on wheels and a burner (the gas cylinder stands beside it)."""
     x, y, _ = origin
     geo.box(f"{name}_box", (x - 0.6, y - 0.35, 0.3), (x + 0.6, y + 0.35, 0.95), m["steel"], col, 0.01)
     geo.box(f"{name}_top", (x - 0.62, y - 0.37, 0.95), (x + 0.62, y + 0.37, 0.99), m["steel"], col, 0.006)
     geo.cylinder(f"{name}_kadai", (x + 0.2, y, 0.99), 0.2, 0.08, m["steel_dark"], col, radius2=0.26)
-    geo.cylinder(f"{name}_cylinder", (x - 0.3, y, 0.0), 0.15, 0.55, m["cylinder_red"], col)
     for i, xx in enumerate((x - 0.45, x + 0.45)):
         geo.cylinder(f"{name}_wheel{i}", (xx, y - 0.38, 0.16), 0.16, 0.05, m["cable"], col, axis="Y", segments=20, bevel=0)
 
@@ -491,3 +491,25 @@ def ph(name, model, loc, rot=0.0, scale=1.0, col=None):
     root.rotation_euler = (0, 0, math.radians(rot))
     root.scale = (scale, scale, scale)
     return root
+
+
+# ---------------------------------------------------------------- the road
+ROAD_Z = -0.15                    # the carriageway sits one kerb below the footpath
+
+
+def road(st, m, col, depth=3.2, x0=None, x1=None):
+    """The street in front of the kerb (V01-V05): asphalt one kerb-height down, kerb stones, a darker
+    wet gutter, worn lane dashes; cut at the front like the plinth. Vehicles belong here, not on the
+    footpath (a few two-wheelers still park nose-in at the shops)."""
+    x0 = st.x0 if x0 is None else x0
+    x1 = st.x1 if x1 is None else x1
+    m.setdefault("asphalt", M.plaster("MAT_asphalt", "#55504B", 0.08, floor_z=-1.0))
+    m.setdefault("gutter", M.matte("MAT_gutter", "#3A3633", 0.3))
+    m.setdefault("lane_paint", M.matte("MAT_lane_paint", "#C9C4B8", 0.7))
+    geo.box("ROAD", (x0, -depth, -0.45), (x1, 0.0, ROAD_Z), m["asphalt"], col, geo.BEVEL_ARCH)
+    geo.box("ROAD_kerbstone", (x0, -0.04, ROAD_Z), (x1, 0.16, 0.04), m["kerb"], col, 0.01)
+    geo.box("ROAD_gutter", (x0, -0.4, ROAD_Z), (x1, -0.04, ROAD_Z + 0.004), m["gutter"], col, 0)
+    x = x0 + 0.6
+    while x < x1 - 1.0:
+        geo.box(f"ROAD_dash{x:.1f}", (x, -depth / 2 - 0.06, ROAD_Z), (x + 1.2, -depth / 2 + 0.06, ROAD_Z + 0.004), m["lane_paint"], col, 0)
+        x += 3.0

@@ -1,0 +1,46 @@
+{
+  "s05": {
+    "files": [
+      {
+        "type": "image",
+        "key": "s05_bg",
+        "url": "assets/stations/s05/bg.png"
+      },
+      {
+        "type": "image",
+        "key": "s05_crate_0",
+        "url": "assets/stations/s05/crate_0.png"
+      },
+      {
+        "type": "image",
+        "key": "s05_crate_1",
+        "url": "assets/stations/s05/crate_1.png"
+      },
+      {
+        "type": "image",
+        "key": "s05_crate_2",
+        "url": "assets/stations/s05/crate_2.png"
+      },
+      {
+        "type": "image",
+        "key": "s05_crate_3",
+        "url": "assets/stations/s05/crate_3.png"
+      },
+      {
+        "type": "image",
+        "key": "s05_crate_4",
+        "url": "assets/stations/s05/crate_4.png"
+      },
+      {
+        "type": "image",
+        "key": "s05_crate_5",
+        "url": "assets/stations/s05/crate_5.png"
+      },
+      {
+        "type": "image",
+        "key": "s05_truck",
+        "url": "assets/stations/s05/truck.png"
+      }
+    ]
+  }
+}

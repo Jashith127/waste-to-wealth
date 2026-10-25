@@ -20,7 +20,8 @@
       "proposed": true,
       "prompts": {
         "watch": "Watch the process",
-        "leave": "Follow the meal"
+        "leave": "Follow the meal",
+        "tend": "Keep the cooker in its band"
       }
     }
   },
@@ -64,6 +65,12 @@
       "Meal",
       "Oil"
     ],
-    "evidence_note": "Rendering evidence ids pending research/evidence.csv"
+    "evidence_note": "Rendering evidence ids pending research/evidence.csv",
+    "tend": {
+      "step": 1,
+      "label": "Cooker",
+      "hold_ms": 2000,
+      "give_up_ms": 6000
+    }
   }
 }

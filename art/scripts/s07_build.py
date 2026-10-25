@@ -75,14 +75,14 @@ def farm(st):
         geo.box(f"FEEDER{i}_meal", (x - 0.66, 1.88, 0.2), (x + 0.66, 2.12, 0.23), m["meal"], col, 0)
     geo.cylinder("WATER_drum", (-1.2, 3.8, 0), 0.3, 0.85, m["drum"], col)
     for i in range(3):
-        kit.ph(f"MEAL_sack{i}", "cement_bag", (-6.3 + i * 0.5, 3.6, 0.0), 10 * i, 1.0, col)
+        geo.box(f"MEAL_sack{i}", (-6.5 + i * 0.5, 3.35, 0), (-6.1 + i * 0.5, 3.85, 0.3), m["meal"], col, 0.04, subsurf=2)
     # the flock
     rnd = random.Random(7)
     for i in range(16):
         x, y = rnd.uniform(-6.2, -0.8), rnd.uniform(1.6, 4.0)
         hen(f"HEN_{i}", Vector((x, y, 0)), rnd.uniform(0, 360), m["hen_white"] if i % 4 else m["hen_brown"], m, col)
     farmer = people.costume_materials("farmer", shirt="#8C7E68", trousers="#3A3633", cap=None)
-    people.figure("FARMER", (-2.2, 1.0, 0), 40, farmer, (-0.4, -0.3, 1.05), (0.3, -0.1, 0.8), col, grip=("flat", "loose"))
+    people.figure("FARMER", (-2.3, 2.9, 0), -50, farmer, (-0.4, -0.3, 1.05), (0.3, -0.1, 0.8), col, grip=("flat", "loose"))   # behind the feeder, throwing
     st.anchor("feed", (-3.4, 2.0, 0.4))
     st.anchor("flock", (-1.6, 2.8, 0.4))
 
@@ -123,10 +123,12 @@ def stall(st):
     mats = people.costume_materials("vendor", apron="#D6CFC0", cap="#E6E2D8")
     people.figure("VENDOR", (6.1, 3.1, 0.15), 0, mats, (-0.3, -0.45, 1.0), (0.3, -0.45, 1.0), col)
     kit.kit_materials(m)
-    kit.two_wheeler_row("BIKE", 1.8, 3.8, 2.2, m, col)
+    kit.road(s, m, col, x0=0.5, x1=8.5)
+    kit.two_wheeler_row("BIKE", 2.0, 2.8, 2.2, m, col, step=0.8, heading=180)
+    kit.two_wheeler_row("BIKE_kerb", 3.8, 7.0, -0.6, m, col, step=2.1, heading=90, z=kit.ROAD_Z)
     kit.flex_board("FLEX_0", 4.4, 3.4, 1.0, s, m, m["flex_red"], col)
     kit.ph("CHAIR", "plastic_monobloc_chair_01", (7.4, 1.9, 0), 160, 1.0, col)
-    kit.autorickshaw("AUTO_0", (2.6, 0.6, 0), 0, m, col)
+    kit.autorickshaw("AUTO_0", (2.0, -1.3, kit.ROAD_Z), 0, m, col)
     st.anchor("stall", (5.7, 2.6, 1.2))
 
 

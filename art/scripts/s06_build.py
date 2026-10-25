@@ -44,6 +44,8 @@ def materials(m):
         meal=M.matte("MAT_meal", "#9C8160", 0.9),
         coverall=M.matte("MAT_coverall", "#4F5E6E", 0.8),
         stain=M.matte("MAT_stain", "#3E352F", 0.25),
+        meal_sack=M.matte("MAT_meal_sack", "#CFC6B0", 0.9),
+        oil_drum=M.steel("MAT_oil_drum", "#5E6670", 0.5),
     )
 
 
@@ -114,10 +116,12 @@ def machines(st):
 def outputs(st):
     """Meal in sacks and oil in drums, at the end of the line (CC0 sacks and barrels)."""
     m, col = st.m, st.set
-    for i, (dx, dy) in enumerate(((0, 0), (0.45, 0.1), (0.2, 0.5))):
-        kit.ph(f"MEAL_sack{i}", "cement_bag", (4.0 + dx, 1.1 + dy, 0.0 if i < 2 else 0.18), 15 * i, 1.0, col)
-    for i, (dx, dy) in enumerate(((0, 0), (0.65, 0.1))):
-        kit.ph(f"OIL_drum{i}", "Barrel_01", (4.0 + dx, 2.9 + dy, 0), 10 * i, 1.0, col)
+    for i, (dx, dy, z) in enumerate(((0, 0, 0), (0.5, 0.1, 0), (0.25, 0.05, 0.3))):      # plain woven sacks of meal
+        geo.box(f"MEAL_sack{i}", (4.0 + dx - 0.22, 1.1 + dy - 0.32, z), (4.0 + dx + 0.22, 1.1 + dy + 0.32, z + 0.3), m["meal_sack"], col, 0.04, subsurf=2)
+    for i, dx in enumerate((0, 0.65)):                                                  # plain steel drums of oil
+        geo.cylinder(f"OIL_drum{i}", (4.2 + dx, 2.95, 0), 0.29, 0.88, m["oil_drum"], col, segments=28)
+        for z in (0.3, 0.6):
+            geo.cylinder(f"OIL_drum{i}_rib{z}", (4.2 + dx, 2.95, z), 0.295, 0.03, m["oil_drum"], col, segments=28, bevel=0)
     st.anchor("out_meal", (4.2, 1.3, 0.6))
     st.anchor("out_oil", (4.3, 2.95, 1.0))
 
@@ -137,7 +141,6 @@ def people_and_kit(st):
     mats = people.costume_materials("worker", shirt="#4F5E6E", trousers="#4F5E6E", cap="#C9C6BC")
     people.figure("WORKER", (0.8, 1.2, 0), 60, mats, (-0.3, -0.18, 0.95), (0.32, -0.1, 0.85), col, moustache=False)
     kit.ph("HAND_truck", "hand_truck", (-4.0, 1.2, 0), 30, 1.0, col)
-    kit.ph("SHELVES", "steel_frame_shelves_01", (-3.9, 3.2, 0), 0, 1.0, col)
     kit.ph("JERRYCAN", "plastic_jerrycan", (4.6, 3.3, 0), -20, 1.0, col)
     light = rig.point_light("LIGHT_plant", (0.0, 2.0, 4.2), (0.96, 0.97, 0.93), 300, 1.0, col)
     light["practical"] = True

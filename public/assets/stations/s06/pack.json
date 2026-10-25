@@ -1,0 +1,16 @@
+{
+  "s06": {
+    "files": [
+      {
+        "type": "image",
+        "key": "s06_bg",
+        "url": "assets/stations/s06/bg.png"
+      },
+      {
+        "type": "image",
+        "key": "s06_material",
+        "url": "assets/stations/s06/material.png"
+      }
+    ]
+  }
+}

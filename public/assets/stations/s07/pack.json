@@ -1,0 +1,11 @@
+{
+  "s07": {
+    "files": [
+      {
+        "type": "image",
+        "key": "s07_bg",
+        "url": "assets/stations/s07/bg.png"
+      }
+    ]
+  }
+}

@@ -18,6 +18,16 @@
       },
       {
         "type": "image",
+        "key": "s02_cart",
+        "url": "assets/stations/s02/cart.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_cart_shadow",
+        "url": "assets/stations/s02/cart_shadow.png"
+      },
+      {
+        "type": "image",
         "key": "s02_kilo",
         "url": "assets/stations/s02/kilo.png"
       },
@@ -35,6 +45,16 @@
         "type": "image",
         "key": "s02_riyaz_walk",
         "url": "assets/stations/s02/riyaz_walk.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_riyaz_walk_a",
+        "url": "assets/stations/s02/riyaz_walk_a.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_riyaz_walk_b",
+        "url": "assets/stations/s02/riyaz_walk_b.png"
       }
     ]
   }

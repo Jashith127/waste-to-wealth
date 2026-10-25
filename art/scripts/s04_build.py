@@ -30,7 +30,7 @@ import people  # noqa: E402
 import rig  # noqa: E402
 import s03_art_build as s03  # noqa: E402  (shared materials and the crate, so s03 and s04 match)
 import station  # noqa: E402
-from mathutils import Vector  # noqa: E402
+from mathutils import Matrix, Vector  # noqa: E402
 
 TARGET = (0.0, 2.0, 0.3)                 # low, so the crate and tray sit above the blueprint line
 ROOM = dict(x0=-3.2, x1=3.6, back=3.0, front=0.0, height=2.8)
@@ -148,8 +148,9 @@ def door_panel(st, key, x0, x1, closed):
         geo.cylinder(f"{name}_window_ring", ((x0 + x1) / 2, y - 0.082, WINDOW_Z), 0.13, 0.012, m["steel"], col, axis="Y", bevel=0),
         geo.cylinder(f"{name}_window", ((x0 + x1) / 2, y - 0.088, WINDOW_Z), 0.11, 0.008, m["glow"], col, axis="Y", bevel=0),
     ]
-    for o in parts:
-        geo.parent_keep(o, hinge)
+    for o in parts:                                  # pivot on the hinge: parts stay where they were built
+        o.parent = hinge
+        o.matrix_parent_inverse = Matrix.Translation(-hinge.location)
     if not closed:
         hinge.rotation_euler = (0, 0, math.radians(-105))
 

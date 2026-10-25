@@ -17,6 +17,7 @@
       "summary": "The kilo is weighed, recorded by voice and paid by UPI.",
       "proposed": true,
       "prompts": {
+        "sort": "Pick out what is not meat waste",
         "drag": "Put the crate on the scale",
         "number": "Say your number",
         "wait": "The attendant types it in",
@@ -75,15 +76,72 @@
   "params": {
     "weight_label": "1.0 kg",
     "rate_board": [
-      { "line": "Bone, sorted", "rate": "₹[__]/kg" },
-      { "line": "Offal, sorted", "rate": "₹[__]/kg" },
-      { "line": "Mixed", "rate": "₹[__]/kg" }
+      {
+        "line": "Bone, sorted",
+        "rate": "₹[__]/kg"
+      },
+      {
+        "line": "Offal, sorted",
+        "rate": "₹[__]/kg"
+      },
+      {
+        "line": "Mixed",
+        "rate": "₹[__]/kg"
+      }
     ],
     "rate_note": "Sorted earns more",
     "speech": "My number is…",
     "number_masked": "••••• •••••",
-    "slip": { "title": "Hub slip", "lines": ["1.0 kg · sorted", "₹[__] by UPI"] },
-    "tag_after": { "value": "+₹[__]", "meaning": "income", "note": "₹[__]/kg, payout to be set" }
+    "slip": {
+      "title": "Hub slip",
+      "lines": [
+        "1.0 kg · sorted",
+        "₹[__] by UPI"
+      ]
+    },
+    "tag_after": {
+      "value": "+₹[__]",
+      "meaning": "income",
+      "note": "₹[__]/kg, payout to be set"
+    },
+    "sort": {
+      "title": "Sort before you weigh",
+      "keep_label": "Into the crate",
+      "reject_label": "Not for the hub",
+      "done": "Sorted",
+      "items": [
+        {
+          "label": "Bone",
+          "kind": "bone",
+          "keep": true
+        },
+        {
+          "label": "Plastic bag",
+          "kind": "bag",
+          "keep": false
+        },
+        {
+          "label": "Offal",
+          "kind": "offal",
+          "keep": true
+        },
+        {
+          "label": "Paper cup",
+          "kind": "cup",
+          "keep": false
+        },
+        {
+          "label": "Fat",
+          "kind": "fat",
+          "keep": true
+        },
+        {
+          "label": "String",
+          "kind": "string",
+          "keep": false
+        }
+      ]
+    }
   },
   "set": {
     "blend": "art/blender/s03_weigh.blend",

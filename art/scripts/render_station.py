@@ -22,6 +22,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 
 import bpy  # noqa: E402
+from bpy_extras.object_utils import world_to_camera_view  # noqa: E402
+from mathutils import Vector  # noqa: E402
 
 import geo  # noqa: E402
 import rig  # noqa: E402
@@ -41,12 +43,47 @@ def objects(col, kinds=GEOMETRY):
     return [o for o in col.all_objects if o.type in kinds]
 
 
+def speed_up(scene):
+    """Render settings that cost no visible quality here: keep the BVH between layers, stop sampling
+    pixels that have settled, fewer bounces than Cycles' defaults, denoise on the GPU."""
+    scene.render.use_persistent_data = True
+    scene.cycles.use_adaptive_sampling = True
+    scene.cycles.adaptive_threshold = 0.03
+    scene.cycles.max_bounces = 6
+    scene.cycles.diffuse_bounces = 3
+    scene.cycles.glossy_bounces = 3
+    scene.cycles.transmission_bounces = 6
+    scene.cycles.transparent_max_bounces = 8
+    scene.cycles.caustics_reflective = scene.cycles.caustics_refractive = False
+    if hasattr(scene.cycles, "denoising_use_gpu"):
+        scene.cycles.denoising_use_gpu = True
+
+
+def border(scene, objs, pad=0.02):
+    """Render only the screen rectangle these objects cover (a sprite layer is mostly empty frame).
+    The image keeps its full size, so packing and anchors are unchanged."""
+    cam, pts = scene.camera, []
+    for o in objs:
+        if o.type in GEOMETRY:
+            pts += [world_to_camera_view(scene, cam, o.matrix_world @ Vector(c)) for c in o.bound_box]
+    r = scene.render
+    if not pts:
+        r.use_border = False
+        return
+    r.use_border, r.use_crop_to_border = True, False
+    r.border_min_x = max(0.0, min(p.x for p in pts) - pad)
+    r.border_max_x = min(1.0, max(p.x for p in pts) + pad)
+    r.border_min_y = max(0.0, min(p.y for p in pts) - pad)
+    r.border_max_y = min(1.0, max(p.y for p in pts) + pad)
+
+
 def groups(prefix):
     return {c.name[len(prefix):]: c for c in bpy.data.collections if c.name.startswith(prefix)}
 
 
 def main():
     scene = bpy.context.scene
+    speed_up(scene)
     sid = scene["station"]
     out = safety.guard(safety.ART / "build" / "renders" / sid)
     out.mkdir(parents=True, exist_ok=True)
@@ -67,10 +104,10 @@ def main():
         for o in every:
             o.hide_render = False
         for o in practicals:
-            o.hide_render = POWER_CUT
             if o.type in GEOMETRY:
-                geo.set_render_role(o, "normal")
+                geo.set_render_role(o, "normal")     # (this un-hides, so it comes before the cut)
                 o.visible_shadow = True
+            o.hide_render = POWER_CUT
         for c in (*fx.values(), *chars.values(), *props.values()):
             for o in c.all_objects:
                 o.hide_render = True
@@ -90,10 +127,14 @@ def main():
             if name.endswith("_idle"):
                 show(c, role)
 
-    def render(name, samples):
+    def render(name, samples, only=None):
         name = name + SUFFIX
         if ONLY and name not in ONLY:
             return
+        if only:
+            border(scene, only)
+        else:
+            scene.render.use_border = False
         scene.cycles.samples = max(16, samples // 4) if DRAFT else max(32, samples // 2) if FAST else samples
         scene.render.filepath = str(out / f"{name}.png")
         bpy.ops.render.render(write_still=True)
@@ -108,7 +149,7 @@ def main():
         for other, oc in chars.items():
             if other.endswith("_idle") and other.split("_")[0] != name.split("_")[0]:
                 show(oc, "holdout")
-        render(name, 96)
+        render(name, 96, list(c.all_objects))
 
     for name, c in props.items():
         geometry = objects(c)
@@ -117,7 +158,7 @@ def main():
         reset(); show(c); holdout(env); idle_shadows("holdout")
         for o in catcher:
             o.hide_render = True
-        render(name, 96)
+        render(name, 96, body)
         if catcher:
             reset(); show(c); holdout(env); idle_shadows("holdout")
             for o in body:
@@ -126,7 +167,7 @@ def main():
                 geo.set_render_role(o, "catcher")
             for o in env:
                 o.visible_shadow = False
-            render(f"{name}_shadow", 96)
+            render(f"{name}_shadow", 96, catcher)
 
     (out / "anchors.json").write_text(scene["anchors"], encoding="utf-8")
     print("[anchors]", scene["anchors"], flush=True)

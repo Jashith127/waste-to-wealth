@@ -13,7 +13,9 @@ import { drawCard, drawChip } from '../../ui/card';
 import { KiloTag } from '../../ui/KiloTag';
 import { StationScene } from '../StationScene';
 
-type Phase = 'drag' | 'number' | 'wait' | 'paid' | 'leave';
+type Phase = 'sort' | 'drag' | 'number' | 'wait' | 'paid' | 'leave';
+type ItemKind = 'bone' | 'offal' | 'fat' | 'bag' | 'cup' | 'string';
+interface SortItem { label: string; kind: ItemKind; keep: boolean }
 
 interface S03Params {
     weight_label: string;
@@ -23,6 +25,7 @@ interface S03Params {
     number_masked: string;
     slip: { title: string; lines: string[] };
     tag_after: KiloTagState;
+    sort: { title: string; keep_label: string; reject_label: string; done: string; items: SortItem[] };
 }
 
 // The crate's 3D centre sits half its height (0.15 m) above the scale pan: 22.7 px at 151.6 px/m.
@@ -94,14 +97,121 @@ export default class Station03 extends StationScene {
         });
         this.input.on('pointerup', () => this.release());
 
-        this.prompt.show(this.prompts().drag, 'Space');
+        this.openTray();
+    }
+
+    // --- sort before you weigh (mini-game) -------------------------------------------------------
+
+    private tray?: GameObjects.Container;
+    private trayItems: { item: SortItem; icon: GameObjects.Container; out: boolean }[] = [];
+
+    /** The kilo, tipped onto a tray above the crate: pick out what is not meat waste. Sorted earns
+     * more (the rate board), so the crate is only sealed once the tray is clean. */
+    private openTray() {
+        this.phase = 'sort';
+        const p = this.params().sort;
         const c = this.crateCentre();
-        this.ring = this.hint(c.x, c.y, 78);
+        const w = 760, h = 300;
+        const box = this.add.container(Math.min(Math.max(c.x, w / 2 + 40), 1920 - w / 2 - 40), Math.max(c.y - 260, h / 2 + 110)).setDepth(40);
+        const g = this.add.graphics();
+        drawCard(g, -w / 2, -h / 2, w, h, colour.brown);
+        box.add(g);
+        box.add(this.add.text(-w / 2 + 28, -h / 2 + 46, p.title, { fontFamily: font.display, fontSize: 34, fontStyle: '700', color: css.ink }).setOrigin(0, 0.5));
+        box.add(this.add.text(w / 2 - 28, -h / 2 + 46, p.reject_label, { fontFamily: font.body, fontSize: 24, color: css.muted }).setOrigin(1, 0.5));
+        const bin = this.add.graphics();
+        bin.lineStyle(3, colour.ink, 0.6).strokeRoundedRect(w / 2 - 150, -h / 2 + 74, 122, 64, 10);
+        box.add(bin);
+        this.trayItems = p.items.map((item, i) => {
+            const x = -w / 2 + 80 + i * 118, y = 40;
+            const icon = this.add.container(x, y);
+            icon.add(this.drawItem(item.kind));
+            icon.add(this.add.text(0, 62, item.label, { fontFamily: font.body, fontSize: 22, color: css.ink }).setOrigin(0.5));
+            icon.setSize(104, 150).setInteractive({ useHandCursor: true }).on('pointerup', () => this.pick(i));
+            box.add(icon);
+            return { item, icon, out: false };
+        });
+        this.tray = box;
+        this.prompt.show(this.prompts().sort, 'Space');
+        if (!this.state.reducedMotion) {
+            box.setAlpha(0).setScale(0.95);
+            this.tweens.add({ targets: box, alpha: 1, scale: 1, duration: motion.normal, ease: 'Back.easeOut' });
+        }
+    }
+
+    /** Simple drawn items, matte and in the world's own colours (no meaning colours, no gore). */
+    private drawItem(kind: ItemKind) {
+        const g = this.add.graphics();
+        if (kind === 'bone') {
+            g.fillStyle(0xe3d2be, 1).fillRoundedRect(-30, -8, 60, 16, 8);
+            for (const [x, y] of [[-32, -10], [-32, 8], [32, -10], [32, 8]]) g.fillCircle(x, y, 11);
+        } else if (kind === 'offal') {
+            g.fillStyle(0x9b5c42, 1).fillEllipse(-6, 0, 58, 40).fillStyle(0x7e4a3c, 1).fillEllipse(14, 6, 34, 26);
+        } else if (kind === 'fat') {
+            g.fillStyle(0xd8c4a6, 1).fillEllipse(0, 0, 60, 34).fillStyle(0xb9886f, 1).fillEllipse(-10, 4, 24, 14);
+        } else if (kind === 'bag') {
+            g.fillStyle(0xeceae4, 0.9).fillRoundedRect(-24, -24, 48, 52, 14);
+            g.lineStyle(5, 0xeceae4, 0.9).strokeEllipse(-12, -30, 16, 22).strokeEllipse(12, -30, 16, 22);
+            g.lineStyle(2, colour.ink, 0.3).strokeRoundedRect(-24, -24, 48, 52, 14);
+        } else if (kind === 'cup') {
+            g.fillStyle(0xf2efe8, 1).beginPath().moveTo(-20, -28).lineTo(20, -28).lineTo(14, 28).lineTo(-14, 28).closePath().fillPath();
+            g.fillStyle(0xa89c88, 1).fillRect(-18, -6, 36, 12);
+            g.lineStyle(2, colour.ink, 0.3).strokeRect(-20, -28, 40, 2);
+        } else {
+            g.lineStyle(4, 0xb7a17e, 1).beginPath().moveTo(-34, 6);
+            for (let k = 1; k <= 8; k++) g.lineTo(-34 + k * 8.5, 6 + Math.sin(k * 1.4) * 12);
+            g.strokePath();
+        }
+        return g;
+    }
+
+    private pick(i: number) {
+        const t = this.trayItems[i];
+        if (this.phase !== 'sort' || t.out) return;
+        if (t.item.keep) {
+            // meat waste stays: a little wobble says so
+            if (!this.state.reducedMotion) this.tweens.add({ targets: t.icon, angle: { from: -8, to: 0 }, duration: 260, ease: 'Back.easeOut' });
+            return;
+        }
+        t.out = true;
+        t.icon.disableInteractive();
+        this.events.emit('sfx', 'sort_out');
+        const to = { x: 760 / 2 - 89, y: -300 / 2 + 106 };
+        if (this.state.reducedMotion) t.icon.setPosition(to.x, to.y).setScale(0.45);
+        else this.tweens.add({ targets: t.icon, x: to.x, y: to.y, scale: 0.45, duration: 300, ease: 'Cubic.easeIn' });
+        if (this.trayItems.every((x) => x.item.keep || x.out)) this.time.delayedCall(450, () => this.sealCrate());
+    }
+
+    /** Space: take out the next thing that is not meat waste. */
+    private removeNext() {
+        const i = this.trayItems.findIndex((x) => !x.item.keep && !x.out);
+        if (i >= 0) this.pick(i);
+    }
+
+    /** The tray is clean: everything left goes into the crate, the lid goes on, then the drag. */
+    private sealCrate() {
+        const p = this.params().sort;
+        const box = this.tray!;
+        box.add(this.add.text(0, -300 / 2 + 46, p.done, { fontFamily: font.display, fontSize: 30, fontStyle: '700', color: css.ink }).setOrigin(0.5));
+        const c = this.crateCentre();
+        const keep = this.trayItems.filter((x) => x.item.keep).map((x) => x.icon);
+        const done = () => {
+            box.destroy();
+            this.tray = undefined;
+            if (!this.state.reducedMotion) this.tweens.add({ targets: this.crate, y: this.crate.y - 6, duration: 110, yoyo: true });
+            this.events.emit('sfx', 'crate_seal');
+            this.phase = 'drag';
+            this.prompt.show(this.prompts().drag, 'Space');
+            this.ring = this.hint(c.x, c.y, 78);
+        };
+        if (this.state.reducedMotion) return done();
+        this.tweens.add({ targets: keep, x: c.x - box.x, y: c.y - box.y, scale: 0.2, alpha: 0, duration: 420, delay: 300, ease: 'Cubic.easeIn' });
+        this.tweens.add({ targets: box, alpha: 0, duration: 300, delay: 800, onComplete: done });
     }
 
     /** Space/Enter/→ walks the beat forward; the pointer handles the drag and the spoken number. */
     private press() {
-        if (this.phase === 'drag') this.snap();
+        if (this.phase === 'sort') this.removeNext();
+        else if (this.phase === 'drag') this.snap();
         else if (this.phase === 'number') this.sayNumber();
         else if (this.phase === 'leave') this.leave();
     }

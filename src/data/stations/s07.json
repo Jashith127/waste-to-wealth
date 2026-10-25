@@ -22,7 +22,8 @@
       "proposed": true,
       "prompts": {
         "watch": "How it could close",
-        "leave": "See the day's ledger"
+        "leave": "See the day's ledger",
+        "feed": "Scatter the meal into the feeder"
       }
     }
   },
@@ -72,6 +73,7 @@
       }
     ],
     "precedent": "Precedent: Kannur, Kerala",
-    "caveat": "No supply chain back to the stall was found"
+    "caveat": "No supply chain back to the stall was found",
+    "handfuls": 3
   }
 }

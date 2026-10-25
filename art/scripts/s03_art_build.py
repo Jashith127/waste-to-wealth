@@ -484,12 +484,20 @@ def dress(st):
     s, m, col = st.street, st.m, st.props
     kit.kit_materials(m)
     m.setdefault("pole", M.plaster("MAT_pole", "#9C978E", 0.2))
-    kit.autorickshaw("AUTO_0", (3.4, 0.5, 0), 0, m, col)
-    kit.two_wheeler_row("BIKE", 4.6, 5.9, 2.25, m, col)
+    kit.road(s, m, st.set)
+    kit.autorickshaw("AUTO_0", (3.4, -1.25, kit.ROAD_Z), 0, m, col)
+    kit.two_wheeler_row("BIKE", 4.6, 5.4, 2.25, m, col, step=0.8, heading=180)
+    kit.two_wheeler_row("BIKE_kerb", -4.4, -1.9, -0.6, m, col, step=2.1, heading=90, z=kit.ROAD_Z)
     kit.pedestrian("PED_0", (2.4, 1.35, 0), 100, col, kind=0, stride=0.14)
     kit.pedestrian("PED_1", (5.4, 1.1, 0), -80, col, kind=2, stride=-0.14)
     kit.lamp_pole("POLE", 5.7, 0.3, m, col, height=7.0, transformer=True)
     kit.flex_board("FLEX_0", 1.55, 3.3, 1.0, s, m, m["flex_yellow"], col)
+    # the drop window is shared: two more vendors queue behind Riyaz with their own sealed crates
+    for i, (x, y) in enumerate(((-2.45, 0.95), (-3.35, 0.75))):
+        kit.pedestrian(f"QUEUE_{i}", (x, y, 0), 80, col, kind=(1, 3)[i])
+        cx, cy = x + 0.45, y - 0.35
+        geo.box(f"QUEUE_{i}_crate", (cx - 0.27, cy - 0.18, 0), (cx + 0.27, cy + 0.18, 0.26), m["crate"], col, 0.015)
+        geo.box(f"QUEUE_{i}_lid", (cx - 0.28, cy - 0.19, 0.26), (cx + 0.28, cy + 0.19, 0.3), m["crate"], col, 0.012)
     kit.ph("HAND_truck", "hand_truck", (1.85, 2.55, 0), -30, 1.0, col)
     kit.ph("JERRYCAN", "plastic_jerrycan", (-1.25, 2.55, 0), 20, 1.0, col)
 

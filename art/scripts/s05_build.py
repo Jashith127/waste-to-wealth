@@ -100,7 +100,8 @@ def dress(st):
     kit.ph("JERRYCAN", "plastic_jerrycan", (0.35, 2.6, BAY_TOP), 15, 1.0, col)
     kit.ph("BIN", "metal_trash_can", (-4.7, 2.6, 0), 0, 1.0, col)
     kit.ph("HAND_truck", "hand_truck", (-0.2, 2.5, BAY_TOP), -40, 1.0, col)
-    kit.autorickshaw("AUTO_0", (-3.2, 0.5, 0), 0, m, col)
+    kit.road(s, m, st.set)
+    kit.autorickshaw("AUTO_0", (-3.2, -1.25, kit.ROAD_Z), 0, m, col)
     kit.wire("WIRE_0", (s.x0, 2.9, 5.6), (6.4, 0.3, 6.6), 0.35, m["cable"], col)
 
 
