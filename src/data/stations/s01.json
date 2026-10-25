@@ -148,7 +148,9 @@
       "prompts": {
         "cut": "Finish the morning cut",
         "pickup": "Pick up the kilo",
-        "leave": "Take it behind Russell Market"
+        "leave": "Take it behind Russell Market",
+        "night": "That night, the power goes out",
+        "night_leave": "Start the day again, with the hub"
       },
       "next": "s02"
     },
@@ -270,6 +272,18 @@
       "evidence": [
         "D-p20",
         "D-p22"
+      ]
+    },
+    "leftovers": {
+      "tag": {
+        "value": "Lost",
+        "meaning": "cost",
+        "note": "Leftovers spoil without power"
+      },
+      "evidence": [
+        "D-p22",
+        "D-p23",
+        "SPEC-journey"
       ]
     }
   }
