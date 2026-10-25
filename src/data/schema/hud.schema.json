@@ -26,6 +26,17 @@
         "note": { "type": "string" },
         "check": { "type": "string", "description": "Open sourcing question; not shown in the game." }
       }
+    },
+    "menu": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "restart", "reduced_motion", "close"],
+      "properties": {
+        "title": { "type": "string" },
+        "restart": { "type": "string" },
+        "reduced_motion": { "type": "string" },
+        "close": { "type": "string" }
+      }
     }
   },
   "$defs": {

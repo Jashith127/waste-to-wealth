@@ -86,6 +86,22 @@ for (const [query, ready, name] of [
   await page.close();
 }
 
+// Skip menu: open on s01, jump to Run 2 · s05 with the keyboard only; the tag must be +₹[__].
+{
+  const page = await open("run=1&beat=0", "s01");
+  await press(page, "m");
+  await page.waitForFunction(() => window.__menu === "open");
+  await shot(page, "menu", "01-open");
+  await unready(page);
+  await press(page, "ArrowRight", "ArrowDown", "ArrowDown", "ArrowDown", "ArrowDown", "Enter");
+  await waitReady(page, "s05");
+  await page.waitForTimeout(500);
+  const state = await page.evaluate(() => window.__game.registry.get("state"));
+  if (state.run !== 2 || state.beat !== 4 || state.kilo.tag?.value !== "+₹[__]") errors.push(`jump to s05 wrong state: ${JSON.stringify(state)}`);
+  await shot(page, "menu", "02-after-jump-s05");
+  await page.close();
+}
+
 await browser.close();
 await server.close();
 if (errors.length) { console.error(errors.join("\n")); process.exit(1); }
