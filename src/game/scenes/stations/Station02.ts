@@ -64,18 +64,19 @@ export default class Station02 extends StationScene {
         new KiloTag(this, knot.x, knot.y, tagData, this.state.reducedMotion, { dx: -150, dy: 14 })
             .setDepth(30);
 
-        // The walk: hold Space, or hold the pointer on the right half.
+        // The walk: hold → (task 02) or Space, or hold the pointer on the right half.
         const kb = this.input.keyboard!;
         kb.on('keydown-SPACE', () => this.press());
         kb.on('keyup-SPACE', () => { this.holding = false; });
         kb.on('keydown-ENTER', () => this.act());
-        kb.on('keydown-RIGHT', () => this.act());
+        kb.on('keydown-RIGHT', () => this.press());
+        kb.on('keyup-RIGHT', () => { this.holding = false; });
         this.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
             if (this.phase === 'walk' && p.x >= 960) this.holding = true;
         });
         this.input.on('pointerup', () => { this.holding = false; });
 
-        this.prompt.show(this.prompts().walk, 'Hold Space');
+        this.prompt.show(this.prompts().walk, 'Hold →');
 
         const start = this.anchor('street_start');
         const end = this.anchor('street_end');
