@@ -1,0 +1,12 @@
+{
+  "id": "s02",
+  "number": 2,
+  "title": "The walk",
+  "place": "Market street to Russell Market",
+  "greybox": true,
+  "evidence": ["SPEC-journey", "M01"],
+  "runs": {
+    "1": { "summary": "The kilo is dumped behind Russell Market." },
+    "2": { "summary": "The kilo goes to the hub inside the fixed drop window.", "proposed": true }
+  }
+}

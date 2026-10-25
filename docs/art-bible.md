@@ -31,7 +31,7 @@ The spec's rule "art is traced from our photos only" now reads: **traced from Ti
 | F04 | `field/photos/F04-bismillah-meat-corner.png` | 19 | **Station 1 anchor.** Meat shop on Cockburn Road: scalloped striped awning, meat hung at the door, a counter with a painted signboard, rolling shutters, plastic chairs |
 | F05 | `field/photos/F05-sweet-chaat-counter.png` | 25 | Red walls, a photo menu banner, steel kadais on burners, an orange gas hose across a dark floor |
 
-Supporting text from the deck: the *Five senses* table on page 34 and the interviews on pages 17–25.
+Supporting text from the deck: the *Five senses* table on page 34 and the interviews on pages 7–32.
 
 ### External photos (Tier B)
 
@@ -56,7 +56,7 @@ We don't know where on Cockburn Road the stall is, and we don't record it, becau
 
 | Needed for | Missing | Plan |
 |---|---|---|
-| S1 | Fridge in a meat stall (Riyaz asks for "a good fridge", deck p. 21) | Look in Commons and Mapillary. Until then the fridge is a grey box. |
+| S1 | Fridge in a meat stall (Riyaz asks for "a good fridge", deck pp. 19–20) | Look in Commons and Mapillary. Until then the fridge is a grey box. |
 | S2 | Russell Market back lane | Look at Street View and Mapillary. The concept already lists it as a missing photo. |
 | S3 | Platform scale | Commons search ("platform scale", in India) for form only |
 | S3–S5 | Stacks of colour-coded crates | F03's red crates give the form. The coding is our proposal. |
@@ -83,15 +83,17 @@ One camera for every station. Never change its angle or scale per station. The c
 | Rotation (Blender XYZ Euler) | **X 60°, Y 0°, Z 45°**. This gives a true 2:1 dimetric: ground lines run at 26.57° on screen. |
 | Ortho scale | **11.0 m** across the frame width |
 | Location | target + (18.371, −18.371, 15.0), which is 30 m along the view axis |
+| Target | The station's focal point, 1 m above the floor at the action. S1: (0, 3, 1.0), the counter in the doorway |
 | Clip | start 0.1 m, end 100 m |
 | Render size | 3840 × 2160 (2× master), shipped at 1920 × 1080 |
 | Pixel density | 1920 / 11 m ≈ **175 px per metre** at 1080p, or 116 px/m at 720p |
 | Up axis | Blender +Z. One Blender unit is 1 metre. |
 
-What it means in practice:
-- A 6 × 6 m set fills about 8.5 m of the 11 m frame width, which leaves room for the HUD and context at the sides.
+What it means in practice (tested in the Station 1 slice):
+- **Sets are street slices, not square plinths.** One run of frontage (S1: 10 m) with 3 m of pavement in front, crossing the frame from top-left to bottom-right, the doorway at the centre. A square plinth with two back walls puts the far corner so high that the walls are cropped at 1–2 m, and pushes any shopfront to the far right of the frame.
 - Ground depth is squashed to 0.5 (2:1). Heights show at 0.866 of their size.
-- The back walls of a 6 m set rise past the top of the frame. **That's intended:** sets are cut off at the top, and the floor always shows in full.
+- Facades rise past the top of the frame. Build them to 7.4 m so the roofline never shows. Only the end at +X is seen as a cut section.
+- **The overhang rule:** an overhang at height H that projects p metres hides the wall behind it down to about **H − 0.82p**, and hides things inside a shop even lower. Keep awnings ≤ 0.6 m deep and above 2.7 m, and put the action *in the doorway*, not deep inside the shop. In S1 the first awning (0.85 m deep) hid everything in the shop above 1.3 m, including Riyaz.
 - No depth of field and no tilt-shift blur. The miniature feel comes from the diorama plinth (section 6) and from chunky forms, not from lens tricks.
 
 ## 2. Scale and proportions
@@ -109,7 +111,7 @@ The same scale throughout, slightly exaggerated so things read at 175 px/m.
 | Awning drop | ~0.45 m deep scallops | same | | F04 |
 | Plastic chair | 0.80 m tall | same | | F04, R08 |
 | Crate | ~0.55 × 0.36 × 0.30 m | same | | F03, R13 |
-| Set footprint | | **6 × 6 m** standard, or 6 × 9 m for S2 and S5 | | |
+| Set footprint | | **10 m of frontage × 3 m of pavement** (street slice); longer for S2 and S5 | | |
 
 **Exaggeration rule:** architecture stays at true scale, people are 6 heads tall, and anything the player touches is 1.3×. Thicknesses get a minimum: walls 25 cm, counter tops 6 cm, sheet metal and awnings 3 cm, so nothing turns into a hairline at 116 px/m.
 
@@ -177,7 +179,7 @@ These match the concept note and our sample of the deck pages at 110 dpi (within
 
 ## 4. Materials
 
-There's one material library, `art/blender/lib/materials`, built in step 3. Every surface uses one of these, each with the wear described. Procedural textures only (noise, Voronoi and musgrave masks); no photo textures, so no stray real signage gets in.
+There's one material library, `art/scripts/lib/materials.py`. Every surface uses one of these, each with the wear described. Procedural textures only (noise, Voronoi and musgrave masks); no photo textures, so no stray real signage gets in.
 
 | Material | Base | Roughness | Wear (the part that makes it Shivajinagar) | Ref |
 |---|---|---|---|---|
@@ -199,12 +201,12 @@ There's one material library, `art/blender/lib/materials`, built in step 3. Ever
 
 ## 5. Lighting
 
-There's one light rig, `art/blender/lib/lights`, with three time-of-day presets. Light falls from the **top-left of the screen**, so shadows go to the bottom-right.
+There's one light rig, `art/scripts/lib/rig.py`, with three time-of-day presets. Light falls from the **top-left of the screen and in front of the shopfronts**, so shadows go to the right. Shopfronts face −Y (toward the camera side), so the sun must travel toward +Y to reach them; a sun from behind the walls (the first draft's 0°, −45°, −20°) leaves every shopfront in its own shadow.
 
 | | Morning (S1, S2) | Midday (S3–S7) | Night power cut (Run 1 end) |
 |---|---|---|---|
-| Sun rotation (XYZ) | 0°, −45°, −20° (45° elevation) | 0°, −30°, −20° (60° elevation) | off |
-| Sun colour, strength | `#FFE2B8`, 4.0 | `#FFF1DC`, 5.0 | |
+| Sun travel direction | (0.70, 0.60, −0.80), about 43° elevation | (0.70, 0.30, −1.30), about 60° | off |
+| Sun colour, strength | `#FFE2B8`, 5.5 | `#FFF1DC`, 5.0 | |
 | Sun angle (softness) | 3° | 2° | |
 | Sky fill (world) | `#9FB4C8`, 0.6 | `#B8C6D2`, 0.8 | `#2A3550`, 0.15 |
 | Practicals | Tube light `#F2F5E8` and bulb `#FFC98A` in the shop, 30 W | same | **all off**; the fridge light flickers (S1 Run 1) |
@@ -219,7 +221,7 @@ There's one light rig, `art/blender/lib/lights`, with three time-of-day presets.
 
 ### 6.1 The diorama
 
-- Every set sits on a **plinth**: the 6 × 6 m floor with a 25 cm cut edge showing paving, a bedding layer and soil (`#5A463A`).
+- Every set sits on a **plinth**: the street-slice floor with a 25 cm cut edge showing paving, a bedding layer and soil (`#5A463A`), and a kerb along the front.
 - The plinth sits on a **charcoal void** (`env.charcoal`) with the deck's diamond lattice pattern at 5% opacity. This ties the 3D world to the deck and stops seams showing at the frame edges.
 - Back walls are cut by the frame. Side walls are cut at the plinth edge with a clean section, as in a model.
 
@@ -229,17 +231,19 @@ Each station is rendered as separate PNGs with alpha so Phaser can stack them. T
 
 | Layer | Contains | Notes |
 |---|---|---|
-| `bg` | Void, plinth, architecture | One image; shadows baked in |
-| `mid` | Static props | Shadows on a shadow-catcher pass, multiplied |
-| `prop_<name>` | Each object the player touches (the kilo, the crate, the fridge door) | Its own pass with its own shadow, so it can move |
-| `fg` | Things in front of the action (an awning post, a scooter mirror) | Kept thin; it never hides the kilo |
-| `char_<name>` | Characters | Rendered as sprite sheets from the same camera |
+| `bg` | Plinth, architecture and static props, on transparent film (the void is drawn by the game) | One image; shadows baked in, including characters' idle shadows |
+| `fx_<name>` | Light changes, e.g. `fx_fridge_glow` | Made by `tools/pack_layers.py` from the difference between two bg renders |
+| `<prop>` | Each object the player touches (`kilo`) | Rendered with every other object as a holdout, so it is lit by the set but cut by what is in front |
+| `<prop>_shadow` | That object's own contact shadow | Shadow catcher only, so the shadow can fade when the prop lifts |
+| `<character>_<pose>` | Character frames (`riyaz_idle`, `riyaz_up`, `riyaz_down`) | Same holdout rule as props |
+
+Layer positions and anchors (screen points for hotspots and the tag) are written to `public/assets/stations/<id>/layers.json`.
 
 ### 6.3 The frame at 1920 × 1080
 
 ```
 ┌────────────────────────────────────────────────────────────┐
-│ [clock]                                        [kilo tag?] │  ← HUD band: top 96 px
+│ [prompt pill · key]              [kilo tag, docked]   (i)  │  ← HUD band: top 96 px
 │                                                            │
 │              ┌──────────── ACTION ZONE ───────────┐        │
 │              │  focal interaction lives here      │        │  ← upper-middle: y 140–640
@@ -256,14 +260,14 @@ Each station is rendered as separate PNGs with alpha so Phaser can stack them. T
 - **Kilo first:** in every frame the kilo is the highest-contrast object. A white bag on a dark interior, or the tag's meaning colour on neutral surroundings. If anything else is brighter or more saturated near it, tone that thing down.
 - **One focal point per beat.** If a beat needs two (say the attendant and the scale), place them close enough that the player's eye moves between them without a pan.
 - **Signage density:** F02 and F04 are thick with signs, and the sets should be too. Signs go on the walls *above* the action zone, at 60–70% contrast, so they add texture without competing.
-- **Leave space around the "i" button.** Each station's evidence "i" sits at the top-right of the action zone with an 80 px clear radius.
+- **HUD band only at the top.** The prompt pill sits top-left (it covered the S1 shop sign when centred), the evidence "i" top-right, and the kilo tag docks left of the "i" whenever the kilo itself is not on screen. While the kilo is on screen the tag hangs from its knot instead. The evidence card opens under the "i", right-aligned, away from the action.
 
 ## 7. People, signs and privacy
 
 - **No likenesses.** The photos show real, identifiable people (F03, F04, X01, X05). We take costume types from them, never faces or builds. Faces are simplified: eye dots, a nose plane, no mouth detail, the same style for everyone.
-- **Riyaz Q.** (the persona from deck p. 21): 40–45, chicken and mutton seller. Costume from the meat-seller type in F04 and X05: white skullcap, checked half-sleeve shirt, apron, sleeves pushed up, **wet hands** (a glossy material on hands and forearms).
+- **Riyaz Q.** (the persona from deck p. 22): 40–45, chicken and mutton seller. Costume from the meat-seller type in F04 and X05: white skullcap, checked half-sleeve shirt, apron, sleeves pushed up, **wet hands** (a glossy material on hands and forearms).
 - **Never copy real signage text.** F04 shows a real shop's name, its owner's name and a phone number. F02 and F01 show real brands and political hoardings. In-world signs use **layout and colour from the photos**, but the text comes only from `src/data/` strings. Real logos, names and phone numbers are never used.
-- **Trilingual signs** (Kannada, English, Urdu, from *Five senses: Sight*). Kannada strings may come from the deck (for example "ಮಾಂಸದ ಅಂಗಡಿ" for "Meat corner", p. 15). Urdu strings need a check by a speaker before shipping, and stay `TODO-urdu` in JSON until then.
+- **Trilingual signs** (Kannada, English, Urdu, from *Five senses: Sight*). Kannada strings may come from the deck (for example "ಮಾಂಸದ ಅಂಗಡಿ" for "Meat corner", p. 18). Urdu strings need a check by a speaker before shipping, and stay `TODO-urdu` in JSON until then.
 - **Hoardings** keep their shape and size (they're everywhere in F01) but show no faces. Use plain blocks of `env.cream` and `env.shutter` with blurred, unreadable type.
 
 ## 8. Type and UI
@@ -350,3 +354,4 @@ This is what step 2 builds, with each item's source.
 
 - 0.1: first draft, from the deck photos and five Commons photos.
 - 0.2: approved. Façade is white with a pink ghost; Chamber B is blue.
+- 0.3: lessons from the S1 slice: street-slice sets, the overhang rule, camera target, sun direction in front of the walls, sun strength 5.5.

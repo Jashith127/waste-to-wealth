@@ -35,3 +35,9 @@ __pycache__/
 # Playwright
 test-results/
 playwright-report/
+
+# Local Claude settings
+.claude/settings.local.json
+# Blender backups and renders (rebuildable)
+art/blender/backups/
+art/build/renders/
