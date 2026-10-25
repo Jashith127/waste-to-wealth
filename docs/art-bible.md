@@ -52,6 +52,21 @@ M01 is `field/external/osm/russell-market-area.json`, made by `tools/fetch_osm.p
 
 We don't know where on Cockburn Road the stall is, and we don't record it, because it is a real business. So the walk in Station 2 is "a few hundred metres", with no number given.
 
+### Street View, look only (Tier D)
+
+Viewed in the browser on 2026-10-25 for proportions, density and street furniture. Nothing was saved, screenshotted to disk or traced (Google's terms); only these notes are kept.
+
+| Id | Where (imagery date) | Link | What it tells the kit |
+|---|---|---|---|
+| V01 | HKP Road beside Russell Market, east (Feb 2026) | [pano](https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=12.98665,77.60445&heading=90) | 4–6 storey white and cream blocks, thick brown window surrounds; a long fascia band over rolling shutters; two-wheelers angle-parked nose-in along every shopfront; steel bollards, a blue drum, a blue tarp over a heap, wall AC units, a red steel stair; wires everywhere |
+| V02 | HKP Road, west (Feb 2026) | [pano](https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=12.98665,77.60445&heading=270) | A rank of green-and-yellow autorickshaws at the kerb; single-storey shed shops under sloping corrugated awnings with worn painted boards; 3–4 storey blocks with balcony railings and brick-red pilasters; lamp-arm poles with wire bundles; no-parking signs |
+| V03 | HKP Road toward the market (Feb 2026) | [pano](https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=12.98705,77.60395&heading=150) | Autos lining both kerbs; pedestrians in white kurta and skullcap; plastered blocks with pink and maroon pilasters and posters; leaning poles with transformers; litter in the gutter |
+| V04 | Cockburn Road, the stall's street (Feb 2026) | [pano](https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=12.98880,77.60398&heading=10) | Narrow (≈6–7 m kerb to kerb), tall thin 4–6 storey blocks with blue trim; projecting red and yellow flex boards with food photos (the F04/F05 type) and vertical banners on the facades; steel stove carts on the pavement; dense two-wheelers; autos in the lane; a boundary wall with flags and a long banner; trees at the far end |
+
+| V05 | MF Norrona Street, the south side of Russell Market (Feb 2026) | [pano](https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=12.98505,77.60490&heading=60) | The market's boundary wall: pink plaster over a grey stone base, with a painted board; pavement vendors on red steel stands, pink umbrellas, white sacks; a huge rain tree over the street; an auto in the lane; red-and-white striped awnings; a white minaret with a green dome on the skyline |
+
+The lane right behind Russell Market has no Street View (the pin lands in a shop's own photo). V05 is the nearest street view and sets the s02 back-lane look: the pile sits against the market's pink-over-stone wall, under the tree, among pavement vendors.
+
 ### Gaps (no reference in any tier yet)
 
 | Needed for | Missing | Plan |

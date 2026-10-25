@@ -340,3 +340,154 @@ def shadow_catcher(name, centre, size, m, col):
     obj = geo.panel(name, centre, size, "+Z", m["catcher"], col)
     obj["shadow_catcher"] = True
     return obj
+
+
+# ---------------------------------------------------------------- the Shivajinagar kit (art bible §0: F01-F05, V01-V05)
+def kit_materials(m):
+    """Materials the street kit needs, added to a station's material dict once."""
+    m.setdefault("auto_body", M.plastic("MAT_auto_body", "#5F7F45", 0.4))          # V02/V03: green, kept off mean.income
+    m.setdefault("auto_top", M.plastic("MAT_auto_top", "#CDB55A", 0.5))            # pale yellow canopy, off mean.pay
+    m.setdefault("auto_dark", M.matte("MAT_auto_dark", "#24211F", 0.6))
+    m.setdefault("flex_red", M.plastic("MAT_flex_red", "#A8504A", 0.6))            # V04 boards, dusty (§3.3)
+    m.setdefault("flex_yellow", M.plastic("MAT_flex_yellow", "#C9AE5E", 0.6))
+    m.setdefault("flex_blue", M.plastic("MAT_flex_blue", "#4F6E8C", 0.6))
+    m.setdefault("pink_wall", M.plaster("MAT_wall_pink", "#D49A86", 0.35))         # V05: the market's boundary wall
+    m.setdefault("stone_base", M.plaster("MAT_stone_base", "#7E7A72", 0.2))
+    m.setdefault("bark", M.matte("MAT_bark", "#5C4A3C", 0.9))
+    m.setdefault("canopy", M.matte("MAT_canopy", "#4E5B3A", 0.85))
+    m.setdefault("kurta", M.matte("MAT_kurta_white", "#E2DED4", 0.85))
+    m.setdefault("cylinder_red", M.plastic("MAT_gas_cylinder", "#8E3E38", 0.4))
+    return m
+
+
+def autorickshaw(name, origin, heading, m, col):
+    """Bengaluru auto (V02, V03): a green tub on three wheels under a pale-yellow canopy. Generic,
+    no permit numbers or text (§7). Built in local space, facing +X, then placed."""
+    root = geo.empty(name, (0, 0, 0), col)
+    parts = [
+        geo.box(f"{name}_tub", (-0.9, -0.62, 0.32), (0.75, 0.62, 0.95), m["auto_body"], col, 0.08),
+        geo.box(f"{name}_nose", (0.75, -0.3, 0.3), (1.25, 0.3, 1.0), m["auto_body"], col, 0.1),
+        geo.box(f"{name}_seat", (-0.75, -0.55, 0.95), (-0.2, 0.55, 1.05), m["auto_dark"], col, 0.03),
+        geo.box(f"{name}_canopy", (-0.98, -0.68, 1.55), (0.92, 0.68, 1.78), m["auto_top"], col, 0, subsurf=2),
+        geo.box(f"{name}_screen", (0.86, -0.42, 1.0), (0.9, 0.42, 1.55), m["window_glass"], col, 0.01),
+        geo.box(f"{name}_back", (-0.97, -0.6, 0.95), (-0.9, 0.6, 1.62), m["auto_top"], col, 0.02),
+    ]
+    for x, y in ((-0.6, -0.66), (-0.6, 0.6), (0.65, -0.62), (0.65, 0.56)):
+        parts.append(geo.limb(f"{name}_post{x}{y}", (x, y, 0.95), (x, y, 1.64), 0.018, 0.018, m["steel_dark"], col))
+    for i, (x, y) in enumerate(((-0.55, -0.66), (-0.55, 0.6), (1.05, -0.03))):
+        parts.append(geo.cylinder(f"{name}_wheel{i}", (x, y, 0.22), 0.22, 0.09, m["auto_dark"], col, axis="Y", segments=24, bevel=0.01))
+    for p in parts:
+        p.parent = root
+    root.location = origin
+    root.rotation_euler = (0, 0, math.radians(heading))
+    return root
+
+
+def two_wheeler_row(prefix, x0, x1, y, m, col, step=0.75, heading=-70):
+    """Scooters and bikes nose-in along a shopfront (V01, V04), every `step` metres."""
+    shades = ("#7B8790", "#8E3E38", "#3A4A5A", "#C9C6BC", "#2E2B2A")
+    x, i = x0, 0
+    while x <= x1:
+        mat = m.setdefault(f"scooter_{i % 5}", M.plastic(f"MAT_scooter_{i % 5}", shades[i % 5], 0.35))
+        scooter({**m, "scooter": mat}, col, (x, y, 0), heading=heading + (i % 3 - 1) * 6, name=f"{prefix}_{i}")
+        x += step
+        i += 1
+
+
+def flex_board(name, x, z, h, st, m, mat, col, proud=0.7):
+    """A flex board projecting from the facade on a steel frame (V04, F05), its face to the street's
+    length so it reads from the camera: text-free colour blocks (the illegible-board rule, §7)."""
+    y = st.wall_y
+    geo.box(f"{name}_frame", (x - 0.03, y - proud, z - h / 2), (x + 0.03, y, z + h / 2), m["steel_dark"], col, 0.004)
+    geo.box(f"{name}_board", (x + 0.03, y - proud + 0.03, z - h / 2 + 0.03), (x + 0.05, y - 0.03, z + h / 2 - 0.03), mat, col, 0.003)
+
+
+def banner(name, x, z0, z1, w, st, mat, col):
+    """A vertical banner hung flat on a facade (V04)."""
+    geo.box(name, (x - w / 2, st.wall_y - 0.03, z0), (x + w / 2, st.wall_y - 0.01, z1), mat, col, 0)
+
+
+def lamp_pole(name, x, y, m, col, height=7.0, lean=3.0, transformer=False):
+    """A concrete pole with a long lamp arm and a wire bundle (V02, V03, R19); optionally a
+    transformer box halfway up."""
+    pole = geo.cylinder(name, (x, y, 0), 0.1, height, m["pole"] if "pole" in m else m["concrete"], col, bevel=0, radius2=0.07)
+    pole.rotation_euler = (math.radians(-lean), math.radians(lean * 0.6), 0)
+    geo.limb(f"{name}_arm", (x, y, height - 0.6), (x + 0.2, y + 1.2, height - 0.3), 0.03, 0.025, m["steel_dark"], col)
+    geo.box(f"{name}_lamp", (x + 0.1, y + 1.1, height - 0.42), (x + 0.32, y + 1.4, height - 0.32), m["steel_dark"], col, 0.01)
+    if transformer:
+        geo.box(f"{name}_transformer", (x - 0.35, y - 0.25, 3.6), (x + 0.05, y + 0.25, 4.4), m["shutter_box"], col, 0.02)
+
+
+def bollards(prefix, xs, y, m, col):
+    for i, x in enumerate(xs):
+        geo.cylinder(f"{prefix}_{i}", (x, y, 0), 0.06, 0.75, m["steel_dark"], col, bevel=0.01)
+        geo.cylinder(f"{prefix}_{i}_band", (x, y, 0.55), 0.062, 0.06, m["flex_yellow"], col, bevel=0)
+
+
+def stove_cart(name, origin, m, col):
+    """A pavement food cart (V04, F01): steel box on wheels, a burner, a red gas cylinder below."""
+    x, y, _ = origin
+    geo.box(f"{name}_box", (x - 0.6, y - 0.35, 0.3), (x + 0.6, y + 0.35, 0.95), m["steel"], col, 0.01)
+    geo.box(f"{name}_top", (x - 0.62, y - 0.37, 0.95), (x + 0.62, y + 0.37, 0.99), m["steel"], col, 0.006)
+    geo.cylinder(f"{name}_kadai", (x + 0.2, y, 0.99), 0.2, 0.08, m["steel_dark"], col, radius2=0.26)
+    geo.cylinder(f"{name}_cylinder", (x - 0.3, y, 0.0), 0.15, 0.55, m["cylinder_red"], col)
+    for i, xx in enumerate((x - 0.45, x + 0.45)):
+        geo.cylinder(f"{name}_wheel{i}", (xx, y - 0.38, 0.16), 0.16, 0.05, m["cable"], col, axis="Y", segments=20, bevel=0)
+
+
+def tarp_heap(name, origin, m, col, size=(1.4, 1.0, 0.7)):
+    """Something covered with a blue tarp against a wall (V01, R20)."""
+    x, y, _ = origin
+    geo.box(name, (x - size[0] / 2, y - size[1] / 2, 0), (x + size[0] / 2, y + size[1] / 2, size[2]), m["tarp"], col, 0, subsurf=2)
+
+
+def rain_tree(name, x, y, m, col, height=6.5):
+    """A big rain tree over the street (V05): a leaning trunk and a broad, flat canopy of lumps."""
+    geo.limb(f"{name}_trunk", (x, y, 0), (x + 0.4, y - 0.3, height * 0.75), 0.32, 0.2, m["bark"], col)
+    for i, (dx, dy) in enumerate(((1.3, 0.4), (-1.0, 0.6), (0.6, -1.2))):
+        geo.limb(f"{name}_branch{i}", (x + 0.35, y - 0.25, height * 0.6), (x + 0.4 + dx, y - 0.3 + dy, height * 0.8), 0.14, 0.07, m["bark"], col)
+    rnd = __import__("random").Random(len(name))
+    for i in range(18):
+        a, r = rnd.uniform(0, 6.28), rnd.uniform(0.3, 2.2)
+        geo.sphere(f"{name}_crown{i}", (x + 0.4 + math.cos(a) * r, y - 0.3 + math.sin(a) * r * 0.8, height * 0.82 + rnd.uniform(-0.3, 0.5)),
+                   rnd.uniform(0.55, 0.85), (1.3, 1.2, 0.6), m["canopy"], col, segments=12, rings=8)
+
+
+def pedestrian(name, origin, heading, col, kind=0, stride=0.0):
+    """A passer-by (V03, V05): white kurta and skullcap, or a shirt and trousers. Plain faces,
+    no likenesses (§7)."""
+    import people
+    looks = (dict(shirt="#E2DED4", trousers="#D8D4CA", cap="#EAE6DC"), dict(shirt="#7E9AAE", trousers="#3A3633", cap=None),
+             dict(shirt="#B9A07E", trousers="#2E2B2A", cap=None), dict(shirt="#8C5A50", trousers="#4A4440", cap=None))
+    mats = people.costume_materials(f"ped{kind}", **looks[kind % len(looks)])
+    swing = 0.12 if stride else 0.0
+    return people.figure(name, origin, heading, mats, (-0.26, -swing, 0.86), (0.26, swing, 0.86), col,
+                         moustache=kind % 2 == 0, stride=stride)
+
+
+# ---------------------------------------------------------------- CC0 models (tools/fetch_polyhaven.py)
+POLYHAVEN = REPO / "art" / "external" / "polyhaven"
+
+
+def ph(name, model, loc, rot=0.0, scale=1.0, col=None):
+    """Import a Poly Haven model (CC0, art/external/polyhaven/credits.json) by script, place it and
+    file it in `col`. Returns its root empty, or None (with a warning) if it has not been fetched."""
+    files = sorted((POLYHAVEN / model).glob("*.gltf"))
+    if not files:
+        print(f"[warn] {model} not fetched: run python tools/fetch_polyhaven.py")
+        return None
+    before = set(bpy.data.objects)
+    bpy.ops.import_scene.gltf(filepath=str(files[0]))
+    new = [o for o in bpy.data.objects if o not in before]
+    root = geo.empty(name, (0, 0, 0), col)
+    for o in new:
+        for c in list(o.users_collection):
+            c.objects.unlink(o)
+        (col or bpy.context.scene.collection).objects.link(o)
+        o.name = f"{name}_{o.name}"
+        if o.parent is None:
+            o.parent = root
+    root.location = loc
+    root.rotation_euler = (0, 0, math.radians(rot))
+    root.scale = (scale, scale, scale)
+    return root

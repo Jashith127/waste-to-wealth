@@ -51,6 +51,8 @@ PRESETS = {
                     sky_col=(0.62, 0.71, 0.78), sky_str=0.6, exposure=0.0),
     "midday":  dict(sun_dir=(0.70, 0.30, -1.30), sun_col=(1.0, 0.945, 0.863), sun_str=5.0, angle=2.0,
                     sky_col=(0.72, 0.78, 0.82), sky_str=0.8, exposure=-0.3),
+    "dusk":    dict(sun_dir=(0.80, 0.45, -0.28), sun_col=(1.0, 0.62, 0.40), sun_str=3.2, angle=4.0,
+                    sky_col=(0.42, 0.36, 0.44), sky_str=0.45, exposure=0.2),        # s04 roof time-lapse
     "night":   dict(sun_dir=None, sky_col=(0.165, 0.208, 0.314), sky_str=0.15, exposure=0.5),
 }
 

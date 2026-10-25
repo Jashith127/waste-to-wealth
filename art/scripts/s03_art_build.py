@@ -477,6 +477,23 @@ def attendant(st):
     st.anchor("attendant_phone", tuple(Vector(ATTENDANT_AT) + Vector((0.0, -0.36, 1.27))))
 
 
+def dress(st):
+    """The Shivajinagar kit round the hub's front (V01-V05): an auto at the kerb, two-wheelers
+    nose-in, a passer-by, a lamp pole, a flex board on the pilaster; a hand truck and a jerrycan
+    (CC0 models, art/external/polyhaven) by the counter."""
+    s, m, col = st.street, st.m, st.props
+    kit.kit_materials(m)
+    m.setdefault("pole", M.plaster("MAT_pole", "#9C978E", 0.2))
+    kit.autorickshaw("AUTO_0", (3.4, 0.5, 0), 0, m, col)
+    kit.two_wheeler_row("BIKE", 4.6, 5.9, 2.25, m, col)
+    kit.pedestrian("PED_0", (2.4, 1.35, 0), 100, col, kind=0, stride=0.14)
+    kit.pedestrian("PED_1", (5.4, 1.1, 0), -80, col, kind=2, stride=-0.14)
+    kit.lamp_pole("POLE", 5.7, 0.3, m, col, height=7.0, transformer=True)
+    kit.flex_board("FLEX_0", 1.55, 3.3, 1.0, s, m, m["flex_yellow"], col)
+    kit.ph("HAND_truck", "hand_truck", (1.85, 2.55, 0), -30, 1.0, col)
+    kit.ph("JERRYCAN", "plastic_jerrycan", (-1.25, 2.55, 0), 20, 1.0, col)
+
+
 def build():
     st = ArtStation(SET_DATA)
     set_materials(st.m)
@@ -491,6 +508,7 @@ def build():
     crate(st)
     riyaz(st)
     attendant(st)
+    dress(st)
     st.anchor("exit", (4.0, 1.2, 0.0))
     st.finish(TARGET)
 

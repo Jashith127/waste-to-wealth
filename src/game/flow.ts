@@ -7,7 +7,7 @@ import { motion } from './theme';
 export interface Beat {
     run: Run;
     index: number;
-    station: string;          // "s01"…"s07" or "end"
+    station: string;          // "s01"…"s07", "map" (the whole market) or "end"
     variant?: string;         // e.g. "night" for "s01:night"
 }
 
@@ -28,6 +28,7 @@ export function nextBeat(scene: Scene): Beat {
 /** Phaser scene key for a beat: the station's own scene if one is registered, else the grey-box placeholder. */
 export function sceneFor(scene: Scene, beat: Beat): string {
     if (beat.station === 'end') return scene.scene.get('EndCard') ? 'EndCard' : 'Placeholder';
+    if (beat.station === 'map') return scene.scene.get('MarketMap') ? 'MarketMap' : 'Placeholder';
     return scene.scene.get(beat.station) ? beat.station : 'Placeholder';
 }
 

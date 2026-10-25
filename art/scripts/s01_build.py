@@ -121,18 +121,21 @@ def cooler(st, m):
 
 
 def riyaz(st):
-    """Riyaz Q. (persona, deck p. 22): white cap, checked half-sleeves, apron, wet hands (p. 23).
-    Three poses for the chop: idle, cleaver up, cleaver down."""
+    """Riyaz Q. (persona, deck p. 22): white cap, checked half-sleeves, bib apron, wet hands (p. 23).
+    Three poses for the chop, the cleaver held through the fist with its edge to the meat:
+    idle (blade hovering over the piece), up (the wind-up, blade high), down (blade in the meat).
+    The left hand lies flat on the piece, holding it."""
     mats = people.costume_materials("riyaz", apron="#D6CFC0", cap="#E6E2D8", wet_hands=True)
-    left = people.local((BLOCK.x + 0.2, BLOCK.y + 0.02, COUNTER_TOP + 0.2), RIYAZ_AT)
-    poses = {
-        "idle": (BLOCK.x - 0.08, BLOCK.y + 0.06, COUNTER_TOP + 0.2),
-        "up": (BLOCK.x - 0.1, BLOCK.y + 0.2, COUNTER_TOP + 0.62),
-        "down": (BLOCK.x - 0.06, BLOCK.y + 0.02, COUNTER_TOP + 0.24),
+    meat = people.local((BLOCK.x - 0.02, BLOCK.y + 0.02, COUNTER_TOP + 0.2), RIYAZ_AT)
+    left = people.local((BLOCK.x + 0.24, BLOCK.y + 0.1, COUNTER_TOP + 0.22), RIYAZ_AT)
+    poses = {                          # (wrist, aim, edge), local to the figure
+        "idle": ((meat[0] - 0.1, meat[1] + 0.3, meat[2] + 0.2), (0.28, -0.92, -0.25), (0, -0.2, -1)),
+        "up": ((meat[0] - 0.16, meat[1] + 0.32, meat[2] + 0.62), (0.15, -0.35, 1.0), (0, -1, 0.15)),
+        "down": ((meat[0] - 0.08, meat[1] + 0.28, meat[2] + 0.17), (0.24, -0.8, -0.55), (0, 0, -1)),
     }
-    for pose, right in poses.items():
-        people.figure(f"RIYAZ_{pose}", RIYAZ_AT, 0, mats, people.local(right, RIYAZ_AT), left,
-                      st.char("riyaz", pose), tool="cleaver")
+    for pose, (wrist, aim, edge) in poses.items():
+        people.figure(f"RIYAZ_{pose}", RIYAZ_AT, 0, mats, wrist, left, st.char("riyaz", pose),
+                      tool="cleaver", aim=aim, edge=edge, grip=("fist", "flat"))
     st.anchor("riyaz_head", (RIYAZ_AT[0], RIYAZ_AT[1], FLOOR_IN + 1.7))
 
 

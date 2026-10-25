@@ -3,6 +3,7 @@
 Run:  blender -b art/blender/<file>.blend --python art/scripts/render_station.py [-- options]
 Options:
   --draft            quarter samples (quick looks; never ship)
+  --fast             half samples (denoised; for big plates against a deadline)
   --only a,b         render only these outputs (names as below)
   --preset night     re-light with another rig preset; outputs get a _night suffix
   --power-cut        hide everything tagged ["practical"] (shop lights and lamps): the grid is down
@@ -28,6 +29,7 @@ import safety  # noqa: E402
 
 ARGS = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
 DRAFT = "--draft" in ARGS
+FAST = "--fast" in ARGS
 ONLY = ARGS[ARGS.index("--only") + 1].split(",") if "--only" in ARGS else None
 PRESET = ARGS[ARGS.index("--preset") + 1] if "--preset" in ARGS else None
 SUFFIX = f"_{PRESET}" if PRESET else ""
@@ -92,7 +94,7 @@ def main():
         name = name + SUFFIX
         if ONLY and name not in ONLY:
             return
-        scene.cycles.samples = max(16, samples // 4) if DRAFT else samples
+        scene.cycles.samples = max(16, samples // 4) if DRAFT else max(32, samples // 2) if FAST else samples
         scene.render.filepath = str(out / f"{name}.png")
         bpy.ops.render.render(write_still=True)
         print(f"[render] {name}", flush=True)

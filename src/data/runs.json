@@ -7,18 +7,21 @@
     "beats": [
       "s01",
       "s02",
-      "s01:night"
+      "s01:night",
+      "map"
     ],
     "evidence": [
       "SPEC-journey",
       "C-fee-southfirst",
       "C-fee-tnm",
-      "D-p22"
+      "D-p22",
+      "M01"
     ],
     "clock": {
       "s01": "morning",
       "s02": "morning",
-      "s01:night": "night"
+      "s01:night": "night",
+      "map": "morning"
     }
   },
   "2": {
@@ -32,11 +35,13 @@
       "s05",
       "s06",
       "s07",
+      "map",
       "end"
     ],
     "proposed": true,
     "evidence": [
-      "SPEC-journey"
+      "SPEC-journey",
+      "M01"
     ],
     "clock": {
       "s01": "morning",
@@ -45,7 +50,8 @@
       "s04": "evening",
       "s05": "night",
       "s06": "night",
-      "s07": "night"
+      "s07": "night",
+      "map": "morning"
     }
   }
 }

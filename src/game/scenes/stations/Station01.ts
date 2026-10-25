@@ -8,6 +8,11 @@ import { StationScene } from '../StationScene';
 
 type Phase = 'cut' | 'pickup' | 'leave' | 'night' | 'night_leave';
 
+const BEAT_MS = 800;          // one sweep of the timing ring
+const BEAT_TARGET = 70;       // px: the target circle's radius
+const BEAT_WINDOW = 16;       // px either side that counts as clean
+const WIND_UP_MS = 170;       // the cleaver held high before it falls
+
 export default class Station01 extends StationScene {
     private phase: Phase = 'cut';
     private chops = 0;
@@ -17,6 +22,8 @@ export default class Station01 extends StationScene {
     private kilo!: GameObjects.Image;
     private kiloShadow!: GameObjects.Image;
     private ring?: GameObjects.Arc;
+    private beat?: GameObjects.Arc;      // the shrinking timing ring around the block
+    private pips: GameObjects.Arc[] = [];
 
     constructor() {
         super('s01');
@@ -50,7 +57,16 @@ export default class Station01 extends StationScene {
         this.input.keyboard!.on('keydown-RIGHT', () => this.phase === 'leave' && this.leave());
 
         this.prompt.show(this.prompts().cut, 'Space');
-        this.ring = this.hint(block.x, block.y - 10, 92);
+        this.ring = this.add.circle(block.x, block.y - 10, BEAT_TARGET).setStrokeStyle(4, colour.cream, 0.95).setDepth(40);
+        if (!this.state.reducedMotion) {
+            // the timing ring: Space as it meets the target circle is a clean cut (a mini-game; a
+            // miss still cuts, so nobody gets stuck)
+            this.beat = this.add.circle(block.x, block.y - 10, 150).setStrokeStyle(3, colour.cream, 0.6).setDepth(40);
+            this.tweens.add({ targets: this.beat, radius: 40, duration: BEAT_MS, repeat: -1, ease: 'Linear' });
+        }
+        const n = this.params().cut.chops ?? 3;
+        this.pips = Array.from({ length: n }, (_, i) =>
+            this.add.circle(block.x - (n - 1) * 14 + i * 28, block.y - 120, 8).setStrokeStyle(3, colour.cream, 0.95).setDepth(40));
     }
 
     /** Run 1's ending: the same stall at night, the grid down, a tray of leftovers on the counter. */
@@ -114,23 +130,34 @@ export default class Station01 extends StationScene {
         for (const [k, img] of Object.entries(this.riyaz)) img.setVisible(k === p);
     }
 
-    /** One stroke of the cleaver: up, down (thunk), back to rest. */
+    /** One stroke of the cleaver: a held wind-up, a fast strike (thunk, chips), back to rest. */
     private chop() {
         if (this.busy) {
             this.queued = true;
             return;
         }
         this.busy = true;
+        const clean = !this.beat || Math.abs(this.beat.radius - BEAT_TARGET) <= BEAT_WINDOW;
         this.pose('up');
-        this.time.delayedCall(110, () => {
+        const up = this.riyaz.up, y0 = up.y;
+        if (!this.state.reducedMotion) this.tweens.add({ targets: up, y: y0 - 5, duration: WIND_UP_MS, ease: 'Sine.easeOut' });
+        this.time.delayedCall(this.state.reducedMotion ? 60 : WIND_UP_MS, () => {
+            up.setY(y0);
             this.pose('down');
-            this.events.emit('sfx', 'cleaver');                     // sound hook: cleaver on the block (art-bible, Five senses)
-            if (!this.state.reducedMotion) this.cameras.main.shake(90, 0.0018);
-            this.time.delayedCall(150, () => {
+            this.events.emit('sfx', clean ? 'cleaver_clean' : 'cleaver');   // sound hook: cleaver on the block (art-bible, Five senses)
+            if (!this.state.reducedMotion) {
+                this.cameras.main.shake(clean ? 150 : 90, clean ? 0.004 : 0.0018);
+                this.chips(clean ? 8 : 3);
+            }
+            this.pips[this.chops]?.setFillStyle(colour.cream, 1);
+            this.time.delayedCall(170, () => {
                 this.pose('idle');
                 this.busy = false;
                 if (++this.chops >= (this.params().cut.chops ?? 3)) {
                     this.queued = false;
+                    this.beat?.destroy();
+                    this.beat = undefined;
+                    this.pips.forEach((p) => p.destroy());
                     this.kiloReady();
                 } else if (this.queued) {
                     this.queued = false;
@@ -140,10 +167,27 @@ export default class Station01 extends StationScene {
         });
     }
 
+    /** Bits of meat and bone flicked off the block by the strike (matte, no blood: art bible §4). */
+    private chips(count: number) {
+        const b = this.anchor('block');
+        const tints = [0x9b5c42, 0xb9886f, 0xe3d2be];
+        for (let i = 0; i < count; i++) {
+            const chip = this.add.rectangle(b.x, b.y - 14, PMath.Between(5, 9), PMath.Between(4, 7), tints[i % 3]).setDepth(35).setAngle(PMath.Between(0, 90));
+            const vx = PMath.FloatBetween(-170, 170), vy = PMath.FloatBetween(-260, -140);
+            const t = { k: 0 };
+            this.tweens.add({
+                targets: t, k: 1, duration: 520, ease: 'Linear',
+                onUpdate: () => chip.setPosition(b.x + vx * t.k * 0.5, b.y - 14 + vy * t.k * 0.5 + 520 * t.k * t.k * 0.5).setAlpha(1 - t.k * t.k),
+                onComplete: () => chip.destroy(),
+            });
+        }
+    }
+
     /** The cut is done: the bone and offal are bagged on the counter. */
     private kiloReady() {
         this.phase = 'pickup';
         this.ring?.destroy();
+        this.ring = undefined;
         const y = this.kilo.y;
         this.kilo.setY(y - 36).setAlpha(0);
         this.tweens.add({ targets: this.kilo, y, alpha: 1, duration: 260, ease: 'Back.easeOut' });

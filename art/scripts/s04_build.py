@@ -2,7 +2,7 @@
 
 Run:  blender -b --python art/scripts/s04_build.py
 Then: blender -b art/blender/s04_cold.blend --python art/scripts/render_station.py
-      blender -b art/blender/s04_cold.blend --python art/scripts/render_station.py -- --preset night --power-cut --only bg_night,bg_fx_chamber_light_night
+      blender -b art/blender/s04_cold.blend --python art/scripts/render_station.py -- --preset night --power-cut --only bg_night,riyaz_idle_night,door_a_night,door_b_night,door_a_open_night,door_b_open_night
       python tools/pack_layers.py s04
 
 Re-runnable. Destructive only to art/blender/s04_cold.blend, which lib/safety backs up first.
@@ -64,14 +64,17 @@ def room(st):
     geo.box("WALL_side_section", (r["x0"] - 0.2, 0.88, 0), (r["x0"], 0.9, r["height"]), m["section"], col, 0)
     # the cold-room front: insulated panels with seams, a base kick and a top trim
     y = r["back"]
-    geo.box("COLD_front", (r["x0"], y, 0), (r["x1"], y + 0.6, r["height"]), m["hub_panel"], col, 0.01)
+    (a0, a1), (b0, b1) = DOORS["a"], DOORS["b"]
+    for i, (x0, x1) in enumerate(((r["x0"], a0 - 0.05), (a1 + 0.05, b0 - 0.05), (b1 + 0.05, r["x1"]))):
+        geo.box(f"COLD_front{i}", (x0, y, 0), (x1, y + 0.6, r["height"]), m["hub_panel"], col, 0.01)
+    geo.box("COLD_front_over", (a0 - 0.05, y, 2.14), (b1 + 0.05, y + 0.6, r["height"]), m["hub_panel"], col, 0.01)
     geo.box("COLD_kick", (r["x0"], y - 0.02, 0), (r["x1"], y, 0.14), m["steel_dark"], col, 0.006)
     geo.box("COLD_trim", (r["x0"], y - 0.04, r["height"] - 0.12), (r["x1"], y, r["height"]), m["steel"], col, 0.006)
     # clean model sections where the walls are cut (§6.1), so no sky colour lands on them
     geo.box("COLD_section_end", (r["x1"], y, 0), (r["x1"] + 0.01, y + 0.6, r["height"]), m["section"], col, 0)
     geo.box("COLD_section_top", (r["x0"] - 0.2, y, r["height"]), (r["x1"] + 0.01, y + 0.6, r["height"] + 0.01), m["section"], col, 0)
     geo.box("WALL_side_top", (r["x0"] - 0.2, 0.88, r["height"]), (r["x0"], y, r["height"] + 0.01), m["section"], col, 0)
-    for k, x in enumerate((-2.4, -0.1, 2.0, 2.9)):
+    for k, x in enumerate((-2.4, 2.0, 2.9)):
         geo.box(f"COLD_seam{k}", (x - 0.008, y - 0.006, 0.14), (x + 0.008, y, r["height"] - 0.12), m["hub_seam"], col, 0)
     # practical lights: a tube over the doors, a bulb over the table (mains: off in the power cut)
     practical = [
@@ -88,27 +91,67 @@ def room(st):
 
 
 def doors(st):
-    """Chamber A and B doors, built as in s03 (same frame, band, kick, lever, window), plus a cool
-    light inside each window as FX_chamber_light: on solar, so it stays on in the power cut."""
+    """The two chambers and their doors. Each doorway is real: a frame, a PVC strip curtain and a
+    cold, lit chamber behind it (A: racks of covered trays; B: sealed crates), on solar, so never
+    practical. The doors are their own layers (PROP_door_a, PROP_door_a_open, ...), so the game can
+    swing one open when something goes in, and only ever one at a time (task 04)."""
     m, col, y = st.m, st.set, ROOM["back"]
-    glow = st.fx("chamber_light")
     for key, (x0, x1) in DOORS.items():
         K = key.upper()
-        geo.box(f"DOOR_{K}_frame", (x0 - 0.05, y - 0.04, 0.12), (x1 + 0.05, y, 2.14), m["steel"], col, 0.008)
-        geo.box(f"DOOR_{K}", (x0, y - 0.07, 0.14), (x1, y - 0.03, 2.1), m["hub_panel"], col, 0.012)
-        geo.box(f"DOOR_{K}_band", (x0, y - 0.075, 1.36), (x1, y - 0.068, 1.5), m[f"band_{key}"], col, 0.003)
-        geo.box(f"DOOR_{K}_kick", (x0 + 0.02, y - 0.075, 0.16), (x1 - 0.02, y - 0.068, 0.38), m["steel"], col, 0.004)
-        hx = x1 - 0.12
-        geo.box(f"DOOR_{K}_hinge_box", (hx - 0.03, y - 0.11, 1.0), (hx + 0.03, y - 0.07, 1.16), m["steel_dark"], col, 0.006)
-        geo.box(f"DOOR_{K}_lever", (hx - 0.2, y - 0.14, 1.06), (hx + 0.02, y - 0.11, 1.1), m["steel"], col, 0.008)
         cx = (x0 + x1) / 2
-        geo.cylinder(f"DOOR_{K}_window_ring", (cx, y - 0.082, WINDOW_Z), 0.13, 0.012, m["steel"], col, axis="Y", bevel=0)
-        geo.cylinder(f"DOOR_{K}_window", (cx, y - 0.078, WINDOW_Z), 0.11, 0.008, m["window_glass"], col, axis="Y", bevel=0)
-        geo.cylinder(f"FX_window_{key}", (cx, y - 0.088, WINDOW_Z), 0.105, 0.004, m["glow"], glow, axis="Y", bevel=0)
-        rig.point_light(f"LIGHT_chamber_{key}", (cx, y - 0.35, WINDOW_Z), (0.87, 0.93, 0.96), 6, 0.1, glow)
+        geo.box(f"DOOR_{K}_frame_L", (x0 - 0.05, y - 0.04, 0.12), (x0, y + 0.6, 2.14), m["steel"], col, 0.006)
+        geo.box(f"DOOR_{K}_frame_R", (x1, y - 0.04, 0.12), (x1 + 0.05, y + 0.6, 2.14), m["steel"], col, 0.006)
+        geo.box(f"DOOR_{K}_frame_T", (x0 - 0.05, y - 0.04, 2.1), (x1 + 0.05, y + 0.6, 2.14), m["steel"], col, 0.006)
+        geo.box(f"DOOR_{K}_sill", (x0, y - 0.04, 0.0), (x1, y + 0.6, 0.12), m["steel_dark"], col, 0.006)
+        # the chamber: 1.4 m deep, cold white panels, its own light (on solar)
+        back = y + 0.6 + 1.4
+        geo.box(f"CHAMBER_{K}_floor", (x0 - 0.3, y + 0.6, 0), (x1 + 0.3, back, 0.12), m["steel_dark"], col, 0)
+        geo.box(f"CHAMBER_{K}_back", (x0 - 0.3, back, 0), (x1 + 0.3, back + 0.1, 2.4), m["chamber"], col, 0)
+        geo.box(f"CHAMBER_{K}_side", (x0 - 0.3, y + 0.6, 0), (x0 - 0.2, back, 2.4), m["chamber"], col, 0)
+        geo.box(f"CHAMBER_{K}_ceiling", (x0 - 0.3, y + 0.6, 2.3), (x1 + 0.3, back, 2.4), m["chamber"], col, 0)
+        for k, z in enumerate((0.5, 1.05, 1.6)):
+            geo.box(f"CHAMBER_{K}_shelf{k}", (x0 - 0.15, back - 0.55, z), (x1 + 0.15, back - 0.05, z + 0.03), m["steel"], col, 0.004)
+            for j in range(3):
+                xx = x0 + 0.02 + j * 0.3
+                if key == "a":      # covered trays of meat waiting overnight
+                    geo.box(f"CHAMBER_A_tray{k}{j}", (xx, back - 0.48, z + 0.03), (xx + 0.26, back - 0.12, z + 0.1), m["steel"], col, 0.006)
+                    geo.box(f"CHAMBER_A_cover{k}{j}", (xx + 0.01, back - 0.47, z + 0.1), (xx + 0.25, back - 0.13, z + 0.13), m["cling"], col, 0.01, subsurf=1)
+                elif k < 2:          # sealed crates for the bulk pickup
+                    geo.box(f"CHAMBER_B_crate{k}{j}", (xx, back - 0.5, z + 0.03), (xx + 0.27, back - 0.1, z + 0.3), m["crate"], col, 0.012)
+        geo.panel(f"CHAMBER_{K}_lamp", (cx, (y + back) / 2, 2.29), (0.6, 0.12), "+Z", m["glow"], col)
+        rig.point_light(f"LIGHT_chamber_{key}", (cx, y + 1.2, 2.0), (0.87, 0.93, 0.96), 40, 0.3, col)
+        # PVC strip curtain hanging in the doorway
+        for j in range(6):
+            xx = x0 + 0.04 + j * (x1 - x0 - 0.08) / 5
+            geo.box(f"DOOR_{K}_strip{j}", (xx - 0.07, y + 0.05, 0.16), (xx + 0.07, y + 0.058, 2.08), m["strip"], col, 0)
+        door_panel(st, key, x0, x1, closed=True)
+        door_panel(st, key, x0, x1, closed=False)
         st.anchor(f"door_{key}", (cx, y - 0.08, 1.05))
         st.anchor(f"door_{key}_label", (cx, y - 0.08, 2.35))
     st.anchor("rule", ((DOORS["a"][1] + DOORS["b"][0]) / 2, y - 0.05, 1.4))
+
+
+def door_panel(st, key, x0, x1, closed):
+    """One insulated door, as on the s03 exterior: band, kick plate, lever, a round window lit from
+    the chamber. Hinged on its left edge; open, it swings out into the room."""
+    m, y = st.m, ROOM["back"]
+    K = key.upper()
+    name = f"door_{key}" + ("" if closed else "_open")
+    col = st.prop(name)
+    hinge = geo.empty(f"{name}_hinge", (x0, y - 0.03, 0), col)
+    parts = [
+        geo.box(f"{name}_panel", (x0, y - 0.07, 0.14), (x1, y - 0.03, 2.1), m["hub_panel"], col, 0.012),
+        geo.box(f"{name}_band", (x0, y - 0.075, 1.36), (x1, y - 0.068, 1.5), m[f"band_{key}"], col, 0.003),
+        geo.box(f"{name}_kick", (x0 + 0.02, y - 0.075, 0.16), (x1 - 0.02, y - 0.068, 0.38), m["steel"], col, 0.004),
+        geo.box(f"{name}_hinge_box", (x1 - 0.15, y - 0.11, 1.0), (x1 - 0.09, y - 0.07, 1.16), m["steel_dark"], col, 0.006),
+        geo.box(f"{name}_lever", (x1 - 0.32, y - 0.14, 1.06), (x1 - 0.1, y - 0.11, 1.1), m["steel"], col, 0.008),
+        geo.cylinder(f"{name}_window_ring", ((x0 + x1) / 2, y - 0.082, WINDOW_Z), 0.13, 0.012, m["steel"], col, axis="Y", bevel=0),
+        geo.cylinder(f"{name}_window", ((x0 + x1) / 2, y - 0.088, WINDOW_Z), 0.11, 0.008, m["glow"], col, axis="Y", bevel=0),
+    ]
+    for o in parts:
+        geo.parent_keep(o, hinge)
+    if not closed:
+        hinge.rotation_euler = (0, 0, math.radians(-105))
 
 
 def solar_unit(st):
@@ -177,9 +220,12 @@ def build():
     m = st.m
     s03.set_materials(m)
     m.update(
-        glow=s03.M.emissive("MAT_chamber_glow", "#DDEBF0", 4.0),
+        glow=s03.M.emissive("MAT_chamber_glow", "#DDEBF0", 3.0),
         lamp=s03.M.emissive("MAT_solar_lamp", "#E9F1F2", 6.0),
         hose=s03.M.plastic("MAT_hose", "#4B5357", 0.5),
+        chamber=s03.M.matte("MAT_chamber_panel", "#D4DADB", 0.5),
+        cling=s03.M.glass("MAT_cling_film", "#E4E8E6"),
+        strip=s03.M.glass("MAT_pvc_strip", "#C9D6DA"),
         floor=floor_damp("MAT_floor_damp"),
         water=s03.water("MAT_puddle_s04"),
     )
@@ -191,6 +237,8 @@ def build():
     s03.CRATE_AT = CRATE_AT                                   # the same sealed crate, here by Chamber B
     s03.crate(st)
     riyaz(st)
+    kit.ph("HAND_truck", "hand_truck", (2.9, 2.2, 0), -50, 1.0, st.props)          # CC0, for moving crates
+    kit.ph("JERRYCAN", "plastic_jerrycan", (-2.95, 2.75, 0), 15, 1.0, st.props)
     st.anchor("exit", (3.2, 1.0, 0.0))
     # Inside, no sun reaches the room: light it with its practicals and a dim sky (the night rig),
     # so the power-cut render goes dark when the practicals go off. The JSON keeps "midday" for the day.

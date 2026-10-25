@@ -1,0 +1,33 @@
+{
+  "title": "The whole market",
+  "attribution": "Map data © OpenStreetMap contributors, ODbL",
+  "evidence": ["M01", "SPEC-journey", "C-fee-southfirst", "C-fee-tnm"],
+  "lenses": { "waste": "Waste", "money": "Money", "power": "Power" },
+  "stall_count_note": "Stalls are placed to show the pattern, not counted from a survey.",
+  "runs": {
+    "1": {
+      "subtitle": "Every stall, the same morning",
+      "prompts": {
+        "watch": "Every stall does the same",
+        "clear": "Tap a pile to clear it",
+        "again": "It never stays clear",
+        "leave": "Now with the hub"
+      },
+      "fee": "−₹5"
+    },
+    "2": {
+      "subtitle": "The same market, with the hub",
+      "proposed": true,
+      "prompts": {
+        "open": "Open the hub's drop window",
+        "window": "Stalls drop inside the window",
+        "pickup": "One pickup for the whole market",
+        "loop": "How it could close",
+        "leave": "See the day's ledger"
+      },
+      "payout": "+₹[__]",
+      "hub": "Hub",
+      "renderer": "Renderer (example)"
+    }
+  }
+}

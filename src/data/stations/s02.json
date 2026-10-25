@@ -20,7 +20,8 @@
       "prompts": {
         "walk": "Walk to the back of Russell Market",
         "dump": "Leave it on the pile",
-        "leave": "Back to the stall"
+        "leave": "Back to the stall",
+        "wait": "Let the handcart pass"
       }
     },
     "2": {
@@ -28,7 +29,8 @@
       "proposed": true,
       "prompts": {
         "walk": "Walk to the hub",
-        "leave": "Into the hub"
+        "leave": "Into the hub",
+        "wait": "Let the handcart pass"
       }
     }
   },

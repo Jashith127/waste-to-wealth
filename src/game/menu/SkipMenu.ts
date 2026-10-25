@@ -4,6 +4,7 @@
 import { GameObjects, Scene } from 'phaser';
 import endcard from '../../data/endcard.json';
 import hud from '../../data/hud.json';
+import marketMap from '../../data/map.json';
 import { hasStation, runs, station, type Tag } from '../content';
 import { parseBeat, type Beat } from '../flow';
 import { getState, setState, type KiloTagState, type Run } from '../state';
@@ -23,6 +24,7 @@ interface Item { col: number; row: number; label: string; choose: () => void; te
 
 function beatLabel(beat: Beat): string {
     if (beat.station === 'end') return endcard.title;
+    if (beat.station === 'map') return `${marketMap.title} (${beat.run === 1 ? 'Run 1' : 'Run 2'})`;
     if (!hasStation(beat.station)) return beat.station;
     const s = station(beat.station);
     return `${s.number} · ${s.title}${beat.variant ? ` (${beat.variant})` : ''}`;

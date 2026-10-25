@@ -23,13 +23,13 @@
         "beats": {
           "type": "array",
           "minItems": 1,
-          "items": { "type": "string", "pattern": "^(s0[1-7](:[a-z]+)?|end)$" }
+          "items": { "type": "string", "pattern": "^(s0[1-7](:[a-z]+)?|map|end)$" }
         },
         "proposed": { "type": "boolean" },
         "clock": {
           "type": "object",
           "description": "HUD clock phase per beat, keyed by beat (\"s01\", \"s01:night\"). Phase words live in hud.json; never a clock time.",
-          "propertyNames": { "pattern": "^s0[1-7](:[a-z]+)?$" },
+          "propertyNames": { "pattern": "^(s0[1-7](:[a-z]+)?|map)$" },
           "additionalProperties": { "enum": ["morning", "evening", "night"] }
         },
         "evidence": { "type": "array", "items": { "type": "string" } }

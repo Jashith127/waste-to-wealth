@@ -3,6 +3,7 @@ import { runs } from './content';
 import { Boot } from './scenes/Boot';
 import { EndCard } from './scenes/EndCard';
 import { Hud } from './scenes/Hud';
+import { MarketMap } from './scenes/MarketMap';
 import { SkipMenu } from './menu/SkipMenu';
 import { Placeholder } from './scenes/Placeholder';
 import { StationCard } from './scenes/StationCard';
@@ -24,7 +25,7 @@ const config: Types.Core.GameConfig = {
         mode: Scale.FIT,
         autoCenter: Scale.CENTER_BOTH,
     },
-    scene: [Boot, ...stationScenes, StationCard, Placeholder, EndCard, Hud, SkipMenu],   // Hud and SkipMenu last: they draw over every scene
+    scene: [Boot, ...stationScenes, StationCard, Placeholder, MarketMap, EndCard, Hud, SkipMenu],   // Hud and SkipMenu last: they draw over every scene
 };
 
 const StartGame = (parent: string) => {
