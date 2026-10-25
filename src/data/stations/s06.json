@@ -1,0 +1,69 @@
+{
+  "$schema": "../schema/station.schema.json",
+  "id": "s06",
+  "number": 6,
+  "title": "Renderer",
+  "label": "Renderer (example)",
+  "place": "Off-site",
+  "greybox": true,
+  "evidence": [
+    "SPEC-journey"
+  ],
+  "set": {
+    "blend": "art/blender/s06_renderer.blend",
+    "renders": "public/assets/stations/s06/",
+    "lighting": "midday"
+  },
+  "runs": {
+    "2": {
+      "summary": "The material moves through a typical rendering process into meal and oil.",
+      "proposed": true,
+      "prompts": {
+        "watch": "Watch the process",
+        "leave": "Follow the meal"
+      }
+    }
+  },
+  "blueprint": {
+    "2": [
+      {
+        "lane": "backstage",
+        "text": "Renderer (example) processes the crates in a typical sequence.",
+        "evidence": [
+          "SPEC-journey"
+        ],
+        "proposed": true
+      },
+      {
+        "lane": "support",
+        "text": "The collector agreement links the hub and the renderer.",
+        "evidence": [
+          "SPEC-journey"
+        ],
+        "proposed": true
+      },
+      {
+        "lane": "evidence",
+        "text": "Rendering steps are a typical process, not a specific plant.",
+        "evidence": [
+          "SPEC-journey"
+        ]
+      }
+    ]
+  },
+  "params": {
+    "process_label": "Typical process",
+    "steps": [
+      "Size reduction",
+      "Cooking",
+      "Pressing out oil",
+      "Drying",
+      "Milling"
+    ],
+    "outputs": [
+      "Meal",
+      "Oil"
+    ],
+    "evidence_note": "Rendering evidence ids pending research/evidence.csv"
+  }
+}

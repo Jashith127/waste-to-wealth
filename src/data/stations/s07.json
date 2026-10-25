@@ -1,0 +1,77 @@
+{
+  "$schema": "../schema/station.schema.json",
+  "id": "s07",
+  "number": 7,
+  "title": "Farm → back to the stall",
+  "label": "How it could close",
+  "place": "A poultry farm, then Cockburn Road",
+  "greybox": true,
+  "evidence": [
+    "SPEC-journey",
+    "C-kannur",
+    "D-p22"
+  ],
+  "set": {
+    "blend": "art/blender/s07_loop.blend",
+    "renders": "public/assets/stations/s07/",
+    "lighting": "midday"
+  },
+  "runs": {
+    "2": {
+      "summary": "Meal as poultry feed, and chicken back at the stall: how the loop could close.",
+      "proposed": true,
+      "prompts": {
+        "watch": "How it could close",
+        "leave": "See the day's ledger"
+      }
+    }
+  },
+  "blueprint": {
+    "2": [
+      {
+        "lane": "backstage",
+        "text": "Meal sold as feed to a poultry farm.",
+        "evidence": [
+          "SPEC-journey",
+          "C-kannur"
+        ],
+        "proposed": true
+      },
+      {
+        "lane": "frontstage",
+        "text": "Chicken back at a stall like Riyaz's.",
+        "evidence": [
+          "SPEC-journey",
+          "D-p22"
+        ],
+        "proposed": true
+      },
+      {
+        "lane": "evidence",
+        "text": "Kannur precedent; no supply chain back to the stall was found.",
+        "evidence": [
+          "C-kannur",
+          "SPEC-journey"
+        ]
+      }
+    ]
+  },
+  "params": {
+    "beats": [
+      {
+        "caption": "Meal becomes poultry feed",
+        "anchor": "feed"
+      },
+      {
+        "caption": "Chickens raised on the farm",
+        "anchor": "flock"
+      },
+      {
+        "caption": "Back on the counter at the stall",
+        "anchor": "stall"
+      }
+    ],
+    "precedent": "Precedent: Kannur, Kerala",
+    "caveat": "No supply chain back to the stall was found"
+  }
+}

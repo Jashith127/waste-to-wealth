@@ -1,0 +1,70 @@
+{
+  "$schema": "../schema/station.schema.json",
+  "id": "s05",
+  "number": 5,
+  "title": "Bulk pickup",
+  "place": "The hub's loading bay",
+  "greybox": true,
+  "evidence": [
+    "SPEC-journey",
+    "C-fee-southfirst",
+    "C-fee-tnm",
+    "D-p35"
+  ],
+  "set": {
+    "blend": "art/blender/s05_pickup.blend",
+    "renders": "public/assets/stations/s05/",
+    "lighting": "midday"
+  },
+  "runs": {
+    "2": {
+      "summary": "One pickup replaces many; an authorised collector takes the sealed crates.",
+      "proposed": true,
+      "prompts": {
+        "load": "Tap to load the crates",
+        "leave": "Follow the crate"
+      }
+    }
+  },
+  "blueprint": {
+    "2": [
+      {
+        "lane": "frontstage",
+        "text": "One pickup from the hub replaces many from single stalls.",
+        "evidence": [
+          "SPEC-journey"
+        ],
+        "proposed": true
+      },
+      {
+        "lane": "backstage",
+        "text": "An authorised collector under the collector agreement.",
+        "evidence": [
+          "SPEC-journey"
+        ],
+        "proposed": true
+      },
+      {
+        "lane": "support",
+        "text": "The association schedules pickups.",
+        "evidence": [
+          "SPEC-journey"
+        ],
+        "proposed": true
+      },
+      {
+        "lane": "evidence",
+        "text": "Hub concept note; outside services shape the vendor's day.",
+        "evidence": [
+          "SPEC-journey",
+          "D-p35"
+        ]
+      }
+    ]
+  },
+  "params": {
+    "crates_to_load": 6,
+    "truck_label": "Authorised collector",
+    "one_for_many": "One pickup replaces many"
+  }
+}
