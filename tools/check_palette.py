@@ -16,6 +16,11 @@ THRESHOLD = 20.0
 LIMIT = 0.002          # 0.2% of opaque pixels
 STEP = 3               # sample every 3rd pixel each way
 
+# Layers that carry a meaning colour on purpose (art bible §3.2), with the share each may use.
+ALLOW = {
+    "s03/crate.png": {"offsite": 1.0},                    # task 14: the sealed crate is Chamber B blue
+}
+
 
 def lab(rgb):
     c = [v / 255 for v in rgb]
@@ -30,7 +35,7 @@ def lab(rgb):
 MEANING_LAB = {k: lab(tuple(int(v[i:i + 2], 16) for i in (1, 3, 5))) for k, v in MEANING.items()}
 
 
-def check(png):
+def check(png, allow=None):
     im = Image.open(png).convert("RGBA")
     px = im.load()
     total, hits = 0, {k: 0 for k in MEANING}
@@ -49,7 +54,7 @@ def check(png):
             if cache[key]:
                 hits[cache[key]] += 1
     share = {k: v / total for k, v in hits.items() if total and v}
-    bad = {k: v for k, v in share.items() if v > LIMIT}
+    bad = {k: v for k, v in share.items() if v > (allow or {}).get(k, LIMIT)}
     return total, share, bad
 
 
@@ -59,7 +64,7 @@ def main(stations):
     failed = False
     for st in stations:
         for png in sorted((base / st).glob("*.png")):
-            total, share, bad = check(png)
+            total, share, bad = check(png, ALLOW.get(f"{st}/{png.name}"))
             note = ", ".join(f"{k} {v:.2%}" for k, v in share.items()) or "clean"
             print(f"{'FAIL' if bad else 'ok  '} {st}/{png.name:20} {note}")
             failed |= bool(bad)
