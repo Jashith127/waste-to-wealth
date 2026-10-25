@@ -1,0 +1,41 @@
+{
+  "s02": {
+    "files": [
+      {
+        "type": "image",
+        "key": "s02_bg",
+        "url": "assets/stations/s02/bg.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_anthony_idle",
+        "url": "assets/stations/s02/anthony_idle.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_arif_idle",
+        "url": "assets/stations/s02/arif_idle.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_kilo",
+        "url": "assets/stations/s02/kilo.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_litter",
+        "url": "assets/stations/s02/litter.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_litter_shadow",
+        "url": "assets/stations/s02/litter_shadow.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_riyaz_walk",
+        "url": "assets/stations/s02/riyaz_walk.png"
+      }
+    ]
+  }
+}

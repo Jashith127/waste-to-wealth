@@ -7,20 +7,118 @@
   "greybox": true,
   "evidence": [
     "SPEC-journey",
-    "M01"
+    "M01",
+    "D-p34",
+    "C-fee-southfirst",
+    "C-fee-tnm",
+    "X03",
+    "X04"
   ],
   "runs": {
     "1": {
-      "summary": "The kilo is dumped behind Russell Market."
+      "summary": "The kilo is dumped behind Russell Market.",
+      "prompts": {
+        "walk": "Walk to the back of Russell Market",
+        "dump": "Leave it on the pile",
+        "leave": "Back to the stall"
+      }
     },
     "2": {
       "summary": "The kilo goes to the hub inside the fixed drop window.",
-      "proposed": true
+      "proposed": true,
+      "prompts": {
+        "walk": "Walk to the hub",
+        "leave": "Into the hub"
+      }
     }
+  },
+  "blueprint": {
+    "1": [
+      {
+        "lane": "vendor",
+        "text": "Carries the kilo to the back of the market and leaves it there.",
+        "evidence": [
+          "SPEC-journey"
+        ]
+      },
+      {
+        "lane": "frontstage",
+        "text": "No one receives it.",
+        "evidence": [
+          "SPEC-journey"
+        ]
+      },
+      {
+        "lane": "backstage",
+        "text": "City collection, charged at ₹5/kg animal waste.",
+        "evidence": [
+          "C-fee-southfirst",
+          "C-fee-tnm"
+        ]
+      },
+      {
+        "lane": "evidence",
+        "text": "Hub concept note; September 2026 fee reports.",
+        "evidence": [
+          "SPEC-journey",
+          "C-fee-southfirst",
+          "C-fee-tnm"
+        ]
+      }
+    ],
+    "2": [
+      {
+        "lane": "vendor",
+        "text": "Carries the kilo to the hub inside the drop window.",
+        "evidence": [
+          "SPEC-journey"
+        ],
+        "proposed": true
+      },
+      {
+        "lane": "frontstage",
+        "text": "The hub's drop window is open.",
+        "evidence": [
+          "SPEC-journey"
+        ],
+        "proposed": true
+      },
+      {
+        "lane": "backstage",
+        "text": "The association sets the drop window.",
+        "evidence": [
+          "SPEC-journey"
+        ],
+        "proposed": true
+      },
+      {
+        "lane": "support",
+        "text": "A cleaner pavement: waste no longer left on the street.",
+        "evidence": [
+          "SPEC-journey"
+        ],
+        "proposed": true
+      },
+      {
+        "lane": "evidence",
+        "text": "Hub concept note.",
+        "evidence": [
+          "SPEC-journey"
+        ]
+      }
+    ]
+  },
+  "params": {
+    "walk_seconds": 6,
+    "pan_m": 10
   },
   "set": {
     "blend": "art/blender/s02_walk.blend",
     "renders": "public/assets/stations/s02/",
-    "lighting": "morning"
+    "lighting": "morning",
+    "street": {
+      "x0": -5,
+      "x1": 15
+    }
   }
 }
