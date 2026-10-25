@@ -86,11 +86,11 @@ export function labelCard(scene: Scene, x: number, y: number, text: string, opts
     return c.setDepth(35);
 }
 
-/** The kilo's tag from s03 on. A deep link straight into s04–s07 has no state yet, so default it to
- * s03's flipped tag (task 08: deep links default what they need). */
+/** The kilo's tag from s03 on: +₹[__]. A deep link straight into s04–s07 has no tag yet, and a run
+ * through a grey-box s03 never flipped it, so default to s03's flipped tag (task 08). */
 export function paidTag(scene: Scene): Tag {
     const current = getState(scene).kilo.tag;
-    if (current) return current;
+    if (current?.meaning === 'income') return current;
     const fallback: Tag = { value: '+₹[__]', meaning: 'income', note: '₹[__]/kg, payout to be set' };
     const tag = (hasStation('s03') ? (station('s03').params?.tag_after as Tag | undefined) : undefined) ?? fallback;
     setState(scene, { kilo: { carried: false, tag } });
