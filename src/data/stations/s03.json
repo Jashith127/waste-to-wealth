@@ -1,0 +1,93 @@
+{
+  "$schema": "../schema/station.schema.json",
+  "id": "s03",
+  "number": 3,
+  "title": "Weigh-in and payment",
+  "place": "The hub's front counter",
+  "greybox": true,
+  "evidence": [
+    "SPEC-journey",
+    "D-p23",
+    "D-p20",
+    "D-p26",
+    "D-p22"
+  ],
+  "runs": {
+    "2": {
+      "summary": "The kilo is weighed, recorded by voice and paid by UPI.",
+      "proposed": true,
+      "prompts": {
+        "drag": "Put the crate on the scale",
+        "number": "Say your number",
+        "wait": "The attendant types it in",
+        "paid": "Paid",
+        "leave": "Into the cold room"
+      }
+    }
+  },
+  "blueprint": {
+    "2": [
+      {
+        "lane": "vendor",
+        "text": "Puts the crate on the scale and says his number.",
+        "evidence": [
+          "SPEC-journey",
+          "D-p23"
+        ],
+        "proposed": true
+      },
+      {
+        "lane": "frontstage",
+        "text": "Attendant, scale and rate board; the slip comes on WhatsApp.",
+        "evidence": [
+          "SPEC-journey",
+          "D-p20"
+        ],
+        "proposed": true
+      },
+      {
+        "lane": "backstage",
+        "text": "The rate is set with the collector agreement.",
+        "evidence": [
+          "SPEC-journey"
+        ],
+        "proposed": true
+      },
+      {
+        "lane": "support",
+        "text": "UPI payment, confirmed by sound.",
+        "evidence": [
+          "SPEC-journey",
+          "D-p26"
+        ],
+        "proposed": true
+      },
+      {
+        "lane": "evidence",
+        "text": "Empathy map: wet hands make the phone uncomfortable; interview 04: typing slows them down.",
+        "evidence": [
+          "D-p23",
+          "D-p26"
+        ]
+      }
+    ]
+  },
+  "params": {
+    "weight_label": "1.0 kg",
+    "rate_board": [
+      { "line": "Bone, sorted", "rate": "₹[__]/kg" },
+      { "line": "Offal, sorted", "rate": "₹[__]/kg" },
+      { "line": "Mixed", "rate": "₹[__]/kg" }
+    ],
+    "rate_note": "Sorted earns more",
+    "speech": "My number is…",
+    "number_masked": "••••• •••••",
+    "slip": { "title": "Hub slip", "lines": ["1.0 kg · sorted", "₹[__] by UPI"] },
+    "tag_after": { "value": "+₹[__]", "meaning": "income", "note": "₹[__]/kg, payout to be set" }
+  },
+  "set": {
+    "blend": "art/blender/s03_weigh.blend",
+    "renders": "public/assets/stations/s03/",
+    "lighting": "midday"
+  }
+}
