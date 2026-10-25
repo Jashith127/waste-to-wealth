@@ -1,0 +1,51 @@
+{
+  "s04": {
+    "files": [
+      {
+        "type": "image",
+        "key": "s04_bg",
+        "url": "assets/stations/s04/bg.png"
+      },
+      {
+        "type": "image",
+        "key": "s04_fx_chamber_light",
+        "url": "assets/stations/s04/fx_chamber_light.png"
+      },
+      {
+        "type": "image",
+        "key": "s04_bg_night",
+        "url": "assets/stations/s04/bg_night.png"
+      },
+      {
+        "type": "image",
+        "key": "s04_fx_chamber_light_night",
+        "url": "assets/stations/s04/fx_chamber_light_night.png"
+      },
+      {
+        "type": "image",
+        "key": "s04_crate",
+        "url": "assets/stations/s04/crate.png"
+      },
+      {
+        "type": "image",
+        "key": "s04_crate_shadow",
+        "url": "assets/stations/s04/crate_shadow.png"
+      },
+      {
+        "type": "image",
+        "key": "s04_meat_tray",
+        "url": "assets/stations/s04/meat_tray.png"
+      },
+      {
+        "type": "image",
+        "key": "s04_meat_tray_shadow",
+        "url": "assets/stations/s04/meat_tray_shadow.png"
+      },
+      {
+        "type": "image",
+        "key": "s04_riyaz_idle",
+        "url": "assets/stations/s04/riyaz_idle.png"
+      }
+    ]
+  }
+}

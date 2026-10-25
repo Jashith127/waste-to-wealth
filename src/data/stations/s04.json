@@ -1,0 +1,86 @@
+{
+  "$schema": "../schema/station.schema.json",
+  "id": "s04",
+  "number": 4,
+  "title": "Cold room",
+  "place": "The hub, inside",
+  "greybox": true,
+  "evidence": [
+    "SPEC-journey",
+    "D-p22",
+    "D-p19",
+    "D-p20"
+  ],
+  "runs": {
+    "2": {
+      "summary": "Waste goes to Chamber B, unsold meat to Chamber A; solar carries through the power cut.",
+      "proposed": true,
+      "prompts": {
+        "waste": "Put the crate in Chamber B",
+        "meat": "Put the unsold meat in Chamber A",
+        "cut": "The power goes out",
+        "solar": "Solar keeps both chambers cold",
+        "leave": "To the pickup bay"
+      }
+    }
+  },
+  "blueprint": {
+    "2": [
+      {
+        "lane": "vendor",
+        "text": "Sorts waste into sealed crates in Chamber B; puts unsold meat in Chamber A.",
+        "evidence": [
+          "SPEC-journey"
+        ],
+        "proposed": true
+      },
+      {
+        "lane": "frontstage",
+        "text": "Two doors, never shared.",
+        "evidence": [
+          "SPEC-journey"
+        ],
+        "proposed": true
+      },
+      {
+        "lane": "backstage",
+        "text": "Chamber B crates wait for the bulk pickup.",
+        "evidence": [
+          "SPEC-journey"
+        ],
+        "proposed": true
+      },
+      {
+        "lane": "support",
+        "text": "Solar unit keeps both chambers cold through power cuts.",
+        "evidence": [
+          "SPEC-journey",
+          "D-p22"
+        ],
+        "proposed": true
+      },
+      {
+        "lane": "evidence",
+        "text": "Persona: power cuts put stock at risk; interview 03: \"a good fridge\".",
+        "evidence": [
+          "D-p22",
+          "D-p19",
+          "D-p20"
+        ]
+      }
+    ]
+  },
+  "params": {
+    "chambers": {
+      "A": { "label": "Chamber A", "sub": "Unsold meat · waits overnight, free", "meaning": "income" },
+      "B": { "label": "Chamber B", "sub": "Sorted waste · sealed crates", "meaning": "offsite" }
+    },
+    "rule": "Two doors, never shared",
+    "solar_label": "Solar"
+  },
+  "set": {
+    "blend": "art/blender/s04_cold.blend",
+    "renders": "public/assets/stations/s04/",
+    "lighting": "midday"
+  }
+}
