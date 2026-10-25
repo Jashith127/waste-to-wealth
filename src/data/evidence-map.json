@@ -1,23 +1,174 @@
 {
+  "$schema": "./schema/evidence-map.schema.json",
   "_note": "Every station, line, number and prop in the game cites ids from 'sources'. The research checkpoint ids (E003-E006, E023-E025, E045, E073-E079) named in docs/game-concept.md cannot be cited yet: research/evidence.csv is not in the repo.",
   "sources": {
-    "F01": { "kind": "field-photo", "file": "field/photos/F01-falooda-cart-square.png", "deck_page": 5, "title": "Falooda cart at the square" },
-    "F02": { "kind": "field-photo", "file": "field/photos/F02-new-taj-durbar-front.png", "deck_page": 6, "title": "New Taj Durbar front" },
-    "F03": { "kind": "field-photo", "file": "field/photos/F03-restaurant-kitchen.png", "deck_page": 6, "title": "Restaurant kitchen nearby" },
-    "F04": { "kind": "field-photo", "file": "field/photos/F04-bismillah-meat-corner.png", "deck_page": 19, "title": "Meat corner, Cockburn Road" },
-    "F05": { "kind": "field-photo", "file": "field/photos/F05-sweet-chaat-counter.png", "deck_page": 25, "title": "Sweet and chaat counter" },
-    "D-p18": { "kind": "deck", "file": "field/deck/shivajinagar-field-visit.pdf", "deck_page": 18, "title": "Meat corner section title (Kannada: ಮಾಂಸದ ಅಂಗಡಿ)" },
-    "D-p19": { "kind": "deck", "file": "field/deck/shivajinagar-field-visit.pdf", "deck_page": 19, "title": "Interview 03 summary, Cockburn Road" },
-    "D-p20": { "kind": "deck", "file": "field/deck/shivajinagar-field-visit.pdf", "deck_page": 20, "title": "Interview 03 Q&A: rate, stock, tools, what would help" },
-    "D-p22": { "kind": "deck", "file": "field/deck/shivajinagar-field-visit.pdf", "deck_page": 22, "title": "Persona: Riyaz Q." },
-    "D-p23": { "kind": "deck", "file": "field/deck/shivajinagar-field-visit.pdf", "deck_page": 23, "title": "Empathy map: Riyaz Q. (wet hands; cleans block between customers)" },
-    "D-p34": { "kind": "deck", "file": "field/deck/shivajinagar-field-visit.pdf", "deck_page": 34, "title": "Shivajinagar through five senses" },
-    "X03": { "kind": "external-photo", "file": "field/external/commons/Russel_Market_Shivaji_Nagar_Bengaluru.jpg", "licence": "CC BY-SA 4.0", "credit": "Ahmed Nisar" },
-    "X04": { "kind": "external-photo", "file": "field/external/commons/Russell_Market.jpg", "licence": "CC BY-SA 4.0", "credit": "Thejeshgn" },
-    "X05": { "kind": "external-photo", "file": "field/external/commons/ST832372_2240996153_.jpg", "licence": "CC BY-SA 2.0", "credit": "fraboof" },
-    "M01": { "kind": "map", "file": "field/external/osm/russell-market-area.json", "licence": "ODbL", "credit": "© OpenStreetMap contributors" },
-    "C-fee-southfirst": { "kind": "report", "url": "https://thesouthfirst.com/karnataka/janmashtami-ban-protest-against-waste-collection-charges-bengaluru-meat-shops-to-shut-on-3-and-4-september/", "title": "South First: waste collection charges (Sept 2026)", "supports": "₹5/kg animal waste, ₹3/kg bone" },
-    "C-fee-tnm": { "kind": "report", "url": "https://www.thenewsminute.com/karnataka/bengaluru-chicken-shops-call-bandh-to-protest-animal-waste-collection-fee", "title": "The News Minute: chicken shops bandh over waste fee (Sept 2026)", "supports": "₹5/kg animal waste, ₹3/kg bone" },
-    "SPEC-journey": { "kind": "proposal", "file": "docs/game-concept.md", "title": "Hub concept: the journey and truth rules", "proposed": true }
+    "F01": {
+      "kind": "field-photo",
+      "file": "field/photos/F01-falooda-cart-square.png",
+      "deck_page": 5,
+      "title": "Falooda cart at the square"
+    },
+    "F02": {
+      "kind": "field-photo",
+      "file": "field/photos/F02-new-taj-durbar-front.png",
+      "deck_page": 6,
+      "title": "New Taj Durbar front"
+    },
+    "F03": {
+      "kind": "field-photo",
+      "file": "field/photos/F03-restaurant-kitchen.png",
+      "deck_page": 6,
+      "title": "Restaurant kitchen nearby"
+    },
+    "F04": {
+      "kind": "field-photo",
+      "file": "field/photos/F04-bismillah-meat-corner.png",
+      "deck_page": 19,
+      "title": "Meat corner, Cockburn Road"
+    },
+    "F05": {
+      "kind": "field-photo",
+      "file": "field/photos/F05-sweet-chaat-counter.png",
+      "deck_page": 25,
+      "title": "Sweet and chaat counter"
+    },
+    "D-p18": {
+      "kind": "deck",
+      "file": "field/deck/shivajinagar-field-visit.pdf",
+      "deck_page": 18,
+      "title": "Meat corner section title (Kannada: ಮಾಂಸದ ಅಂಗಡಿ)"
+    },
+    "D-p19": {
+      "kind": "deck",
+      "file": "field/deck/shivajinagar-field-visit.pdf",
+      "deck_page": 19,
+      "title": "Interview 03 summary, Cockburn Road"
+    },
+    "D-p20": {
+      "kind": "deck",
+      "file": "field/deck/shivajinagar-field-visit.pdf",
+      "deck_page": 20,
+      "title": "Interview 03 Q&A: rate, stock, tools, what would help"
+    },
+    "D-p22": {
+      "kind": "deck",
+      "file": "field/deck/shivajinagar-field-visit.pdf",
+      "deck_page": 22,
+      "title": "Persona: Riyaz Q."
+    },
+    "D-p23": {
+      "kind": "deck",
+      "file": "field/deck/shivajinagar-field-visit.pdf",
+      "deck_page": 23,
+      "title": "Empathy map: Riyaz Q. (wet hands; cleans block between customers)"
+    },
+    "D-p34": {
+      "kind": "deck",
+      "file": "field/deck/shivajinagar-field-visit.pdf",
+      "deck_page": 34,
+      "title": "Shivajinagar through five senses"
+    },
+    "X03": {
+      "kind": "external-photo",
+      "file": "field/external/commons/Russel_Market_Shivaji_Nagar_Bengaluru.jpg",
+      "licence": "CC BY-SA 4.0",
+      "credit": "Ahmed Nisar"
+    },
+    "X04": {
+      "kind": "external-photo",
+      "file": "field/external/commons/Russell_Market.jpg",
+      "licence": "CC BY-SA 4.0",
+      "credit": "Thejeshgn"
+    },
+    "X05": {
+      "kind": "external-photo",
+      "file": "field/external/commons/ST832372_2240996153_.jpg",
+      "licence": "CC BY-SA 2.0",
+      "credit": "fraboof"
+    },
+    "M01": {
+      "kind": "map",
+      "file": "field/external/osm/russell-market-area.json",
+      "licence": "ODbL",
+      "credit": "© OpenStreetMap contributors"
+    },
+    "C-fee-southfirst": {
+      "kind": "report",
+      "url": "https://thesouthfirst.com/karnataka/janmashtami-ban-protest-against-waste-collection-charges-bengaluru-meat-shops-to-shut-on-3-and-4-september/",
+      "title": "South First: waste collection charges (Sept 2026)",
+      "supports": "₹5/kg animal waste, ₹3/kg bone"
+    },
+    "C-fee-tnm": {
+      "kind": "report",
+      "url": "https://www.thenewsminute.com/karnataka/bengaluru-chicken-shops-call-bandh-to-protest-animal-waste-collection-fee",
+      "title": "The News Minute: chicken shops bandh over waste fee (Sept 2026)",
+      "supports": "₹5/kg animal waste, ₹3/kg bone"
+    },
+    "SPEC-journey": {
+      "kind": "proposal",
+      "file": "docs/game-concept.md",
+      "title": "Hub concept: the journey and truth rules",
+      "proposed": true
+    },
+    "D-p7": {
+      "kind": "deck",
+      "file": "field/deck/shivajinagar-field-visit.pdf",
+      "deck_page": 7,
+      "title": "Saree wholesale section title (Kannada: ಸೀರೆ ಸಗಟು ಅಂಗಡಿ)"
+    },
+    "D-p24": {
+      "kind": "deck",
+      "file": "field/deck/shivajinagar-field-visit.pdf",
+      "deck_page": 24,
+      "title": "Sweet and chaat stall section title (Kannada: ಸಿಹಿ ಮತ್ತು ಚಾಟ್ ಅಂಗಡಿ)"
+    },
+    "D-p11": {
+      "kind": "deck",
+      "file": "field/deck/shivajinagar-field-visit.pdf",
+      "deck_page": 11,
+      "title": "Persona: Arif K., saree wholesale"
+    },
+    "D-p12": {
+      "kind": "deck",
+      "file": "field/deck/shivajinagar-field-visit.pdf",
+      "deck_page": 12,
+      "title": "Empathy map: Arif K."
+    },
+    "D-p14": {
+      "kind": "deck",
+      "file": "field/deck/shivajinagar-field-visit.pdf",
+      "deck_page": 14,
+      "title": "Interview 02 summary, flower stall at St Mary's Basilica"
+    },
+    "D-p16": {
+      "kind": "deck",
+      "file": "field/deck/shivajinagar-field-visit.pdf",
+      "deck_page": 16,
+      "title": "Persona: Anthony D., flower stall"
+    },
+    "D-p17": {
+      "kind": "deck",
+      "file": "field/deck/shivajinagar-field-visit.pdf",
+      "deck_page": 17,
+      "title": "Empathy map: Anthony D."
+    },
+    "D-p26": {
+      "kind": "deck",
+      "file": "field/deck/shivajinagar-field-visit.pdf",
+      "deck_page": 26,
+      "title": "Interview 04 Q&A: UPI mostly; typing would slow me down"
+    },
+    "D-p35": {
+      "kind": "deck",
+      "file": "field/deck/shivajinagar-field-visit.pdf",
+      "deck_page": 35,
+      "title": "What we observed: outside services shape the day"
+    },
+    "C-kannur": {
+      "kind": "report",
+      "url": "https://krishijagran.com/animal-husbandry/kannur-to-become-the-first-poultry-waste-free-district-in-kerala/?amp=1",
+      "title": "Krishi Jagran: Kannur, a poultry-waste-free district",
+      "supports": "Precedent: poultry waste collected for rendering; shops pay (Kannur, Kerala)"
+    }
   }
 }

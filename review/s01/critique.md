@@ -43,10 +43,18 @@ Judged against `docs/art-bible.md`. Each pass lists what failed and what changed
 | Input | A press during a chop was dropped, so a quick player (or the test) lost a chop | One press is buffered during a chop |
 | S2 placeholder | Cream text on light grey | Dark backing card |
 
+## Pass 8: your review (meat and signage)
+
+| Note | Finding | Fix |
+|---|---|---|
+| "The meat is not accurate enough" | Smooth slabs read as neither F04's pieces nor X05's carcasses | A steel U-bracket off the orange pillar (F04); a whole skinned goat hung by the hind legs, with forelegs splayed (X05/R26); a large side with yellowed fat (F04/R03). New `geo.loft`/`geo.limb` shapes and a `materials.carcass` shader with streaky fat and faint ribs |
+| "The signage does not feel like Shivajinagar" | A clean board in the deck's rounded UI font; neighbour boards were blurred blocks that read as empty | Flex-banner fascia after F04 (Kannada and Urdu top line, outlined condensed name, black tagline band, address line); a red flex sweets-and-chaat board and a painted maroon saree board, with trades and Kannada from our deck (pp. 7, 24); a UPI QR sticker on the pillar (F04) |
+
 ## Still open (not blocking the slice)
+
+- **The Urdu line** "گوشت کی دکان" ("meat shop") is on the fascia now, flagged `check: pending` in `s01.json`. It needs a speaker's check before the game is shown.
 
 - **Fridge form** has no photo reference (art bible §0 gaps). It is a generic glass-door cooler.
 - **The cream monoblock chair** still reads as a toy. It sits below the blueprint line, so it's low priority; the Blender task for S1 polish can fix it.
 - **Sound** hooks fire (`sfx` event: `cleaver`) but no audio files exist yet. The field recordings are not in the repo.
-- **Urdu sign line** waits for a speaker's check (art bible §7).
 - Renders ship at 1920 × 1080 PNG (about 2 MB for `bg`). The 2× masters and WebP conversion belong to the scaling task.

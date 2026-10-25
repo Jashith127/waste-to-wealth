@@ -1,9 +1,20 @@
 {
+  "$schema": "../schema/station.schema.json",
   "id": "s01",
   "number": 1,
   "title": "The stall",
   "place": "Cockburn Road",
-  "evidence": ["F04", "D-p19", "D-p20", "D-p22", "D-p23", "D-p34", "C-fee-southfirst", "C-fee-tnm", "SPEC-journey"],
+  "evidence": [
+    "F04",
+    "D-p19",
+    "D-p20",
+    "D-p22",
+    "D-p23",
+    "D-p34",
+    "C-fee-southfirst",
+    "C-fee-tnm",
+    "SPEC-journey"
+  ],
   "set": {
     "blend": "art/blender/s01_stall.blend",
     "renders": "public/assets/stations/s01/",
@@ -12,31 +23,124 @@
   "signs": [
     {
       "id": "fascia",
-      "size_m": [3.15, 0.75],
-      "style": "board-cream-green",
-      "lines": [
-        { "text": "ಮಾಂಸದ ಅಂಗಡಿ", "lang": "kn", "role": "top" },
-        { "text": "MEAT CORNER", "lang": "en", "role": "name" },
-        { "text": "Chicken · Mutton", "lang": "en", "role": "band" }
+      "size_m": [
+        3.15,
+        0.75
       ],
-      "todo": "Urdu line pending a speaker's check (art-bible §7); omitted until then.",
-      "evidence": ["F04", "D-p18", "D-p22", "D-p34"]
+      "style": "flex-meat",
+      "lines": [
+        {
+          "text": "ಮಾಂಸದ ಅಂಗಡಿ",
+          "lang": "kn",
+          "role": "top"
+        },
+        {
+          "text": "گوشت کی دکان",
+          "lang": "ur",
+          "role": "top-right",
+          "check": "pending: Urdu speaker check (art-bible §7)"
+        },
+        {
+          "text": "MEAT CORNER",
+          "lang": "en",
+          "role": "name"
+        },
+        {
+          "text": "Fresh chicken · mutton",
+          "lang": "en",
+          "role": "band"
+        },
+        {
+          "text": "Cockburn Road, Shivajinagar, Bengaluru",
+          "lang": "en",
+          "role": "address"
+        }
+      ],
+      "note": "Flex-banner layout after F04: trilingual top line, outlined condensed name, black tagline band, address line. No real shop name or phone number.",
+      "evidence": [
+        "F04",
+        "D-p18",
+        "D-p19",
+        "D-p22",
+        "D-p34"
+      ]
     },
     {
       "id": "neighbour_left",
-      "size_m": [2.1, 0.75],
-      "style": "illegible",
-      "palette": ["#C9C0AC", "#4F5E6B", "#7E4A42"],
-      "note": "Texture only: faded, unreadable signage density after F02/F04 (art-bible §6.3, §7).",
-      "evidence": ["F02", "F04"]
+      "size_m": [
+        2.1,
+        0.75
+      ],
+      "style": "flex-red",
+      "lines": [
+        {
+          "text": "ಸಿಹಿ ಮತ್ತು ಚಾಟ್ ಅಂಗಡಿ",
+          "lang": "kn",
+          "role": "top"
+        },
+        {
+          "text": "SWEETS & CHAAT",
+          "lang": "en",
+          "role": "name"
+        }
+      ],
+      "note": "Composite set dressing: a trade we met in Shivajinagar (interview 04), not the real neighbour. Kannada as on deck p. 24.",
+      "evidence": [
+        "D-p24",
+        "F05",
+        "D-p34"
+      ]
     },
     {
       "id": "neighbour_right",
-      "size_m": [2.3, 0.75],
-      "style": "illegible",
-      "palette": ["#7E4A42", "#D9C9B0", "#3A3330"],
-      "note": "Texture only: faded, unreadable signage density after F02/F04 (art-bible §6.3, §7).",
-      "evidence": ["F02", "F04"]
+      "size_m": [
+        2.3,
+        0.75
+      ],
+      "style": "board-maroon",
+      "lines": [
+        {
+          "text": "ಸೀರೆ ಸಗಟು ಅಂಗಡಿ",
+          "lang": "kn",
+          "role": "top"
+        },
+        {
+          "text": "SAREES · DRESS MATERIAL",
+          "lang": "en",
+          "role": "name"
+        },
+        {
+          "text": "Wholesale",
+          "lang": "en",
+          "role": "band"
+        }
+      ],
+      "note": "Composite set dressing: a trade we met in Shivajinagar (interview 01), not the real neighbour. Kannada as on deck p. 7. Painted-board style after F02.",
+      "evidence": [
+        "D-p7",
+        "F02",
+        "D-p34"
+      ]
+    },
+    {
+      "id": "upi_sticker",
+      "size_m": [
+        0.13,
+        0.17
+      ],
+      "style": "sticker-upi",
+      "lines": [
+        {
+          "text": "UPI",
+          "lang": "en",
+          "role": "name"
+        }
+      ],
+      "note": "QR sticker on the pillar, as in F04; payments by UPI (persona). The pattern is decorative and does not scan.",
+      "evidence": [
+        "F04",
+        "D-p22"
+      ]
     }
   ],
   "runs": {
@@ -57,30 +161,116 @@
       "next": "s02"
     }
   },
-  "cut": { "chops": 3 },
   "kilo": {
     "label": "1 kg bone and offal",
-    "tag": { "value": "−₹5", "meaning": "cost", "note": "₹5/kg animal waste" },
-    "evidence": ["SPEC-journey", "C-fee-southfirst", "C-fee-tnm"]
-  },
-  "fridge": {
-    "flicker": true,
-    "evidence": ["D-p20", "D-p22"]
+    "tag": {
+      "value": "−₹5",
+      "meaning": "cost",
+      "note": "₹5/kg animal waste"
+    },
+    "evidence": [
+      "SPEC-journey",
+      "C-fee-southfirst",
+      "C-fee-tnm"
+    ]
   },
   "blueprint": {
     "1": [
-      { "lane": "vendor", "text": "Finishes the morning cut and bags the bone and offal.", "evidence": ["SPEC-journey", "D-p23"] },
-      { "lane": "frontstage", "text": "Regulars at the counter; they know the rate and care about cut and weight.", "evidence": ["D-p20"] },
-      { "lane": "backstage", "text": "City waste collection charge: ₹5/kg animal waste, ₹3/kg bone.", "evidence": ["C-fee-southfirst", "C-fee-tnm"] },
-      { "lane": "support", "text": "Fridge on mains power; power cuts and late pickup put stock and hygiene at risk.", "evidence": ["D-p22"] },
-      { "lane": "evidence", "text": "Interview 03, Cockburn Road meat stall; persona Riyaz Q.; September 2026 fee reports.", "evidence": ["D-p19", "D-p22", "C-fee-southfirst", "C-fee-tnm"] }
+      {
+        "lane": "vendor",
+        "text": "Finishes the morning cut and bags the bone and offal.",
+        "evidence": [
+          "SPEC-journey",
+          "D-p23"
+        ]
+      },
+      {
+        "lane": "frontstage",
+        "text": "Regulars at the counter; they know the rate and care about cut and weight.",
+        "evidence": [
+          "D-p20"
+        ]
+      },
+      {
+        "lane": "backstage",
+        "text": "City waste collection charge: ₹5/kg animal waste, ₹3/kg bone.",
+        "evidence": [
+          "C-fee-southfirst",
+          "C-fee-tnm"
+        ]
+      },
+      {
+        "lane": "support",
+        "text": "Fridge on mains power; power cuts and late pickup put stock and hygiene at risk.",
+        "evidence": [
+          "D-p22"
+        ]
+      },
+      {
+        "lane": "evidence",
+        "text": "Interview 03, Cockburn Road meat stall; persona Riyaz Q.; September 2026 fee reports.",
+        "evidence": [
+          "D-p19",
+          "D-p22",
+          "C-fee-southfirst",
+          "C-fee-tnm"
+        ]
+      }
     ],
     "2": [
-      { "lane": "vendor", "text": "Finishes the morning cut and bags the bone and offal for the hub.", "evidence": ["SPEC-journey", "D-p23"] },
-      { "lane": "frontstage", "text": "Regulars at the counter; they know the rate and care about cut and weight.", "evidence": ["D-p20"] },
-      { "lane": "backstage", "text": "The association sets a fixed drop window at the hub.", "evidence": ["SPEC-journey"], "proposed": true },
-      { "lane": "support", "text": "Fridge on mains power; unsold meat can wait in the hub's Chamber A instead.", "evidence": ["D-p22", "SPEC-journey"], "proposed": true },
-      { "lane": "evidence", "text": "Interview 03, Cockburn Road meat stall; persona Riyaz Q.; hub concept note.", "evidence": ["D-p19", "D-p22", "SPEC-journey"] }
+      {
+        "lane": "vendor",
+        "text": "Finishes the morning cut and bags the bone and offal for the hub.",
+        "evidence": [
+          "SPEC-journey",
+          "D-p23"
+        ]
+      },
+      {
+        "lane": "frontstage",
+        "text": "Regulars at the counter; they know the rate and care about cut and weight.",
+        "evidence": [
+          "D-p20"
+        ]
+      },
+      {
+        "lane": "backstage",
+        "text": "The association sets a fixed drop window at the hub.",
+        "evidence": [
+          "SPEC-journey"
+        ],
+        "proposed": true
+      },
+      {
+        "lane": "support",
+        "text": "Fridge on mains power; unsold meat can wait in the hub's Chamber A instead.",
+        "evidence": [
+          "D-p22",
+          "SPEC-journey"
+        ],
+        "proposed": true
+      },
+      {
+        "lane": "evidence",
+        "text": "Interview 03, Cockburn Road meat stall; persona Riyaz Q.; hub concept note.",
+        "evidence": [
+          "D-p19",
+          "D-p22",
+          "SPEC-journey"
+        ]
+      }
     ]
+  },
+  "params": {
+    "cut": {
+      "chops": 3
+    },
+    "fridge": {
+      "flicker": true,
+      "evidence": [
+        "D-p20",
+        "D-p22"
+      ]
+    }
   }
 }

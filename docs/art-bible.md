@@ -268,6 +268,14 @@ Layer positions and anchors (screen points for hotspots and the tag) are written
 - **Riyaz Q.** (the persona from deck p. 22): 40–45, chicken and mutton seller. Costume from the meat-seller type in F04 and X05: white skullcap, checked half-sleeve shirt, apron, sleeves pushed up, **wet hands** (a glossy material on hands and forearms).
 - **Never copy real signage text.** F04 shows a real shop's name, its owner's name and a phone number. F02 and F01 show real brands and political hoardings. In-world signs use **layout and colour from the photos**, but the text comes only from `src/data/` strings. Real logos, names and phone numbers are never used.
 - **Trilingual signs** (Kannada, English, Urdu, from *Five senses: Sight*). Kannada strings may come from the deck (for example "ಮಾಂಸದ ಅಂಗಡಿ" for "Meat corner", p. 18). Urdu strings need a check by a speaker before shipping, and stay `TODO-urdu` in JSON until then.
+- **Sign style (decided in the S1 review).** Shivajinagar signs are *printed flex banners* and *painted boards*, never designer type. `tools/render_signs.mjs` has the styles:
+  - `flex-meat`: white flex; the Kannada line top-left in red and the Urdu line top-right in Nastaliq; the name in heavy condensed letters with a dark outline and drop shadow; a black tagline band; a small address line;
+  - `flex-red`;
+  - `board-maroon`: a serif on a painted board, after F02;
+  - `sticker-upi`.
+
+  Fonts: Anton, Noto Sans Kannada (900), Noto Nastaliq Urdu, Rozha One and Noto Sans. The deck's Baloo is for UI only, never in the world. Flex signs get a crease and grime bump in Blender (`materials.image(flex=True)`).
+- **Neighbour signs are readable** but carry only trades we met in Shivajinagar (saree wholesale, sweets and chaat, flowers, meat), in the Kannada printed in our deck. They are composite set dressing, noted as such in the station JSON, and never the real neighbours.
 - **Hoardings** keep their shape and size (they're everywhere in F01) but show no faces. Use plain blocks of `env.cream` and `env.shutter` with blurred, unreadable type.
 
 ## 8. Type and UI
@@ -339,7 +347,7 @@ This is what step 2 builds, with each item's source.
 | Shopfront, opening and shutter box | R02, R06 | A 2.4 m opening, the shutter rolled up and showing its housing |
 | Awning | R01 | Full width plus 40 cm, the scalloped hem at the front |
 | Pillars and walls | R04, R05 | The orange pillar on the left, the cream neighbour on the right |
-| Hanging rail and meat | R03, R26 | Left side of the opening, matte, no gore |
+| Hanging rail and meat | R03, R26, X05 | A steel U-bracket off the orange pillar (F04) holding a whole skinned goat hung by the hind legs (X05) and a large side with yellowed fat (F04). Moist, streaky fat, no gore (`kit.hung_meat`, `materials.carcass`) |
 | Counter and chopping block | R09, R25, *Five senses: Sound* | Tiled front (X05), wooden block on top; the cleaver is the "morning cut" prop |
 | Signboard on the counter | F04 layout | Text from JSON: "Meat corner" plus Kannada; Urdu TODO |
 | Fridge | **gap** | A grey box until we find a reference; it flickers in Run 1 |
@@ -355,3 +363,4 @@ This is what step 2 builds, with each item's source.
 - 0.1: first draft, from the deck photos and five Commons photos.
 - 0.2: approved. Façade is white with a pink ghost; Chamber B is blue.
 - 0.3: lessons from the S1 slice: street-slice sets, the overhang rule, camera target, sun direction in front of the walls, sun strength 5.5.
+- 0.4: S1 review: meat rebuilt as carcasses after F04/X05; signs in the flex/board styles with readable deck-sourced trades; the kit (`art/scripts/lib/kit.py`, `people.py`, `station.py`) holds every reusable piece.

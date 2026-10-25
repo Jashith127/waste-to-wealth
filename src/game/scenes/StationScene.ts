@@ -2,6 +2,7 @@
 // evidence (I), and the walk-out transition. A station subclass only adds its own interaction.
 import { GameObjects, Scene } from 'phaser';
 import { blueprint, runData, station, type StationData } from '../content';
+import { goNext, type Beat } from '../flow';
 import { getState, setState, type GameState } from '../state';
 import { colour, FRAME, layout, motion } from '../theme';
 import { BlueprintPanel } from '../ui/BlueprintPanel';
@@ -19,6 +20,7 @@ export abstract class StationScene extends Scene {
     protected blueprintPanel!: BlueprintPanel;
     protected evidence!: EvidencePanel;
     protected layers?: Layers;
+    protected variant?: string;     // e.g. "night" when runs.json says "s01:night"
     private leaving = false;
 
     constructor(readonly stationId: string) {
@@ -31,7 +33,8 @@ export abstract class StationScene extends Scene {
         this.load.json(`${this.stationId}_layers`, `assets/stations/${this.stationId}/layers.json`);
     }
 
-    create() {
+    create({ beat }: { beat?: Beat } = {}) {
+        this.variant = beat?.variant;
         this.stationData = station(this.stationId);
         this.state = setState(this, { station: this.stationId });
         this.layers = this.cache.json.get(`${this.stationId}_layers`);
@@ -87,14 +90,13 @@ export abstract class StationScene extends Scene {
         return ring;
     }
 
-    /** Walk out to the next station: the street slides past, fade, station card, next scene. */
-    protected leave(nextId: string) {
+    /** Walk out to the next beat in runs.json: the street slides past, fade, station card, next scene. */
+    protected leave() {
         if (this.leaving) return;
         this.leaving = true;
         if (!this.state.reducedMotion) {
             this.tweens.add({ targets: this.world, x: -260, duration: motion.transition, ease: 'Sine.easeIn' });
         }
-        this.cameras.main.fadeOut(motion.transition, 28, 23, 20);
-        this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('StationCard', { next: nextId }));
+        goNext(this);
     }
 }

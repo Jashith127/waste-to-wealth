@@ -105,6 +105,64 @@ def sphere(name, centre, radius, scale=(1, 1, 1), mat=None, col=None, segments=2
     return obj
 
 
+def loft(name, sections, mat=None, col=None, ring=16, subsurf=2, noise=0.0, seed=0):
+    """Organic body from elliptical cross-sections. sections: [(centre_xyz, rx, ry), ...]
+    top to bottom; each ring lies in the XY plane at its centre's Z. `noise` jitters radii
+    (fraction) so carcasses and sacks never look turned on a lathe."""
+    import random
+    rnd = random.Random(seed)
+    bm = bmesh.new()
+    rings = []
+    for (cx, cy, cz), rx, ry in sections:
+        verts = []
+        for k in range(ring):
+            a = 2 * math.pi * k / ring
+            j = 1 + rnd.uniform(-noise, noise)
+            verts.append(bm.verts.new((cx + math.cos(a) * rx * j, cy + math.sin(a) * ry * j, cz)))
+        rings.append(verts)
+    for r0, r1 in zip(rings, rings[1:]):
+        for k in range(ring):
+            bm.faces.new((r0[k], r0[(k + 1) % ring], r1[(k + 1) % ring], r1[k]))
+    for r in (rings[0], rings[-1]):          # caps
+        bm.faces.new(r)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    _box_uvs(bm)
+    obj = _obj(name, bm, mat, col, 0, subsurf)
+    return obj
+
+
+def limb(name, a, b, r_a, r_b, mat=None, col=None, segments=12):
+    """Tapered cylinder from point a (radius r_a) to point b (radius r_b): legs, shanks, arms."""
+    a, b = Vector(a), Vector(b)
+    d = b - a
+    bm = bmesh.new()
+    bmesh.ops.create_cone(bm, cap_ends=True, segments=segments, radius1=r_a, radius2=r_b, depth=d.length)
+    rot = d.normalized().to_track_quat("Z", "Y").to_matrix().to_4x4()
+    bmesh.ops.transform(bm, matrix=Matrix.Translation((a + b) / 2) @ rot, verts=bm.verts)
+    _box_uvs(bm)
+    obj = _obj(name, bm, mat, col, 0)
+    for p in obj.data.polygons:
+        p.use_smooth = True
+    return obj
+
+
+def solid(name, bm, mat, col, thickness):
+    """Mesh from a flat bmesh (e.g. an awning outline), given thickness with Solidify. UVs in XZ."""
+    me = bpy.data.meshes.new(name)
+    uv = bm.loops.layers.uv.new("UVMap")
+    for f in bm.faces:
+        for loop in f.loops:
+            loop[uv].uv = (loop.vert.co.x, loop.vert.co.z)
+    bm.to_mesh(me)
+    bm.free()
+    obj = bpy.data.objects.new(name, me)
+    col.objects.link(obj)
+    me.materials.append(mat)
+    s = obj.modifiers.new("solid", "SOLIDIFY")
+    s.thickness, s.offset = thickness, 0
+    return obj
+
+
 def empty(name, loc, col=None):
     e = bpy.data.objects.new(name, None)
     (col or bpy.context.scene.collection).objects.link(e)

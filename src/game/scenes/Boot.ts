@@ -1,5 +1,6 @@
 // Boot: wait for the deck fonts, draw the void lattice texture, start the first station.
 import { Scene } from 'phaser';
+import { parseBeat, sceneFor } from '../flow';
 import { getState } from '../state';
 
 export class Boot extends Scene {
@@ -15,7 +16,9 @@ export class Boot extends Scene {
             document.fonts.load('400 28px Hind'),
         ]).catch(() => undefined);
         this.makeLattice();
-        this.scene.start(getState(this).station);
+        const { run, beat } = getState(this);
+        const first = parseBeat(run, beat);
+        this.scene.start(sceneFor(this, first), { beat: first });
     }
 
     /** The deck's diamond lattice at 5% on the charcoal void (art-bible §6.1). */

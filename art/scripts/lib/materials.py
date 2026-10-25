@@ -379,6 +379,34 @@ def meat(name):
     return n.mat
 
 
+def carcass(name, lean, deep, fat, fat_amount=0.5):
+    """Skinned carcass (F04, X05): lean with darker creases, streaky fat running down the body,
+    faint rib banding, moist. Readable at 175 px/m without gore."""
+    n = Nodes(name)
+    mapping = n.add("ShaderNodeMapping")
+    mapping.inputs["Scale"].default_value = (7, 7, 1.6)          # streaks run with gravity
+    n.link(n.coords("Object"), mapping.inputs["Vector"])
+    streak = n.add("ShaderNodeTexNoise")
+    streak.inputs["Scale"].default_value = 1.0
+    streak.inputs["Detail"].default_value = 5.0
+    streak.inputs["Roughness"].default_value = 0.6
+    n.link(mapping.outputs[0], streak.inputs["Vector"])
+    lo = 0.62 - 0.12 * fat_amount
+    fat_mask = n.maprange(streak.outputs["Fac"], lo, lo + 0.05)
+    base = n.mix(n.maprange(n.noise(9.0, 4, 0.6), 0.35, 0.7), rgb(deep), rgb(lean))
+    ribs = n.mix(n.stripes("Z", 0.045), (0, 0, 0, 1), (1, 1, 1, 1))
+    m = n.add("ShaderNodeMath", operation="MULTIPLY")
+    n.link(ribs, m.inputs[0])
+    m.inputs[1].default_value = 0.18
+    base = n.mix(m.outputs[0], base, rgb(deep))
+    n.link(n.mix(fat_mask, base, rgb(fat)), n.bsdf.inputs["Base Color"])
+    n.set("Roughness", 0.38)
+    n.set("Subsurface Weight", 0.12)
+    n.set("Coat Weight", 0.25)
+    n.bump(streak.outputs["Fac"], 0.25, 0.01)
+    return n.mat
+
+
 def skin(name, colour="skin", wet=False):
     n = Nodes(name)
     n.link(n.mix(n.noise(20, 3), rgb(colour), n.mix(0.25, rgb(colour), rgb("#5A3424"))), n.bsdf.inputs["Base Color"])
@@ -418,7 +446,7 @@ def glass(name, tint="#9FB4B8"):
     return n.mat
 
 
-def image(name, path, rough=0.6, box_uv=False):
+def image(name, path, rough=0.6, box_uv=False, flex=False):
     """Image texture on UVs (signboards rendered from src/data by tools/render_signs.mjs)."""
     n = Nodes(name)
     tex = n.add("ShaderNodeTexImage")
@@ -437,4 +465,6 @@ def image(name, path, rough=0.6, box_uv=False):
     faded = n.mix(n.maprange(n.noise(4, 4), 0.4, 0.8, 0.0, 0.2), tex.outputs["Color"], rgb("#D9C9B8"))
     n.link(faded, n.bsdf.inputs["Base Color"])
     n.set("Roughness", rough)
+    if flex:   # printed flex banner: soft creases where it is stretched over the frame
+        n.bump(n.noise(4.0, 3, 0.5), 0.12, 0.01)
     return n.mat

@@ -1,10 +1,15 @@
-import { AUTO, Game, Scale, Types } from 'phaser';
+import { AUTO, Game, Scale, type Scene, Types } from 'phaser';
+import { runs } from './content';
 import { Boot } from './scenes/Boot';
-import { Station01 } from './scenes/Station01';
-import { Station02 } from './scenes/Station02';
+import { Placeholder } from './scenes/Placeholder';
 import { StationCard } from './scenes/StationCard';
 import { initState } from './state';
 import { FRAME } from './theme';
+
+// Every station scene in scenes/stations/ registers itself: default-export a StationScene subclass.
+const stationScenes = Object.values(
+    import.meta.glob<new () => Scene>('./scenes/stations/*.ts', { eager: true, import: 'default' }),
+);
 
 // https://docs.phaser.io/api-documentation/typedef/types-core#gameconfig
 const config: Types.Core.GameConfig = {
@@ -16,12 +21,12 @@ const config: Types.Core.GameConfig = {
         mode: Scale.FIT,
         autoCenter: Scale.CENTER_BOTH,
     },
-    scene: [Boot, Station01, Station02, StationCard],
+    scene: [Boot, ...stationScenes, StationCard, Placeholder],
 };
 
 const StartGame = (parent: string) => {
     const game = new Game({ ...config, parent });
-    initState(game);
+    initState(game, { 1: runs[1].beats, 2: runs[2].beats });
     (window as unknown as { __game: Game }).__game = game;   // for Playwright screenshots
     return game;
 };

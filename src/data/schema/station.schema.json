@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "station.schema.json",
+  "title": "Station",
+  "description": "One station of the journey: its set, signs, per-run prompts, kilo tag and blueprint rows. Every text a player sees comes from here, and every item cites ids from evidence-map.json. Worked example: stations/s01.json.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "number", "title", "place", "evidence", "set", "runs"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "id": { "type": "string", "pattern": "^s0[1-7]$", "description": "s01..s07, also the Phaser scene key." },
+    "number": { "type": "integer", "minimum": 1, "maximum": 7 },
+    "title": { "type": "string", "description": "As in the spec's journey table, e.g. \"The stall\"." },
+    "label": { "type": "string", "description": "A truth-rule label shown with the title, e.g. \"How it could close\" (s07) or \"Renderer (example)\" (s06)." },
+    "place": { "type": "string" },
+    "greybox": { "type": "boolean", "description": "true while the set is a blockout; remove when final art lands." },
+    "evidence": { "$ref": "#/$defs/evidence", "description": "Everything the evidence card (I) lists for this station." },
+    "set": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["blend", "renders", "lighting"],
+      "properties": {
+        "blend": { "type": "string", "pattern": "^art/blender/s0[1-7]_[a-z0-9_]+\\.blend$" },
+        "renders": { "type": "string", "pattern": "^public/assets/stations/s0[1-7]/$" },
+        "lighting": { "enum": ["morning", "midday", "night"] },
+        "street": {
+          "type": "object",
+          "description": "Overrides for kit.Street (art/scripts/lib/kit.py), in metres.",
+          "additionalProperties": false,
+          "properties": {
+            "x0": { "type": "number" }, "x1": { "type": "number" }, "depth": { "type": "number" },
+            "wall_y": { "type": "number" }, "wall_t": { "type": "number" },
+            "chajja_z": { "type": "number" }, "top_z": { "type": "number" }
+          }
+        }
+      }
+    },
+    "signs": { "type": "array", "items": { "$ref": "#/$defs/sign" } },
+    "runs": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Per-run content. Leave a run out if the station is not in it.",
+      "properties": { "1": { "$ref": "#/$defs/run" }, "2": { "$ref": "#/$defs/run" } }
+    },
+    "kilo": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["label", "tag", "evidence"],
+      "properties": {
+        "label": { "type": "string" },
+        "tag": { "$ref": "#/$defs/tag" },
+        "evidence": { "$ref": "#/$defs/evidence" }
+      }
+    },
+    "blueprint": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": { "1": { "$ref": "#/$defs/blueprintRow" }, "2": { "$ref": "#/$defs/blueprintRow" } }
+    },
+    "params": {
+      "type": "object",
+      "description": "Station-specific numbers and flags read only by that station's scene (e.g. s01: cut.chops, fridge.flicker). Anything numeric shown to the player must also carry evidence."
+    }
+  },
+  "$defs": {
+    "evidence": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "description": "A key of evidence-map.json sources." }
+    },
+    "run": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "prompts": {
+          "type": "object",
+          "description": "Prompt pill texts keyed by the scene's phase name.",
+          "additionalProperties": { "type": "string" }
+        },
+        "next": { "type": "string", "description": "Station id or \"end\". Normally taken from runs.json; set here only to override." },
+        "summary": { "type": "string" },
+        "proposed": { "type": "boolean", "description": "true if this run's version of the station is our proposal (hub)." }
+      }
+    },
+    "tag": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "meaning"],
+      "properties": {
+        "value": { "type": "string", "description": "As shown: \"−₹5\", or the payout placeholder \"+₹[__]\". Never a payout number (truth rules)." },
+        "meaning": { "enum": ["cost", "income", "pay", "offsite"] },
+        "note": { "type": "string" }
+      }
+    },
+    "blueprintRow": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["lane", "text", "evidence"],
+        "properties": {
+          "lane": { "enum": ["vendor", "frontstage", "backstage", "support", "evidence"] },
+          "text": { "type": "string" },
+          "evidence": { "$ref": "#/$defs/evidence" },
+          "proposed": { "type": "boolean", "description": "Required true for every hub detail (truth rules: \"Proposed\")." }
+        }
+      }
+    },
+    "sign": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "size_m", "style", "evidence"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9_]+$" },
+        "size_m": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2 },
+        "style": { "enum": ["flex-meat", "flex-red", "board-maroon", "sticker-upi"], "description": "A style in tools/render_signs.mjs. Add new styles there first." },
+        "lines": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["text", "lang", "role"],
+            "properties": {
+              "text": { "type": "string" },
+              "lang": { "enum": ["en", "kn", "ur", "hi"] },
+              "role": { "type": "string" },
+              "check": { "type": "string", "description": "Set while a translation awaits a speaker's check; listed in review/final.md." }
+            }
+          }
+        },
+        "note": { "type": "string" },
+        "evidence": { "$ref": "#/$defs/evidence" }
+      }
+    }
+  }
+}

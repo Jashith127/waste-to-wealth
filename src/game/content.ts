@@ -1,7 +1,7 @@
 // Typed access to src/data/. All game text and numbers come from these JSON files.
+// New station files in src/data/stations/ are picked up automatically.
 import evidenceMap from '../data/evidence-map.json';
-import s01 from '../data/stations/s01.json';
-import s02 from '../data/stations/s02.json';
+import runsData from '../data/runs.json';
 import type { Meaning } from './theme';
 import type { Run } from './state';
 
@@ -14,17 +14,24 @@ export interface BlueprintItem {
     proposed?: boolean;
 }
 
+export interface Tag { value: string; meaning: Meaning; note?: string }
+
+export interface RunData { prompts?: Record<string, string>; next?: string; summary?: string; proposed?: boolean }
+
 export interface StationData {
     id: string;
     number: number;
     title: string;
+    label?: string;
     place: string;
     evidence: string[];
     greybox?: boolean;
-    runs: Record<string, { prompts?: Record<string, string>; next?: string; summary?: string; proposed?: boolean }>;
-    blueprint?: Record<string, BlueprintItem[]>;
-    kilo?: { label: string; tag: { value: string; meaning: Meaning; note?: string }; evidence: string[] };
-    [extra: string]: unknown;
+    set: { blend: string; renders: string; lighting: string };
+    runs: Partial<Record<'1' | '2', RunData>>;
+    blueprint?: Partial<Record<'1' | '2', BlueprintItem[]>>;
+    kilo?: { label: string; tag: Tag; evidence: string[] };
+    signs?: unknown[];
+    params?: Record<string, unknown>;
 }
 
 export interface Source {
@@ -39,20 +46,25 @@ export interface Source {
     proposed?: boolean;
 }
 
-const stations: Record<string, StationData> = { s01, s02 } as unknown as Record<string, StationData>;
+export interface RunInfo { title: string; subtitle: string; beats: string[]; target_seconds?: number; proposed?: boolean; evidence: string[] }
+
+const files = import.meta.glob<StationData>('../data/stations/*.json', { eager: true, import: 'default' });
+const stations: Record<string, StationData> = Object.fromEntries(Object.values(files).map((s) => [s.id, s]));
+
+export const runs = runsData as unknown as Record<Run, RunInfo>;
 
 export function station(id: string): StationData {
     const s = stations[id];
-    if (!s) throw new Error(`no station data for ${id}`);
+    if (!s) throw new Error(`no station data for ${id} (add src/data/stations/${id}.json)`);
     return s;
 }
 
-export function runData(s: StationData, run: Run) {
-    return s.runs[String(run)] ?? {};
+export function runData(s: StationData, run: Run): RunData {
+    return s.runs[String(run) as '1' | '2'] ?? {};
 }
 
 export function blueprint(s: StationData, run: Run): BlueprintItem[] {
-    return s.blueprint?.[String(run)] ?? [];
+    return s.blueprint?.[String(run) as '1' | '2'] ?? [];
 }
 
 export function source(id: string): Source {

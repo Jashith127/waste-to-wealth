@@ -1,0 +1,37 @@
+{
+  "$schema": "./schema/runs.schema.json",
+  "1": {
+    "title": "Run 1 · Today",
+    "subtitle": "The morning cut, the ₹5/kg fee, waste dumped behind Russell Market, and leftover meat spoiling in the night's power cut.",
+    "target_seconds": 60,
+    "beats": [
+      "s01",
+      "s02",
+      "s01:night"
+    ],
+    "evidence": [
+      "SPEC-journey",
+      "C-fee-southfirst",
+      "C-fee-tnm",
+      "D-p22"
+    ]
+  },
+  "2": {
+    "title": "Run 2 · With the hub",
+    "subtitle": "The same day, the same kilo, through the Meat Waste Hub.",
+    "beats": [
+      "s01",
+      "s02",
+      "s03",
+      "s04",
+      "s05",
+      "s06",
+      "s07",
+      "end"
+    ],
+    "proposed": true,
+    "evidence": [
+      "SPEC-journey"
+    ]
+  }
+}

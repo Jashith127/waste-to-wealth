@@ -12,7 +12,8 @@ export interface KiloTagState {
 
 export interface GameState {
     run: Run;
-    station: string;
+    beat: number;       // index into runs.json beats for this run
+    station: string;    // scene currently playing
     kilo: { carried: boolean; tag: KiloTagState | null };
     blueprintOpen: boolean;
     reducedMotion: boolean;
@@ -20,11 +21,17 @@ export interface GameState {
 
 const KEY = 'state';
 
-export function initState(game: Game): GameState {
+/** URL params for reviewers and screenshots: ?run=2&beat=3, or ?station=s04 (first beat of that station). */
+export function initState(game: Game, beats: Record<Run, string[]>): GameState {
     const params = new URLSearchParams(window.location.search);
+    const run: Run = params.get('run') === '2' ? 2 : 1;
+    let beat = Number(params.get('beat') ?? 0);
+    const wanted = params.get('station');
+    if (wanted) beat = Math.max(0, beats[run].findIndex((b) => b.split(':')[0] === wanted));
     const state: GameState = {
-        run: params.get('run') === '2' ? 2 : 1,
-        station: params.get('station') ?? 's01',
+        run,
+        beat,
+        station: beats[run][beat]?.split(':')[0] ?? 's01',
         kilo: { carried: false, tag: null },
         blueprintOpen: false,
         reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches || params.has('reducedMotion'),

@@ -2,9 +2,10 @@
 
 Usage: python tools/pack_layers.py s01
 
-Reads art/build/renders/<id>/*.png (+ anchors.json) and writes to public/assets/stations/<id>/:
-  bg.png              the full-frame background (fridge light off)
-  fx_fridge_glow.png  only the pixels that change when the fridge light is on (overlay)
+Reads art/build/renders/<id>/ (written by art/scripts/render_station.py) and writes to
+public/assets/stations/<id>/:
+  bg.png              the full-frame background, every FX off
+  fx_<name>.png       only the pixels that bg_fx_<name>.png changes (an overlay the game toggles)
   <sprite>.png        every other layer, cropped to its visible pixels
   pack.json           Phaser asset pack (keys "<id>_<layer>")
   layers.json         where each layer sits in the 1920x1080 frame, plus anchors
@@ -52,20 +53,27 @@ def main(station):
         files.append({"type": "image", "key": f"{station}_{name}", "url": f"assets/stations/{station}/{name}.png"})
         print(f"{name:16} {im.width}x{im.height} at {box[0]},{box[1]}  {path.stat().st_size // 1024} KB")
 
-    off = Image.open(src / "bg_fridge_off.png").convert("RGBA")
-    on = Image.open(src / "bg_fridge_on.png").convert("RGBA")
-    emit("bg", off, (0, 0))
-    glow, box = glow_overlay(on, off)
-    if glow:
-        emit("fx_fridge_glow", glow, box)
+    # backgrounds: bg.png plus preset variants like bg_night.png; fx overlays diff against the bg of
+    # the same preset (bg_fx_glow.png vs bg.png, bg_fx_glow_night.png vs bg_night.png)
+    presets = [""] + sorted(p.stem[3:] for p in src.glob("bg_*.png") if not p.stem.startswith("bg_fx_"))
+    for preset in presets:
+        off = Image.open(src / f"bg{preset and '_' + preset}.png").convert("RGBA")
+        emit(f"bg{preset and '_' + preset}", off, (0, 0))
+        for fx in sorted(src.glob("bg_fx_*.png")):
+            name = fx.stem.removeprefix("bg_")
+            if (name.endswith("_" + preset) if preset else not any(name.endswith("_" + p) for p in presets if p)):
+                overlay, box = glow_overlay(Image.open(fx).convert("RGBA"), off)
+                if overlay:
+                    emit(name, overlay, box)
 
     anchors = json.loads((src / "anchors.json").read_text(encoding="utf-8"))
     for png in sorted(src.glob("*.png")):
-        if png.stem.startswith("bg_"):
+        if png.stem == "bg" or png.stem.startswith("bg_"):
             continue
         im = Image.open(png).convert("RGBA")
-        if png.stem.endswith("_shadow"):   # a contact shadow lives near its prop: clear stray catcher alpha
-            cx, cy = anchors[png.stem.removesuffix("_shadow") + "_centre"]
+        prop = png.stem.split("_shadow")[0]
+        if "_shadow" in png.stem:          # a contact shadow lives near its prop: clear stray catcher alpha
+            cx, cy = anchors[prop + "_centre"]
             keep = Image.new("L", im.size, 0)
             keep.paste(255, (int(cx - 170), int(cy - 70), int(cx + 170), int(cy + 90)))
             im.putalpha(ImageChops.multiply(im.getchannel("A"), keep))

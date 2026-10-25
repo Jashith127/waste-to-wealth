@@ -1,14 +1,13 @@
 // Station 1 · The stall, Cockburn Road. Finish the morning cut, pick up the kilo, take it out.
 import { GameObjects, Math as PMath } from 'phaser';
-import { runData } from '../content';
-import { setState } from '../state';
-import { colour, css, font, motion } from '../theme';
-import { KiloTag } from '../ui/KiloTag';
-import { StationScene } from './StationScene';
+import { setState } from '../../state';
+import { colour, css, font, motion } from '../../theme';
+import { KiloTag } from '../../ui/KiloTag';
+import { StationScene } from '../StationScene';
 
 type Phase = 'cut' | 'pickup' | 'leave';
 
-export class Station01 extends StationScene {
+export default class Station01 extends StationScene {
     private phase: Phase = 'cut';
     private chops = 0;
     private busy = false;
@@ -45,7 +44,7 @@ export class Station01 extends StationScene {
         this.add.zone(block.x, block.y - 20, 190, 150).setInteractive({ useHandCursor: true }).on('pointerup', () => this.act());
         this.input.keyboard!.on('keydown-SPACE', () => this.act());
         this.input.keyboard!.on('keydown-ENTER', () => this.act());
-        this.input.keyboard!.on('keydown-RIGHT', () => this.phase === 'leave' && this.leave(this.next()));
+        this.input.keyboard!.on('keydown-RIGHT', () => this.phase === 'leave' && this.leave());
 
         this.prompt.show(this.prompts().cut, 'Space');
         this.ring = this.hint(block.x, block.y - 10, 92);
@@ -75,7 +74,7 @@ export class Station01 extends StationScene {
             this.time.delayedCall(150, () => {
                 this.pose('idle');
                 this.busy = false;
-                if (++this.chops >= ((this.stationData.cut as { chops: number }).chops ?? 3)) {
+                if (++this.chops >= (this.params().cut.chops ?? 3)) {
                     this.queued = false;
                     this.kiloReady();
                 } else if (this.queued) {
@@ -123,22 +122,22 @@ export class Station01 extends StationScene {
         const x = Math.min(exit.x + 360, 1720), y = 560;
         const g = this.add.graphics();
         g.fillStyle(colour.ink, 0.92).fillRoundedRect(-150, -36, 300, 72, 36);
-        const label = this.add.text(0, 0, `${runData(this.stationData, this.state.run).next === 's02' ? 'Walk on' : 'Next'}  →`, {
+        const label = this.add.text(0, 0, 'Walk on  →', {
             fontFamily: font.display, fontSize: 32, fontStyle: '700', color: css.cream,
         }).setOrigin(0.5);
         const b = this.add.container(x, y, [g, label]).setSize(300, 72).setDepth(45).setAlpha(0);
-        b.setInteractive({ useHandCursor: true }).on('pointerup', () => this.leave(this.next()));
+        b.setInteractive({ useHandCursor: true }).on('pointerup', () => this.leave());
         this.tweens.add({ targets: b, alpha: 1, x: { from: x - 20, to: x }, duration: motion.normal, delay: 350 });
         return b;
     }
 
-    private next() {
-        return runData(this.stationData, this.state.run).next ?? 's02';
+    private params() {
+        return this.stationData.params as { cut: { chops: number }; fridge: { flicker: boolean } };
     }
 
     /** The cooler light stutters: mostly on, with bursts of drop-outs (unreliable power, deck p. 22). */
     private flicker(glow: GameObjects.Image) {
-        if (this.state.reducedMotion) return;
+        if (this.state.reducedMotion || !this.params().fridge.flicker) return;
         const burst = () => {
             const blinks = PMath.Between(2, 4);
             for (let i = 0; i < blinks; i++) {
