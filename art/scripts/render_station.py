@@ -8,10 +8,12 @@ Options:
   --preset night     re-light with another rig preset; outputs get a _night suffix
   --power-cut        hide everything tagged ["practical"] (shop lights and lamps): the grid is down
 Outputs to art/build/renders/<station>/ (never saves the .blend):
-  bg.png                     SET + PROPS; every FX off; the idle pose of each character casts its shadow
+  bg.png                     SET + PROPS + FG; every FX off; the idle pose of each character casts its shadow
+  fg.png                     FG alone, cut by nothing (the rest of the set is a holdout): drawn over moving sprites
   bg_fx_<name>.png           the same with FX_<name> on (pack_layers.py turns the difference into fx_<name>)
   <char>_<pose>.png          each CHAR_<char>_<pose>; every other object is a holdout
-  <prop>.png                 each PROP_<prop>, lit by the set, cut by what is in front
+                             (a ["free"] collection moves: the set only lights and shadows it, fg.png occludes)
+  <prop>.png                 each PROP_<prop>, lit by the set, cut by what is in front (or ["free"], as above)
   <prop>_shadow.png          its contact shadow on the catcher tagged ["shadow_catcher"]
   anchors.json               screen anchors written by the build script
 Then: python tools/pack_layers.py <station>
@@ -92,7 +94,9 @@ def main():
             bpy.data.objects.remove(o)
         rig.lights(PRESET)
 
-    env = objects(bpy.data.collections["SET"]) + objects(bpy.data.collections["PROPS"])
+    fg_col = bpy.data.collections.get("FG")
+    fg = objects(fg_col) if fg_col else []
+    env = objects(bpy.data.collections["SET"]) + objects(bpy.data.collections["PROPS"]) + fg
     fx = groups("FX_")
     chars = groups("CHAR_")                      # "riyaz_idle" -> collection
     props = groups("PROP_")
@@ -103,6 +107,8 @@ def main():
     def reset():
         for o in every:
             o.hide_render = False
+        for o in env:                            # undo the last layer's holdouts (the fg pass precedes FX)
+            geo.set_render_role(o, "normal")
         for o in practicals:
             if o.type in GEOMETRY:
                 geo.set_render_role(o, "normal")     # (this un-hides, so it comes before the cut)
@@ -140,22 +146,33 @@ def main():
         bpy.ops.render.render(write_still=True)
         print(f"[render] {name}", flush=True)
 
+    def cut(c, objs):
+        """Occluders for a sprite: the set is a holdout, unless the collection moves (["free"]): then the
+        set still lights and shadows it but is not seen, and the game draws fg.png over it."""
+        if c.get("free"):
+            for o in objs:
+                geo.set_render_role(o, "hidden")
+        else:
+            holdout(objs)
+
     reset(); idle_shadows(); render("bg", 128)
+    if fg:
+        reset(); idle_shadows(); holdout([o for o in env if o not in fg]); render("fg", 128, fg)
     for name, c in fx.items():
         reset(); idle_shadows(); show(c); render(f"bg_fx_{name}", 128)
 
     for name, c in chars.items():
-        reset(); show(c); holdout(env)
+        reset(); show(c); cut(c, env)
         for other, oc in chars.items():
             if other.endswith("_idle") and other.split("_")[0] != name.split("_")[0]:
-                show(oc, "holdout")
+                show(oc, "hidden" if c.get("free") else "holdout")
         render(name, 96, list(c.all_objects))
 
     for name, c in props.items():
         geometry = objects(c)
         catcher = [o for o in geometry if o.get("shadow_catcher")]
         body = [o for o in geometry if not o.get("shadow_catcher")]
-        reset(); show(c); holdout(env); idle_shadows("holdout")
+        reset(); show(c); cut(c, env); idle_shadows("hidden" if c.get("free") else "holdout")
         for o in catcher:
             o.hide_render = True
         render(name, 96, body)

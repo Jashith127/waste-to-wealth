@@ -37,6 +37,8 @@ import bpy  # noqa: E402
 import geo  # noqa: E402
 import kit  # noqa: E402
 import materials as M  # noqa: E402
+import human  # noqa: E402  (low-poly rigged people, s02 on; s01 keeps lib/people)
+kit.BODY = human
 import people  # noqa: E402
 import rig  # noqa: E402
 import safety  # noqa: E402
@@ -80,6 +82,7 @@ class ArtStation(station.Station):
         self.m = kit.materials()
         self.set = geo.collection("SET")
         self.props = geo.collection("PROPS")
+        self.fg = geo.collection("FG")
 
 
 # ---------------------------------------------------------------- materials only this set needs
@@ -433,7 +436,7 @@ def riyaz(st):
     mats["apron"] = apron_worn("MAT_riyaz_apron_worn")
     right, left = (-0.52, -0.06, 0.92), (0.52, -0.06, 0.92)       # out to the sides, off the apron
     col = st.char("riyaz", "idle")
-    people.figure("RIYAZ_idle", RIYAZ_AT, RIYAZ_HEADING, mats, right, left, col)
+    human.figure("RIYAZ_idle", RIYAZ_AT, RIYAZ_HEADING, mats, right, left, col)
     for side, hand in (("R", right), ("L", left)):          # drips from the fingertips
         for k, (dz, r) in enumerate(((0.1, 0.02), (0.26, 0.016), (0.44, 0.013))):
             p = _world(RIYAZ_AT, RIYAZ_HEADING, (hand[0], hand[1], hand[2] - dz))
@@ -459,7 +462,7 @@ def attendant(st):
     }
     for pose, (right, left) in poses.items():
         col = st.char("attendant", pose)
-        root = people.figure(f"ATT_{pose}", ATTENDANT_AT, 0, mats, right, left, col, moustache=False)
+        root = human.figure(f"ATT_{pose}", ATTENDANT_AT, 0, mats, right, left, col, moustache=False)
         parts = [
             geo.limb(f"ATT_{pose}_lanyard_L", (-0.07, -0.152, 1.34), (0.0, -0.162, 1.1), 0.007, 0.007, m["lanyard"], col),
             geo.limb(f"ATT_{pose}_lanyard_R", (0.07, -0.152, 1.34), (0.0, -0.162, 1.1), 0.007, 0.007, m["lanyard"], col),

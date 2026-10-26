@@ -17,7 +17,7 @@
       "summary": "The kilo is weighed, recorded by voice and paid by UPI.",
       "proposed": true,
       "prompts": {
-        "sort": "Pick out what is not meat waste",
+        "sort": "Sort it: crate or bin",
         "drag": "Put the crate on the scale",
         "number": "Say your number",
         "wait": "The attendant types it in",
@@ -97,6 +97,10 @@
       "lines": [
         "1.0 kg · sorted",
         "₹[__] by UPI"
+      ],
+      "lines_mixed": [
+        "1.0 kg · mixed",
+        "₹[__] by UPI"
       ]
     },
     "tag_after": {
@@ -108,37 +112,79 @@
       "title": "Sort before you weigh",
       "keep_label": "Into the crate",
       "reject_label": "Not for the hub",
+      "keys": "← crate · bin →",
+      "count": "{n} of {total}",
       "done": "Sorted",
+      "score": "{right} of {total} sorted right",
+      "verdict_clean": "A clean crate: the sorted rate",
+      "verdict_mixed": "Rubbish in the crate: the mixed rate",
+      "verdict_lost": "Meat waste in the bin is value thrown away",
       "items": [
         {
-          "label": "Bone",
+          "label": "Bone-in offcut",
           "kind": "bone",
-          "keep": true
+          "keep": true,
+          "why": "Bone is meat waste: it goes in the crate"
         },
         {
-          "label": "Plastic bag",
+          "label": "Carry bag",
           "kind": "bag",
-          "keep": false
+          "keep": false,
+          "why": "Plastic is not meat waste"
         },
         {
-          "label": "Offal",
-          "kind": "offal",
-          "keep": true
+          "label": "Liver",
+          "kind": "liver",
+          "keep": true,
+          "why": "Offal is meat waste: it goes in the crate"
         },
         {
-          "label": "Paper cup",
+          "label": "Paper tea cup",
           "kind": "cup",
-          "keep": false
+          "keep": false,
+          "why": "A tea cup is not meat waste"
         },
         {
-          "label": "Fat",
-          "kind": "fat",
-          "keep": true
+          "label": "Rib offcut",
+          "kind": "ribs",
+          "keep": true,
+          "why": "Bone is meat waste: it goes in the crate"
         },
         {
-          "label": "String",
+          "label": "Twine",
           "kind": "string",
-          "keep": false
+          "keep": false,
+          "why": "Twine is not meat waste"
+        },
+        {
+          "label": "Fat trim",
+          "kind": "fat",
+          "keep": true,
+          "why": "Fat is meat waste: it goes in the crate"
+        },
+        {
+          "label": "Newspaper wrap",
+          "kind": "paper",
+          "keep": false,
+          "why": "Paper is not meat waste"
+        },
+        {
+          "label": "Gut",
+          "kind": "gut",
+          "keep": true,
+          "why": "Offal is meat waste: it goes in the crate"
+        },
+        {
+          "label": "Foam tray",
+          "kind": "tray",
+          "keep": false,
+          "why": "Thermocol is not meat waste"
+        },
+        {
+          "label": "Chicken skin",
+          "kind": "skin",
+          "keep": true,
+          "why": "Skin is meat waste: it goes in the crate"
         }
       ]
     }

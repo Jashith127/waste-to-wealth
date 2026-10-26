@@ -5,7 +5,7 @@ import { GameObjects, Scene } from 'phaser';
 import { hasStation, station, type Tag } from '../content';
 import { getState, setState } from '../state';
 import { colour, css, font, FRAME } from '../theme';
-import { drawCard, drawChip } from './card';
+import { drawCard, drawChip, keepClear } from './card';
 
 const PPM = 1920 / 11;
 const GREY = { top: 0xb4aea6, front: 0x9a958e, side: 0x6e6a65 };
@@ -83,6 +83,7 @@ export function labelCard(scene: Scene, x: number, y: number, text: string, opts
         chip.setX(cx);
         c.add([cg, chip]);
     }
+    keepClear(c, w, h);
     return c.setDepth(35);
 }
 

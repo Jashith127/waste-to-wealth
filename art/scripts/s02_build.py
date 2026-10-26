@@ -13,6 +13,12 @@ other station, with the same camera (only the canvas is wider). The plate's top-
 normal start frame; Station02 shows a 1920x1080 window and slides it across the plate. Anchors
 are in plate pixels.
 
+Layering: Riyaz walks a clear lane down the middle of the footpath (LANE_Y). Nothing stands in
+the lane. Everything behind it (shop side) is plain set; everything in front of it that can
+overlap him on screen (kerb side: pole, bollards, the tree, a passer-by) goes in FG, which the game
+draws over him. Riyaz, the bag and the handcart are ["free"] layers: rendered with no set
+holdouts, because they move (a holdout baked at one spot travels with the sprite).
+
 Sources: shopfronts, shutters, awnings, signboards, scooter, chairs after F04 and F02 (Tier A);
 the steel pushcart and tarp after F01; red crates and the blue drum after F03; overhead wires and
 the leaning pole after F02/R19; Russell Market's white masonry with the pink ghost, pointed arches
@@ -22,6 +28,7 @@ bone, cardboard and stains with no gore (art bible §4). Signboards are the s01 
 (no real shop names, §7).
 """
 import math
+import random
 import sys
 from pathlib import Path
 
@@ -33,22 +40,26 @@ import bpy  # noqa: E402
 import geo  # noqa: E402
 import kit  # noqa: E402
 import materials as M  # noqa: E402
+import human  # noqa: E402  (low-poly rigged people, s02 on; s01 keeps lib/people)
+kit.BODY = human
 import people  # noqa: E402
 import rig  # noqa: E402
 import s03_art_build as s03  # noqa: E402  (Russell Market masonry, arches, posters, as at the hub)
 import safety  # noqa: E402
 import station  # noqa: E402
+import street_life  # noqa: E402
 from mathutils import Matrix, Vector  # noqa: E402
 
 TARGET = (0.0, 3.0, 1.0)                 # camera focal point: the start of the walk
 PLATE_W, PLATE_H = 3200, 1920             # the street plate: 1920x1080 start frame plus the pan
 PLATE_TARGET = (6.0, 2.19, 1.0)           # plate centre; 640 px right and 420 px down of TARGET
 PPM = 1920 / 11.0                         # keep the 11 m / 1920 px camera scale
-RIYAZ_AT = (0.2, 2.75, 0.0)              # on the pavement, near the shopfronts, walking +X
+LANE_Y = 1.7                              # Riyaz's walking line, mid-footpath; kept clear of everything
+RIYAZ_AT = (0.2, LANE_Y, 0.0)             # walking +X
 HEADING = 90                              # facing along the street
 HAND_R = (-0.3, 0.02, 0.74)               # local: the right arm down at his side, carrying the bag
-ANTHONY_AT = (3.0, 2.25, 0.0)
-ARIF_AT = (7.0, 2.8, 0.0)
+ANTHONY_AT = (3.15, 2.85, 0.0)            # behind his counter, against the wall
+ARIF_AT = (7.0, 2.85, 0.0)                # in his doorway
 LITTER_AT = Vector((13.0, 1.95, 0.0))      # against the market's boundary wall (V05)
 PILE_TOP = 0.42
 CART_AT = Vector((6.1, 2.25, 0.0))        # the handcart that crosses the walk (the mini-game)
@@ -56,7 +67,7 @@ CART_AT = Vector((6.1, 2.25, 0.0))        # the handcart that crosses the walk (
 # Shopfront rhythm along 20 m: piers, then a bay between each pair.
 PIERS = ((-5.0, -4.7), (-1.7, -1.4), (1.7, 2.0), (4.8, 5.1), (8.0, 8.3), (10.7, 11.0))
 BAYS = ((-4.7, -1.7), (-1.4, 1.7), (2.0, 4.8), (5.1, 8.0), (8.3, 10.7))
-OPEN_BAYS = (0, 2)                        # open shops with awnings and dark interiors
+OPEN_BAYS = {0: "provisions", 1: "sweets", 2: "fruits"}   # open shops: their sign id and their stock
 
 
 def plate_to_screen(point, _target=None):
@@ -119,34 +130,126 @@ def facade(st):
         if i in OPEN_BAYS:
             kit.shop_opening(s, f"FACADE_bay_{i}", x0, x1, m, col)
             kit.awning(s, f"SHOP_awning_{i}", x0 - 0.1, x1 + 0.1, m, col)
+            kit.fascia(s, st.data, OPEN_BAYS[i], (x0 + x1) / 2, 3.18, m, col)     # its name, above the awning
             rooms.append((x0, x1, s.wall_y + 2.4, 3.0))
-            shop_interior(st, i, x0, x1)
+            shop_interior(st, i, x0, x1, OPEN_BAYS[i])
         elif i == 3:
             door_bay(st, x0, x1)
         else:
-            kit.shutter_bay(s, f"FACADE_bay_{i}", x0, x1, m, col, m["sign_a"] if i == 1 else m["sign_b"])
+            kit.shutter_bay(s, f"FACADE_bay_{i}", x0, x1, m, col, m["sign_b"])        # the saree wholesaler, shut
     kit.upper_storey(s, m, col, windows=((-4.2, -2.6), (-1.2, 0.4), (1.6, 3.2), (4.4, 6.0), (7.2, 8.8)), ac_at=0.4)
     kit.building_mass(s, m, col, rooms=rooms)
     kit.facade_wires(s, m, col)
 
 
-def shop_interior(st, i, x0, x1):
-    """A shallow lit shop behind an open bay (R09): floor, back wall, shelves of muted goods."""
+def shop_interior(st, i, x0, x1, kind):
+    """A shallow, lit, stocked shop behind an open bay (R09, F05 density): a tiled back wall, shelves
+    packed to the ceiling, a tube light, and the trade's own front display (see `stock`)."""
     s, m, col = st.street, st.m, st.set
     back = s.wall_y + 2.4
     geo.box(f"SHOP{i}_floor", (x0, s.wall_y, 0), (x1, back, 0.12), m["floor"], col, 0.01)
     geo.box(f"SHOP{i}_back", (x0, back, 0), (x1, back + 0.2, 3.0), m["tiles_in"], col, 0)
     geo.box(f"SHOP{i}_ceiling", (x0, s.wall_y, 2.95), (x1, back + 0.2, 3.05), m["ceiling"], col, 0)
-    for k in range(3):
-        z = 0.6 + k * 0.55
-        geo.box(f"SHOP{i}_shelf{k}", (x0 + 0.2, back - 0.45, z), (x1 - 0.2, back - 0.05, z + 0.03), m["steel"], col, 0.004)
-        for j in range(int((x1 - x0 - 0.5) / 0.32)):
-            xx = x0 + 0.3 + j * 0.32
-            tint = ("#9A7B5C", "#B6A88C", "#7E8A6A", "#A8685C")[(i + j + k) % 4]
-            geo.box(f"SHOP{i}_goods{k}_{j}", (xx, back - 0.4, z + 0.03), (xx + 0.24, back - 0.12, z + 0.3),
-                    M.plastic(f"MAT_goods_{(i + j + k) % 4}", tint, 0.6), col, 0.01)
-    light = rig.point_light(f"LIGHT_shop{i}", ((x0 + x1) / 2, s.wall_y + 1.0, 2.6), (1.0, 0.85, 0.65), 45, 0.2, col)
+    for side, x in (("L", x0), ("R", x1 - 0.05)):                    # side walls, so it reads as a room
+        geo.box(f"SHOP{i}_side{side}", (x, s.wall_y + 0.25, 0), (x + 0.05, back, 2.95), m["tiles_in"], col, 0)
+    # shelves packed to the top along the left side wall: the one wall the camera sees into
+    sx = x0 + 0.05
+    for k in range(4):
+        z = 0.5 + k * 0.55
+        geo.box(f"SHOP{i}_shelf{k}", (sx, s.wall_y + 0.3, z), (sx + 0.4, back - 0.1, z + 0.03), m["steel"], col, 0.004)
+        rnd = random.Random(i * 10 + k)
+        yy = s.wall_y + 0.35
+        while yy < back - 0.3:
+            w, h = rnd.uniform(0.14, 0.26), rnd.uniform(0.22, 0.42)
+            tint = goods_tint(kind, rnd)
+            geo.box(f"SHOP{i}_goods{k}_{yy:.2f}", (sx + 0.03, yy, z + 0.03), (sx + 0.37, yy + w, z + 0.03 + h),
+                    M.plastic(f"MAT_goods_{kind}_{tint}", tint, 0.5), col, 0.01)
+            yy += w + 0.02
+    geo.box(f"SHOP{i}_tube", ((x0 + x1) / 2 - 0.6, s.wall_y + 0.5, 2.88), ((x0 + x1) / 2 + 0.6, s.wall_y + 0.56, 2.92), m["tube"], col, 0)
+    light = rig.point_light(f"LIGHT_shop{i}", ((x0 + x1) / 2, s.wall_y + 1.0, 2.6), (1.0, 0.92, 0.8), 140, 0.4, col)
     light["practical"] = True
+    stock(st, i, x0, x1, kind)
+
+
+def goods_tint(kind, rnd):
+    palettes = {
+        "provisions": ("#C9A66B", "#B5452E", "#E6D9B8", "#3E6B8C", "#D9A93A", "#7A8C3E", "#A33A3F"),
+        "sweets": ("#D9447A", "#E6C24A", "#F0E6D2", "#C9562E", "#7A3E8C", "#2E7A6B"),
+        "fruits": ("#8C6A44", "#B89A6E", "#6E5A3E"),
+    }
+    return rnd.choice(palettes[kind])
+
+
+def heap(name, centre, w, d, colour, r, col, rough=0.45, layers=3):
+    """A pyramid of round goods (fruit, laddoos), stacked as they are on a stall."""
+    mat = M.plastic(f"MAT_heap_{colour}", colour, rough)
+    cx, cy, cz = centre
+    nx, ny = max(1, int(w / (2 * r))), max(1, int(d / (2 * r)))
+    for layer in range(layers):
+        for a in range(nx - layer):
+            for b in range(ny - layer):
+                x = cx - (nx - layer - 1) * r + a * 2 * r
+                y = cy - (ny - layer - 1) * r + b * 2 * r
+                geo.sphere(f"{name}_{layer}_{a}_{b}", (x, y, cz + r + layer * r * 1.5), r, (1, 1, 0.92), mat, col, segments=12, rings=8)
+
+
+def stock(st, i, x0, x1, kind):
+    """The trade's front display, just inside the opening, where the street sees it."""
+    s, m, col = st.street, st.m, st.set
+    y = s.wall_y + 0.45
+    if kind == "provisions":
+        # open grain sacks with rolled tops: rice, dal, chilli, wheat, jaggery (F05)
+        for k, colour in enumerate(("#EDE6D6", "#D9A93A", "#9C2B1E", "#C9A66B", "#8C5A2E")):
+            x = x0 + 0.4 + k * ((x1 - x0 - 0.8) / 4)
+            geo.cylinder(f"SHOP{i}_sack{k}", (x, y + 0.1, 0.12), 0.22, 0.48, m["sack_white"], col, segments=20, bevel=0.03)
+            geo.cylinder(f"SHOP{i}_sack{k}_roll", (x, y + 0.1, 0.56), 0.235, 0.06, m["sack_white"], col, segments=20, bevel=0.02)
+            geo.sphere(f"SHOP{i}_sack{k}_grain", (x, y + 0.1, 0.58), 0.2, (1, 1, 0.35), M.matte(f"MAT_grain_{colour}", colour, 0.85), col, segments=20, rings=10)
+            geo.cylinder(f"SHOP{i}_scoop{k}", (x + 0.08, y + 0.05, 0.62), 0.04, 0.05, m["steel"], col, segments=12, bevel=0.004)
+        geo.box(f"SHOP{i}_counter", (x1 - 1.2, y + 1.1, 0.12), (x1 - 0.2, y + 1.5, 0.95), m["steel_dark"], col, 0.02)
+        geo.box(f"SHOP{i}_scale", (x1 - 0.9, y + 1.15, 0.95), (x1 - 0.55, y + 1.4, 1.02), m["steel"], col, 0.01)
+    elif kind == "sweets":
+        # an open, stepped display counter across the front: trays of laddoo, barfi, jalebi, mysore pak
+        geo.box(f"SHOP{i}_case_base", (x0 + 0.2, y, 0.12), (x1 - 0.2, y + 0.3, 0.76), m["steel_dark"], col, 0.02)
+        geo.box(f"SHOP{i}_case_step", (x0 + 0.2, y + 0.3, 0.12), (x1 - 0.2, y + 0.65, 1.0), m["steel_dark"], col, 0.02)
+        n = 4
+        tw = (x1 - x0 - 0.6) / n
+        for tier, (z, ty) in enumerate(((0.76, 0.0), (1.0, 0.3))):
+            for k in range(n):
+                tx = x0 + 0.3 + k * tw
+                geo.box(f"SHOP{i}_tray{tier}_{k}", (tx, y + ty + 0.02, z), (tx + tw - 0.06, y + ty + 0.3, z + 0.02), m["steel"], col, 0.004)
+                kind_k = (k + tier * 2) % 4
+                cx, cy = tx + (tw - 0.06) / 2, y + ty + 0.16
+                if kind_k == 0:
+                    heap(f"SHOP{i}_laddoo{tier}{k}", (cx, cy, z + 0.02), tw - 0.12, 0.24, "#E8932E", 0.035, col, 0.6, 2)
+                elif kind_k == 2:
+                    heap(f"SHOP{i}_jalebi{tier}{k}", (cx, cy, z + 0.02), tw - 0.12, 0.24, "#E07A1F", 0.03, col, 0.2, 2)
+                else:
+                    colour = "#E8E0C8" if kind_k == 1 else "#D9A93A"
+                    for a in range(int((tw - 0.12) / 0.07)):
+                        for b in range(4):  # noqa: B007
+                            bx, by = tx + 0.04 + a * 0.07, y + ty + 0.04 + b * 0.06
+                            geo.box(f"SHOP{i}_barfi{tier}{k}_{a}{b}", (bx, by, z + 0.02), (bx + 0.06, by + 0.065, z + 0.05),
+                                    M.matte(f"MAT_barfi_{colour}", colour, 0.6), col, 0.004)
+        # the sweet-seller behind the counter
+        mats = people.costume_materials("sweets", shirt="#E2DED4", trousers="#D8D4CA", cap="#EAE6DC")
+        human.figure("SWEETS_seller", ((x0 + x1) / 2 + 0.3, y + 1.0, 0.12), 0, mats, (-0.26, -0.1, 0.86), (0.26, -0.1, 0.86), col)
+    elif kind == "fruits":
+        # stepped crates of fruit rising to the back, bananas hung on a rail (F05)
+        for step, z in enumerate((0.12, 0.45, 0.78)):
+            yy = y + 0.25 + step * 0.45
+            geo.box(f"SHOP{i}_step{step}", (x0 + 0.2, yy - 0.2, 0), (x1 - 0.2, yy + 0.2, z), m["crate_dusty"], col, 0.01)
+            for k, colour in enumerate(("#E07A1F", "#A8282E", "#7FA33A", "#C9A12E", "#7A2E3A")):
+                fx = x0 + 0.45 + k * ((x1 - x0 - 0.9) / 4)
+                if (k + step) % 2 == 0 or step == 0:
+                    heap(f"SHOP{i}_fruit{step}_{k}", (fx, yy, z), 0.4, 0.3, colour, 0.045, col, 0.35, 2)
+        geo.limb(f"SHOP{i}_rail", (x0 + 0.3, y + 0.15, 2.4), (x1 - 0.3, y + 0.15, 2.4), 0.015, 0.015, m["steel"], col)
+        for k in range(5):
+            bx = x0 + 0.5 + k * ((x1 - x0 - 1.0) / 4)
+            geo.limb(f"SHOP{i}_banana_stalk{k}", (bx, y + 0.15, 2.4), (bx, y + 0.15, 1.9), 0.02, 0.02, m["stem"] if "stem" in m else m["cable"], col)
+            for j in range(6):
+                a = j * 1.05
+                geo.sphere(f"SHOP{i}_banana{k}_{j}", (bx + math.cos(a) * 0.07, y + 0.15 + math.sin(a) * 0.07, 2.25 - (j % 3) * 0.12), 0.035,
+                           (1, 1, 3.2), M.plastic("MAT_banana", "#D9C23A", 0.4), col, segments=10, rings=6, rot=(0.35 * math.cos(a), 0.35 * math.sin(a), 0))
 
 
 def door_bay(st, x0, x1):
@@ -186,64 +289,97 @@ def market_corner(st):
 
 
 def street_props(st):
-    """What fills the walk (F01-F04): a parked scooter, red crates and a blue drum by the shutters,
-    a pushcart with a tarp, plastic chairs, Anthony's stall, a leaning pole with its wires."""
-    s, m, col = st.street, st.m, st.props
-    kit.scooter(m, col, (-3.0, 1.15, 0), heading=-15)
-    for i, (x, y, z, r) in enumerate(((1.0, 2.55, 0, 0), (1.02, 2.55, 0.3, 8), (1.5, 2.6, 0, -6), (9.2, 2.5, 0, 12))):
+    """What lines the shop side of the walk (F01-F04): red crates and a blue drum by the shutters,
+    a plastic chair at a shop door, Anthony's stall against the wall. All of it behind the lane."""
+    m, col = st.m, st.props
+    for i, (x, y, z, r) in enumerate(((1.0, 2.62, 0, 0), (1.02, 2.62, 0.3, 8), (1.5, 2.66, 0, -6), (9.3, 2.62, 0, 12))):
         kit.ph(f"PROP_crate{i}", "plastic_crate_01", (x, y, z), r, 1.0, col)                       # F03, R13
-    geo.cylinder("PROP_drum", (9.2, 2.65, 0), 0.28, 0.85, m["drum"], col)                       # F03 blue drum
-    kit.ph("PROP_chair_a", "plastic_monobloc_chair_01", (4.3, 1.9, 0), 200, 1.0, col)            # R08
-    kit.ph("PROP_chair_b", "plastic_monobloc_chair_01", (8.9, 1.6, 0), 150, 1.0, col)
+    geo.cylinder("PROP_drum", (9.85, 2.68, 0), 0.28, 0.85, m["drum"], col)                      # F03 blue drum
+    kit.ph("PROP_chair_a", "plastic_monobloc_chair_01", (4.5, 2.55, 0), 200, 1.0, col)           # R08, at the shop door
 
-    # Anthony's stall: a steel counter with crates of produce (F05 density, muted)
-    geo.box("STALL_counter", (2.45, 2.5, 0), (3.85, 2.95, 0.88), m["steel_dark"], col, 0.02)
-    geo.box("STALL_top", (2.42, 2.46, 0.88), (3.88, 2.98, 0.94), m["steel"], col, 0.01)
+    # Anthony's stall: a steel counter against the wall with crates of produce (F05 density, muted)
+    geo.box("STALL_counter", (2.45, 2.3, 0), (3.85, 2.65, 0.88), m["steel_dark"], col, 0.02)
+    geo.box("STALL_top", (2.42, 2.26, 0.88), (3.88, 2.68, 0.94), m["steel"], col, 0.01)
     for k, x in enumerate((2.6, 3.05, 3.5)):
-        geo.box(f"STALL_tray{k}", (x - 0.18, 2.55, 0.94), (x + 0.18, 2.88, 1.02), m["crate_dusty"], col, 0.01)
+        geo.box(f"STALL_tray{k}", (x - 0.18, 2.32, 0.94), (x + 0.18, 2.62, 1.02), m["crate_dusty"], col, 0.01)
         for j in range(5):
-            geo.sphere(f"STALL_fruit{k}_{j}", (x - 0.12 + j * 0.06, 2.7 + (j % 2) * 0.06, 1.05), 0.04, (1, 1, 1),
+            geo.sphere(f"STALL_fruit{k}_{j}", (x - 0.12 + j * 0.06, 2.44 + (j % 2) * 0.06, 1.05), 0.04, (1, 1, 1),
                        M.plastic(f"MAT_fruit{k}", ("#A8823F", "#8E5A3C", "#9A8F4E")[k], 0.5), col)
-    # the leaning lamp pole with its transformer (R19, V03), with wires up to the facade
+
+
+def kerb_side(st):
+    """In front of the lane, at the kerb (FG): the leaning lamp pole with its transformer and wires
+    (R19, V03), one passer-by. The game draws these over Riyaz."""
+    s, m, col = st.street, st.m, st.fg
     kit.lamp_pole("POLE", 10.85, 0.35, m, col, height=7.2, transformer=True)
     for i, z in enumerate((6.4, 6.6)):
         kit.wire(f"POLE_wire{i}", (11.1, 0.3, z), (4.0, s.wall_y - 0.1, 4.75 + i * 0.08), 0.3, m["cable"], col)
+    kit.pedestrian("PED_kerb", (-2.2, 0.55, 0), 95, col, kind=1, stride=0.15)
 
 
 def dress(st):
-    """The Shivajinagar kit along the walk (V01-V05): two-wheelers nose-in along the shops, autos at
-    the kerb, projecting flex boards and a banner, a stove cart, a tarp heap, pedestrians; at the
-    market end the pink-over-stone boundary wall, the rain tree, bollards and pavement vendors."""
+    """The Shivajinagar kit along the walk (V01-V05), thinned so the footpath reads as a footpath:
+    two-wheelers and autos on the road (none on the footpath), projecting flex boards and banners,
+    the shops' own displays, one shopper; at the market end the pink-over-
+    stone boundary wall, and the rain tree and bollards at the kerb."""
     s, m, col = st.street, st.m, st.props
-    kit.two_wheeler_row("BIKE_a", -4.4, -3.6, 2.0, m, col, step=0.8, heading=180)          # a few nose-in at the shops
-    kit.two_wheeler_row("BIKE_b", 8.6, 9.4, 2.0, m, col, step=0.8, heading=180)
-    kit.two_wheeler_row("BIKE_kerb_a", -4.2, 0.4, -0.6, m, col, step=2.1, heading=90, z=kit.ROAD_Z)   # the rest along the kerb
-    kit.two_wheeler_row("BIKE_kerb_b", 10.2, 12.4, -0.6, m, col, step=2.1, heading=90, z=kit.ROAD_Z)
-    for i, (x, y) in enumerate(((2.6, -1.2), (6.4, -1.25), (8.9, -2.3))):        # autos on the road (V02, V03)
+    for i, x in enumerate((-3.6, 1.2, 12.2)):                                     # a few along the kerb, on the road
+        kit.two_wheeler_row(f"BIKE_kerb_{i}", x, x, -0.6, m, col, heading=90, z=kit.ROAD_Z)
+    for i, (x, y) in enumerate(((4.6, -1.3), (9.4, -2.2))):                      # autos on the road (V02, V03)
         kit.autorickshaw(f"AUTO_{i}", (x, y, kit.ROAD_Z), 0, m, col)
+    prints = ("flex_biryani", "flex_chai", "flex_falooda", "flex_kebab")
     for i, (x, z, mat) in enumerate(((-1.55, 3.35, "flex_red"), (1.85, 3.45, "flex_yellow"), (4.95, 3.3, "flex_blue"), (8.15, 3.45, "flex_red"))):
-        kit.flex_board(f"FLEX_{i}", x, z, 1.1, s, m, m[mat], col)
+        kit.flex_board(f"FLEX_{i}", x, z, 1.1, s, m, m[mat], col, sign=kit.sign_material(st.data, prints[i], m[mat], box_uv=False))
+    for i, x in enumerate((-1.55, 4.95)):                    # the UPI QR on the piers, as at Riyaz's stall (F04)
+        kit.sticker(s, st.data, "upi_sticker", x, 1.35, 0.03, col)
     kit.banner("BANNER_0", 0.4, 4.6, 6.6, 0.9, s, m["flex_yellow"], col)
     kit.banner("BANNER_1", 6.2, 4.5, 6.2, 0.8, s, m["flex_blue"], col)
-    kit.stove_cart("STOVE_cart", (-0.6, 1.75, 0), m, col)
-    kit.ph("STOVE_lpg", "small_lpg_tank", (-1.45, 1.75, 0), 0, 1.0, col)
-    kit.ph("MANHOLE", "water_manhole_cover", (8.2, 1.6, 0.002), 0, 1.0, col)
-    kit.tarp_heap("TARP_heap", (-4.2, 2.55, 0), m, col)
-    for i, (x, y, h, k, stride) in enumerate(((-1.8, 0.75, 80, 0, 0.15), (1.6, 0.9, -100, 1, -0.15), (8.4, 0.8, 95, 2, 0.12))):
-        kit.pedestrian(f"PED_{i}", (x, y, 0), h, col, kind=k, stride=stride)
-    # the market end (V05): boundary wall, pink plaster over a stone base, under a rain tree
+    kit.ph("MANHOLE", "water_manhole_cover", (8.2, 1.6, 0.002), 0, 1.0, col)        # flat: the lane walks over it
+    kit.pedestrian("PED_shop", (8.75, 2.55, 0), 200, col, kind=2)                    # at the shops, looking in
+    # the market end (V05): boundary wall, pink plaster over a stone base; the tree and bollards at the kerb
     geo.box("BWALL_base", (11.45, 2.55, 0), (15.0, 2.8, 0.7), m["stone_base"], col, 0.02)
     geo.box("BWALL", (11.45, 2.57, 0.7), (15.0, 2.78, 2.3), m["pink_wall"], col, 0.02)
     geo.box("BWALL_coping", (11.4, 2.52, 2.3), (15.0, 2.83, 2.4), m["stone_base"], col, 0.02)
-    kit.rain_tree("TREE", 14.3, 1.6, m, col)
-    kit.bollards("BOLLARD", (11.6, 12.4, 13.9, 14.6), 0.95, m, col)
-    # (the pavement vendors of V05 stay out of the pile's corner: it reads better uncrowded)
+    kit.rain_tree("TREE", 14.3, 0.7, m, st.fg)
+    kit.bollards("BOLLARD", (11.6, 12.4, 13.9), 0.6, m, st.fg)
+
+
+def life(st):
+    """Street life (V01, V03, V05): cable bundles and meter boxes along the facade, AC units with their
+    drip stains, crows on the sunshade, marigolds over the sweet shop, a dog asleep by the drum, a
+    pavement vendor at the market end, and people on both sides of the lane (never in it)."""
+    s = st.street
+    street_life.wires(st, s.x0, 11.0)
+    street_life.ac_units(st, (-2.45, 3.3, 6.1), z=5.0)
+    street_life.crows(st, (-0.8, 1.1, 5.5, 9.6), s.chajja_z)
+    street_life.marigolds(st, -1.3, 1.6)
+    street_life.dog(st, (8.05, 2.42, 0), 5)
+    street_life.vendors(st, (14.35,), 2.1, side=-1)
+    street_life.people(st, [("PED_kurta", (3.6, 0.6), 100, "kurta", 0.15), ("PED_porter", (7.9, 0.75), -80, "porter", 0.14)], col=st.fg)
+    street_life.people(st, [("PED_lungi", (0.4, 2.42), 170, "lungi", 0.0)])
+
+
+def lane_check(st):
+    """Stop the build if anything that stands up sits in Riyaz's lane (why this set was rebuilt)."""
+    bad = []
+    for col in (st.set, st.props, st.fg):
+        for o in col.all_objects:
+            if o.type != "MESH":
+                continue
+            pts = [o.matrix_world @ Vector(c) for c in o.bound_box]
+            lo_y, hi_y = min(p.y for p in pts), max(p.y for p in pts)
+            lo_x, hi_x = min(p.x for p in pts), max(p.x for p in pts)
+            lo_z, hi_z = min(p.z for p in pts), max(p.z for p in pts)
+            if hi_z > 0.05 and lo_z < 2.0 and lo_y < LANE_Y + 0.3 and hi_y > LANE_Y - 0.3 and hi_x > -1.0 and lo_x < 10.6:
+                bad.append(o.name)
+    if bad:
+        raise SystemExit(f"[s02] in Riyaz's lane: {', '.join(sorted(bad)[:20])}")
 
 
 def cart(st):
     """PROP_cart: a steel handcart with a blue tarp bundle (F01), which crosses the pavement
     mid-walk. Its own layer, so Station02 can roll it across."""
-    m, col = st.m, st.prop("cart")
+    m, col = st.m, st.prop("cart", free=True)
     c = CART_AT
     geo.box("CART_bed", (c.x - 0.75, c.y - 0.4, 0.55), (c.x + 0.75, c.y + 0.4, 0.62), m["cart_steel"], col, 0.01)
     for name, lo, hi in (("rail_f", (c.x - 0.75, c.y - 0.42, 0.62), (c.x + 0.75, c.y - 0.38, 0.75)),
@@ -314,16 +450,17 @@ def riyaz(st):
     mats["apron"] = s03.apron_worn("MAT_riyaz_apron_worn")
     frames = {"walk_a": (0.17, (0.24, -0.16, 0.86)), "walk": (0.0, (0.25, 0.0, 0.82)), "walk_b": (-0.17, (0.24, 0.15, 0.86))}
     for pose, (stride, left) in frames.items():
-        people.figure(f"RIYAZ_{pose}", RIYAZ_AT, HEADING, mats, HAND_R, left, st.char("riyaz", pose),
+        human.figure(f"RIYAZ_{pose}", RIYAZ_AT, HEADING, mats, HAND_R, left, st.char("riyaz", pose, free=True),
                       grip=("fist", "loose"), stride=stride)
     hand = Vector(RIYAZ_AT) + Vector((-HAND_R[1], HAND_R[0], HAND_R[2]))      # local -> world for heading 90
-    kilo = st.prop("kilo")
+    kilo = st.prop("kilo", free=True)
     centre = Vector((hand.x + 0.04, hand.y - 0.02, hand.z - 0.27))
     _, bag_knot = kit.kilo_bag("KILO_bag", centre, centre.z - 0.13, {"bag": m["bag_waste"]}, kilo)
     st.anchor("riyaz_hand", bag_knot)
     st.anchor("kilo_knot", bag_knot)
     st.anchor("kilo_centre", centre)
     st.anchor("riyaz_head", (RIYAZ_AT[0], RIYAZ_AT[1], 1.75))
+    st.anchor("riyaz_feet", RIYAZ_AT)
 
 
 def stakeholders(st):
@@ -331,7 +468,7 @@ def stakeholders(st):
     for name, origin, heading, shirt, anchor in (("anthony", ANTHONY_AT, 10, "#8C8477", "anthony_head"),
                                                  ("arif", ARIF_AT, -10, "#9AA0A4", "arif_head")):
         mats = people.costume_materials(name, shirt=shirt, cap=None)
-        people.figure(f"{name.upper()}_idle", origin, heading, mats, (-0.26, -0.06, 0.88), (0.26, -0.06, 0.88),
+        human.figure(f"{name.upper()}_idle", origin, heading, mats, (-0.26, -0.06, 0.88), (0.26, -0.06, 0.88),
                       st.char(name, "idle"), moustache=name == "arif")
         st.anchor(anchor, (origin[0], origin[1], 1.75))
 
@@ -345,7 +482,10 @@ def build():
     market_corner(st)
     kit.kit_materials(st.m)
     street_props(st)
+    kerb_side(st)
     dress(st)
+    life(st)
+    lane_check(st)
     cart(st)
     litter(st)
     riyaz(st)

@@ -1,0 +1,36 @@
+{
+  "$schema": "./schema/audio.schema.json",
+  "sfx": {
+    "cleaver":       { "caption": "[cleaver on the block]",             "file": "assets/audio/cleaver.ogg",       "synth": "thunk",   "evidence": ["D-p34"] },
+    "cleaver_clean": { "caption": "[a clean cut]",                      "file": "assets/audio/cleaver.ogg",       "synth": "thunk",   "evidence": ["D-p34"] },
+    "bump":          { "caption": "[the handcart bumps past]",          "file": "assets/audio/bump.ogg",          "synth": "knock",   "evidence": ["F01"] },
+    "sort_right":    { "caption": "[into the right place]",             "file": "assets/audio/sort_right.ogg",    "synth": "tick",    "evidence": ["SPEC-journey"] },
+    "sort_wrong":    { "caption": "[wrong place]",                      "file": "assets/audio/sort_wrong.ogg",    "synth": "buzz",    "evidence": ["SPEC-journey"] },
+    "crate_seal":    { "caption": "[the crate lid snaps shut]",         "file": "assets/audio/crate_seal.ogg",    "synth": "snap",    "evidence": ["SPEC-journey"] },
+    "scale":         { "caption": "[the scale clunks]",                 "file": "assets/audio/scale.ogg",         "synth": "clunk",   "evidence": ["SPEC-journey"] },
+    "upi_ping":      { "caption": "[payment ping: paid]",               "file": "assets/audio/upi_ping.ogg",      "synth": "ping",    "evidence": ["SPEC-journey", "D-p26"] },
+    "door_open":     { "caption": "[the cold-room door unseals]",       "file": "assets/audio/door_open.ogg",     "synth": "unseal",  "evidence": ["SPEC-journey"] },
+    "door_shut":     { "caption": "[the cold-room door seals]",         "file": "assets/audio/door_seal.ogg",     "synth": "seal",    "evidence": ["SPEC-journey"] },
+    "power_cut":     { "caption": "[the power cuts out]",               "file": "assets/audio/power_cut.ogg",     "synth": "powerdown", "evidence": ["D-p34"] },
+    "sweep":         { "caption": "[sweeping]",                         "file": "assets/audio/sweep.ogg",         "synth": "swish",   "evidence": ["SPEC-journey"] },
+    "crate_load":    { "caption": "[a crate goes into the truck]",      "file": "assets/audio/crate_load.ogg",    "synth": "knock",   "evidence": ["SPEC-journey"] },
+    "truck":         { "caption": "[the truck pulls away]",             "file": "assets/audio/truck.ogg",         "synth": "engine",  "evidence": ["SPEC-journey"] },
+    "renderer_step_1": { "caption": "[the crusher grinds]",             "file": "assets/audio/crusher.ogg",       "synth": "grind",   "evidence": ["SPEC-journey"] },
+    "renderer_step_2": { "caption": "[the cooker hisses]",              "file": "assets/audio/cooker.ogg",        "synth": "hiss",    "evidence": ["SPEC-journey"] },
+    "renderer_step_3": { "caption": "[the press squeezes out oil]",     "file": "assets/audio/press.ogg",         "synth": "grind",   "evidence": ["SPEC-journey"] },
+    "renderer_step_4": { "caption": "[the mill whirrs]",                "file": "assets/audio/mill.ogg",          "synth": "whirr",   "evidence": ["SPEC-journey"] },
+    "renderer_step_5": { "caption": "[the meal is bagged]",             "file": "assets/audio/bagging.ogg",       "synth": "swish",   "evidence": ["SPEC-journey"] },
+    "scatter_feed":  { "caption": "[meal scattered; the hens cluck]",   "file": "assets/audio/scatter.ogg",       "synth": "scatter", "evidence": ["SPEC-journey"] }
+  },
+  "ambient": {
+    "market": { "caption": "[market: auto horns, talk in Dakhni, Tamil and Kannada]", "file": "assets/audio/ambient_market.ogg", "evidence": ["D-p34"],
+                "source": "Ambient sections only of our field recordings; no identifiable voices (spec)." },
+    "street": { "caption": "[street: two-wheelers, auto horns]", "file": "assets/audio/ambient_street.ogg", "evidence": ["D-p34"],
+                "source": "Ambient sections only of our field recordings; no identifiable voices (spec)." },
+    "plant":  { "caption": "[the plant hums]", "file": "assets/audio/ambient_plant.ogg", "evidence": ["SPEC-journey"],
+                "source": "To be recorded or sourced (CC0); none yet." }
+  },
+  "station_ambient": { "s01": "market", "s02": "street", "s03": "market", "s04": "market", "s05": "street", "s06": "plant", "s07": "street" },
+  "synth_note": "Until a file exists, each effect is a short sound synthesised in the browser (no samples, no voices). Ambient beds play only from our own recordings.",
+  "captions_default": true
+}

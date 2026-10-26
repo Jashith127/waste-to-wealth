@@ -1,10 +1,11 @@
 // Base for every station: the diorama void, layer placement from layers.json, prompt, blueprint (B),
 // evidence (I), and the walk-out transition. A station subclass only adds its own interaction.
 import { GameObjects, Scene } from 'phaser';
-import { blueprint, runData, station, type StationData } from '../content';
+import { blueprint, runData, runs, station, type StationData } from '../content';
 import { goNext, type Beat } from '../flow';
 import { getState, setState, type GameState } from '../state';
 import { colour, FRAME, layout, motion } from '../theme';
+import { mountAudio } from '../audio';
 import { BlueprintPanel } from '../ui/BlueprintPanel';
 import { EvidencePanel } from '../ui/EvidencePanel';
 import { Prompt } from '../ui/Prompt';
@@ -42,6 +43,10 @@ export abstract class StationScene extends Scene {
 
         this.add.tileSprite(0, 0, FRAME.width, FRAME.height, 'lattice').setOrigin(0).setDepth(-10);
         this.world = this.add.container(0, 0);
+        this.add.image(0, 0, 'skyline').setOrigin(0).setDepth(-9);       // the backdrop beyond the set
+        if (this.clockPhase() !== 'night') {                               // morning haze over the street
+            this.add.image(0, 0, 'haze').setOrigin(0).setDisplaySize(FRAME.width, FRAME.height).setDepth(20);
+        }
         this.prompt = new Prompt(this, layout.prompt.x, layout.prompt.y);
         this.blueprintPanel = new BlueprintPanel(this, this.stationData, this.state.run, blueprint(this.stationData, this.state.run), this.state.reducedMotion);
         this.evidence = new EvidencePanel(this, this.stationData, this.state.reducedMotion);
@@ -52,6 +57,7 @@ export abstract class StationScene extends Scene {
         kb.on('keydown-ESC', () => { this.evidence.toggle(false); this.blueprintPanel.toggle(false); });
         if (getState(this).blueprintOpen) this.blueprintPanel.toggle(true);
 
+        mountAudio(this);
         this.build();
         const ready = () => ((window as unknown as { __ready?: string }).__ready = this.stationId);   // Playwright waits on this
         if (this.state.reducedMotion) ready();
@@ -59,6 +65,11 @@ export abstract class StationScene extends Scene {
             this.cameras.main.fadeIn(motion.transition, 28, 23, 20);
             this.cameras.main.once('camerafadeincomplete', ready);
         }
+    }
+
+    private clockPhase() {
+        const beats = runs[this.state.run].beats[this.state.beat] ?? this.stationId;
+        return runs[this.state.run].clock?.[beats] ?? 'morning';
     }
 
     /** Station-specific content. */

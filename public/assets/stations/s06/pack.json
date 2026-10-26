@@ -8,8 +8,33 @@
       },
       {
         "type": "image",
-        "key": "s06_material",
-        "url": "assets/stations/s06/material.png"
+        "key": "s06_form_0",
+        "url": "assets/stations/s06/form_0.png"
+      },
+      {
+        "type": "image",
+        "key": "s06_form_1",
+        "url": "assets/stations/s06/form_1.png"
+      },
+      {
+        "type": "image",
+        "key": "s06_form_2",
+        "url": "assets/stations/s06/form_2.png"
+      },
+      {
+        "type": "image",
+        "key": "s06_form_3",
+        "url": "assets/stations/s06/form_3.png"
+      },
+      {
+        "type": "image",
+        "key": "s06_form_4",
+        "url": "assets/stations/s06/form_4.png"
+      },
+      {
+        "type": "image",
+        "key": "s06_product",
+        "url": "assets/stations/s06/product.png"
       }
     ]
   }

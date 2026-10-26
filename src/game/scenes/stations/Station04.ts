@@ -6,7 +6,7 @@
 // Flow after DeepSeek's first pass at task 04; sets from art/scripts/s04_build.py and s04roof_build.py.
 import { GameObjects, Display } from 'phaser';
 import { colour, css, font, FRAME, motion } from '../../theme';
-import { drawCard } from '../../ui/card';
+import { drawCard, keepClear } from '../../ui/card';
 import { labelCard, paidTag } from '../../ui/greybox';
 import { KiloTag } from '../../ui/KiloTag';
 import type { Layers } from '../StationScene';
@@ -114,20 +114,22 @@ export default class Station04 extends StationScene {
     private doorLabel(key: Key) {
         const ch = this.p.chambers[key];
         const at = this.anchor(`door_${key.toLowerCase()}_label`);
-        const c = this.add.container(at.x, at.y).setDepth(35);
+        // A sits up-left of its door and B down-right of its own, so the two cards never overlap
+        const c = this.add.container(at.x + (key === 'A' ? -110 : 60), at.y).setDepth(35);
         const title = this.add.text(0, -14, ch.label, { fontFamily: font.display, fontSize: 30, fontStyle: '700', color: css[ch.meaning] }).setOrigin(0.5);
         const sub = this.add.text(0, 20, ch.sub, { fontFamily: font.body, fontSize: 21, color: css.muted }).setOrigin(0.5);
         const w = Math.max(title.width, sub.width) + 36, h = 90;
         const g = this.add.graphics();
         drawCard(g, -w / 2, -h / 2 - 4, w, h, colour[ch.meaning]);
         c.add([g, title, sub]);
+        keepClear(c, w, h + 8);
         return c;
     }
 
     private rule() {
-        // between the doors, low: clear of both windows and both doorways
+        // on the open floor in front of the doors: clear of both windows, the doorways and Riyaz
         const at = this.anchor('rule');
-        return labelCard(this, at.x, at.y + 170, this.p.rule, { size: 24 });
+        return labelCard(this, at.x - 60, at.y + 520, this.p.rule, { size: 24 });
     }
 
     private press() {

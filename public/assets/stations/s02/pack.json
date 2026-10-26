@@ -28,6 +28,11 @@
       },
       {
         "type": "image",
+        "key": "s02_fg",
+        "url": "assets/stations/s02/fg.png"
+      },
+      {
+        "type": "image",
         "key": "s02_kilo",
         "url": "assets/stations/s02/kilo.png"
       },

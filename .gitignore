@@ -44,3 +44,7 @@ art/build/renders/
 
 # Poly Haven models: re-fetch with python tools/fetch_polyhaven.py
 art/external/polyhaven/*/
+art/external/kenney_food/*
+!art/external/kenney_food/License.txt
+art/external/quaternius_ubc/*
+art/external/kenney_chars/

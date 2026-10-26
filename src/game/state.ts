@@ -17,6 +17,7 @@ export interface GameState {
     kilo: { carried: boolean; tag: KiloTagState | null };
     blueprintOpen: boolean;
     reducedMotion: boolean;
+    captions: boolean;  // sound captions (task 19), C toggles
 }
 
 const KEY = 'state';
@@ -35,6 +36,7 @@ export function initState(game: Game, beats: Record<Run, string[]>): GameState {
         kilo: { carried: false, tag: null },
         blueprintOpen: false,
         reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches || params.has('reducedMotion'),
+        captions: !params.has('noCaptions'),
     };
     game.registry.set(KEY, state);
     return state;

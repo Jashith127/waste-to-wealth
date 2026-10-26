@@ -15,14 +15,12 @@ import { StationScene } from '../StationScene';
 
 type Phase = 'walk' | 'dump' | 'leave';
 
-// Where the back-lane pile should sit on screen when the walk ends. The x pan follows the street
-// (street_start → street_end); the y pan is chosen so the pile lands here, above the blueprint line.
-const END = { x: 1290, y: 640 };
 const FRAME_MS = 140;                      // one walk frame: right foot, pass, left foot, pass
 const CART_FROM = 0.36;                    // walk progress at which the handcart sets off
 const CART_MS = 2400;                      // its trip from the shopfront to the kerb
-const CART_LANE = [0.05, 0.45];            // the part of that trip where it blocks Riyaz's line
-const CART_ZONE = [0.42, 0.62];            // walk progress where Riyaz would walk into it
+const CART_LANE = [0.3, 0.66];             // the part of that trip where it is across Riyaz's lane
+const CART_ZONE = [0.43, 0.6];             // walk progress where Riyaz would walk into it
+const CART_IN_FRONT = 0.48;                // past this the cart is kerb-side of the lane (s02_build LANE_Y)
 const M_PX = { x: 123.4, y: 61.7 };        // one world metre along +Y, on screen (2:1 dimetric)
 
 interface Fly { dot: GameObjects.Arc; phase: number; r: number; speed: number; home: { x: number; y: number } }
@@ -34,7 +32,7 @@ export default class Station02 extends StationScene {
     private pan = { x: 0, y: 0 };
     private riyaz!: GameObjects.Image;
     private bag!: GameObjects.Image;
-    private base = { riyaz: { x: 0, y: 0 }, bag: { x: 0, y: 0 } };
+    private base = { riyaz: { x: 0, y: 0 }, bag: { x: 0, y: 0 }, feet: { x: 0, y: 0 } };
     private ring?: GameObjects.Arc;
     private arrivedAt = 0;
     private left = false;
@@ -42,6 +40,7 @@ export default class Station02 extends StationScene {
     private walkMs = 0;
     private cart?: { img: GameObjects.Image; shadow: GameObjects.Image; home: { x: number; y: number }; off: { x: number; y: number }; k: number };
     private bumped = 0;
+    private feet!: GameObjects.Ellipse;
     private pileFlies: Fly[] = [];
     private bagFlies: Fly[] = [];
 
@@ -77,9 +76,17 @@ export default class Station02 extends StationScene {
         };
         this.placeCart(0);
 
+        // back to front: set, shop side, the cart, Riyaz (a contact shadow, the frames, the bag), then
+        // fg.png (the kerb side: pole, bollards, tree) over him. Riyaz and the bag are rendered with no
+        // set holdouts, so they stay whole wherever the walk takes them; fg does the occluding.
+        const feet = this.anchor('riyaz_feet');
+        this.feet = this.add.ellipse(feet.x + 4, feet.y - 2, 86, 26, 0x1c1714, 0.28);
+        this.world.add(this.feet);
         this.frames = [this.layer('riyaz_walk_a'), this.layer('riyaz_walk'), this.layer('riyaz_walk_b')];
         this.riyaz = this.frames[1];
         this.bag = this.layer('kilo');
+        this.base.feet = { x: this.feet.x, y: this.feet.y };
+        if (this.layers?.layers['fg']) this.layer('fg');
         this.base.riyaz = { x: this.riyaz.x, y: this.riyaz.y };
         this.base.bag = { x: this.bag.x, y: this.bag.y };
         this.walkMs = 0;
@@ -113,8 +120,9 @@ export default class Station02 extends StationScene {
 
         const start = this.anchor('street_start');
         const end = this.anchor('street_end');
-        const dump = this.anchor('dump');
-        this.pan = { x: start.x - end.x, y: END.y - dump.y };
+        // The pan follows the street exactly (street_start → street_end), so Riyaz, who holds still on
+        // screen, stays on his lane the whole way instead of drifting toward the kerb.
+        this.pan = { x: start.x - end.x, y: start.y - end.y };
     }
 
     /** Hold starts the walk; Space/click later handles the dump and the exit. */
@@ -156,8 +164,10 @@ export default class Station02 extends StationScene {
             if (this.phase === 'walk') this.prompt.show(this.prompts().wait, 'Release →');
         }
         if (c.k < 0 || c.k >= 1) return;
+        const was = c.k;
         c.k = Math.min(1, c.k + delta / CART_MS);
         this.placeCart(c.k);
+        if (was < CART_IN_FRONT && c.k >= CART_IN_FRONT) this.world.moveAbove(c.img, this.bag);   // now nearer than Riyaz
         if (c.k >= 1) {
             this.tweens.add({ targets: [c.img, c.shadow], alpha: 0, duration: 300 });
             if (this.phase === 'walk') this.prompt.show(this.prompts().walk, 'Hold →');
@@ -218,6 +228,7 @@ export default class Station02 extends StationScene {
         const wy = this.pan.y * this.t;
         this.world.setPosition(wx, wy);
         this.frames.forEach((f) => f.setX(this.base.riyaz.x - wx));
+        this.feet.setPosition(this.base.feet.x - wx, this.base.feet.y - wy);
         this.bag.setPosition(this.base.bag.x - wx, this.base.bag.y - wy);
     }
 

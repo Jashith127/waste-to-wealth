@@ -4,7 +4,7 @@ import type { KiloTagState } from '../state';
 import { colour, css, font, motion } from '../theme';
 import { drawCard } from './card';
 
-const W = 168;
+const MIN_W = 168;
 const H = 92;
 
 /** Where the card hangs relative to the knot. Beside the kilo, never over it (art-bible §6.3 "kilo first"). */
@@ -38,11 +38,18 @@ export class KiloTag extends GameObjects.Container {
         scene.add.existing(this);
     }
 
+    /** The card grows to fit its note ("₹[__]/kg, payout to be set" ran past a fixed-width card). */
     private render(tag: KiloTagState) {
-        this.card.clear();
-        drawCard(this.card, -W / 2, 0, W, H, colour[tag.meaning]);
         this.value.setText(tag.value).setColor(css[tag.meaning]);
         this.note.setText(tag.note ?? '');
+        const w = Math.max(MIN_W, this.value.width + 32, this.note.width + 28);
+        this.card.clear();
+        drawCard(this.card, -w / 2, 0, w, H, colour[tag.meaning]);
+    }
+
+    /** Half the card's width, so a docked tag can keep its right edge clear of the HUD buttons. */
+    get halfWidth() {
+        return Math.max(MIN_W, this.value.width + 32, this.note.width + 28) / 2;
     }
 
     /** Swing in from the knot. */

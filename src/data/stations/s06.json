@@ -16,12 +16,12 @@
   },
   "runs": {
     "2": {
-      "summary": "The material moves through a typical rendering process into meal and oil.",
+      "summary": "The kilo goes through a typical rendering process and comes out as meat and bone meal, and oil.",
       "proposed": true,
       "prompts": {
-        "watch": "Watch the process",
-        "leave": "Follow the meal",
-        "tend": "Keep the cooker in its band"
+        "start": "Turn the kilo into something useful",
+        "next": "Next machine",
+        "leave": "See it used"
       }
     }
   },
@@ -29,7 +29,7 @@
     "2": [
       {
         "lane": "backstage",
-        "text": "Renderer (example) processes the crates in a typical sequence.",
+        "text": "Renderer (example) turns the crates into meat and bone meal, and oil, in a typical sequence.",
         "evidence": [
           "SPEC-journey"
         ],
@@ -54,23 +54,35 @@
   },
   "params": {
     "process_label": "Typical process",
-    "steps": [
-      "Size reduction",
-      "Cooking",
-      "Pressing out oil",
-      "Drying",
-      "Milling"
+    "stages": [
+      {
+        "chip": "Bone & offal",
+        "caption": "Bone and offal, from the hub"
+      },
+      {
+        "chip": "Crushed",
+        "caption": "Size reduction: crushed small"
+      },
+      {
+        "chip": "Cooked",
+        "caption": "Cooking: sterilised, the fat lets go"
+      },
+      {
+        "chip": "Pressed",
+        "caption": "Pressing: the oil runs off, a dry cake stays"
+      },
+      {
+        "chip": "Meal",
+        "caption": "Drying and milling: a fine meal"
+      }
     ],
-    "outputs": [
-      "Meal",
-      "Oil"
-    ],
-    "evidence_note": "Rendering evidence ids pending research/evidence.csv",
-    "tend": {
-      "step": 1,
-      "label": "Cooker",
-      "hold_ms": 2000,
-      "give_up_ms": 6000
-    }
+    "product": {
+      "chip": "Product",
+      "meal": "Meat and bone meal",
+      "oil": "Oil",
+      "uses": "Typical uses: animal feed, fertiliser"
+    },
+    "inset_label": "Now",
+    "evidence_note": "Rendering evidence ids pending research/evidence.csv"
   }
 }

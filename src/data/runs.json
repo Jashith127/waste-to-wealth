@@ -49,8 +49,8 @@
       "s03": "morning",
       "s04": "evening",
       "s05": "night",
-      "s06": "night",
-      "s07": "night",
+      "s06": "morning",
+      "s07": "morning",
       "map": "morning"
     }
   }

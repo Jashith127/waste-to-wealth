@@ -1,26 +1,34 @@
-// Station 6 · Renderer (example), Run 2. The material moves through a typical process, one machine
-// every 1.2 s; Space skips ahead. The plant is fictional: "Renderer (example)" and "Typical process"
-// stay on screen throughout. Off-site labels are blue. Set and layers from art/scripts/s06_build.py.
-import type { GameObjects, Time } from 'phaser';
+// Station 6 · Renderer (example), Run 2: the kilo becomes a product. The same kilo sits on a belt
+// along the front of the plant in five forms (crate of bone and offal → crushed → cooked → pressed
+// cake and oil → meal); each Space runs it through the next machine, and the last press bags it as
+// meat and bone meal, with the oil in a drum. The forms are in-place layers from
+// art/scripts/s06_build.py, swapped one for the next. A strip of stage chips and an enlarged inset
+// of the current form keep the conversion readable. "Renderer (example)" and "Typical process" stay
+// on screen throughout (truth rules). Off-site cards are blue.
+import type { GameObjects } from 'phaser';
 import { colour, css, font, FRAME, layout, motion } from '../../theme';
 import { drawCard } from '../../ui/card';
 import { labelCard, paidTag } from '../../ui/greybox';
 import { KiloTag } from '../../ui/KiloTag';
 import { StationScene } from '../StationScene';
 
-type Phase = 'watch' | 'leave';
-interface Params { process_label: string; steps: string[]; outputs: string[]; tend: { step: number; label: string; hold_ms: number; give_up_ms: number } }
+type Phase = 'convert' | 'leave';
+interface Stage { chip: string; caption: string }
+interface Params { process_label: string; stages: Stage[]; product: { chip: string; meal: string; oil: string; uses: string }; inset_label: string }
 
-const STEP_MS = 1200;
-const AUTO_LEAVE_MS = 2200;      // untouched, the station ends by itself in under 10 s (task 06)
+const INSET = { x: 1520, y: 200, w: 350, h: 300 };       // under the docked tag, over the empty back wall
+const BUSY_MS = 700;                                     // one machine's run; a press during it is queued
 
 export default class Station06 extends StationScene {
-    private phase: Phase = 'watch';
-    private step = -1;
-    private material!: GameObjects.Image;
-    private offset = { x: 0, y: 0 };
-    private stepCard?: GameObjects.Container;
-    private timer?: Time.TimerEvent;
+    private phase: Phase = 'convert';
+    private stage = 0;
+    private forms: GameObjects.Image[] = [];
+    private product!: GameObjects.Image;
+    private chips: GameObjects.Container[] = [];
+    private inset?: GameObjects.Container;
+    private ring?: GameObjects.Arc;
+    private busy = false;
+    private queued = false;
     private p!: Params;
 
     constructor() {
@@ -32,108 +40,145 @@ export default class Station06 extends StationScene {
     }
 
     protected build() {
-        this.phase = 'watch';
-        this.step = -1;
-        this.stepCard = undefined;
+        this.phase = 'convert';
+        this.stage = 0;
+        this.busy = this.queued = false;
         this.p = this.stationData.params as unknown as Params;
         this.layer('bg');
-        this.material = this.layer('material').setVisible(false).setDepth(25);
-        const c = this.anchor('material_centre');
-        this.offset = { x: c.x - this.material.x, y: c.y - this.material.y };
+        this.forms = this.p.stages.map((_, i) => this.layer(`form_${i}`).setAlpha(i === 0 ? 1 : 0));
+        this.product = this.layer('product').setAlpha(0);
 
-        // "Renderer (example)" and "Typical process" stay up for the whole station
-        const card = labelCard(this, 0, 0, `${this.stationData.label} · ${this.p.process_label}`, { band: colour.offsite, size: 28 });
-        card.setPosition(layout.prompt.x + card.getBounds().width / 2, 150);
+        const head = labelCard(this, 0, 0, `${this.stationData.label} · ${this.p.process_label}`, { band: colour.offsite, size: 28 });
+        head.setPosition(layout.prompt.x + head.getBounds().width / 2, 150);
+        this.chipStrip(layout.prompt.x, 224);
         new KiloTag(this, FRAME.width - 260, 20, paidTag(this), this.state.reducedMotion).setDepth(30);
 
         const kb = this.input.keyboard!;
-        kb.on('keydown-SPACE', () => this.advance());
-        kb.on('keydown-ENTER', () => this.advance());
+        kb.on('keydown-SPACE', () => this.press());
+        kb.on('keydown-ENTER', () => this.press());
         kb.on('keydown-RIGHT', () => this.phase === 'leave' && this.leave());
-        this.prompt.show(this.prompts().watch, 'Space');
-        this.advance();
+        this.input.on('pointerup', () => this.press());
+        this.prompt.show(this.prompts().start, 'Space');
+        this.showStage();
     }
 
-    /** Put the heap's centre on a screen point. */
-    private place(at: { x: number; y: number }, tween: boolean) {
-        const to = { x: at.x - this.offset.x, y: at.y - this.offset.y };
-        if (!tween || this.state.reducedMotion) this.material.setPosition(to.x, to.y);
-        else this.tweens.add({ targets: this.material, ...to, duration: motion.transition, ease: 'Sine.easeInOut' });
-    }
-
-    /** Next step (auto every STEP_MS, or Space). After the last machine, the outputs; then leave. */
-    private advance() {
-        if (this.gauge) return this.nudge();
+    private press() {
         if (this.phase === 'leave') return this.leave();
-        this.timer?.remove();
-        this.step++;
-        this.stepCard?.destroy();
-        if (this.step >= this.p.steps.length) return this.showOutputs();
-        const at = this.anchor(`step_${this.step}`);
-        this.material.setVisible(true);
-        this.place(at, this.step > 0);
-        this.events.emit('sfx', `renderer_step_${this.step}`);
-        this.stepCard = labelCard(this, at.x, at.y - 120, this.p.steps[this.step], { band: colour.offsite, size: 30 });
-        if (this.step === this.p.tend.step && !this.state.reducedMotion) return this.startTending(at);
-        this.timer = this.time.delayedCall(STEP_MS, () => this.advance());
+        if (this.busy) { this.queued = true; return; }
+        this.run();
     }
 
-    // --- keep the line running (mini-game) -------------------------------------------------------
+    // --- the conversion --------------------------------------------------------------------------
 
-    private gauge?: { box: GameObjects.Container; g: GameObjects.Graphics; x: number; v: number; held: number; spent: number };
-
-    /** A gauge over the cooker: the needle drifts; Space nudges it back. Two seconds in the band
-     * and the line moves on (it moves on anyway after a while: nobody gets stuck). No numbers. */
-    private startTending(at: { x: number; y: number }) {
-        const box = this.add.container(at.x + 360, at.y - 40).setDepth(40);   // right of the cooker: the label stays clear
-        const g = this.add.graphics();
-        const card = this.add.graphics();
-        drawCard(card, -190, -60, 380, 120, colour.offsite);
-        box.add([card, g, this.add.text(0, -26, this.p.tend.label, { fontFamily: font.display, fontSize: 26, fontStyle: '700', color: css.ink }).setOrigin(0.5)]);
-        this.gauge = { box, g, x: 0.15, v: 0.35, held: 0, spent: 0 };
-        this.prompt.show(this.prompts().tend, 'Space');
+    /** Run the kilo through the next machine: the current form goes in, the machine works, the next
+     * form comes out on the belt below it. After the last machine, the product. */
+    private run() {
+        const from = this.forms[this.stage];
+        const last = this.stage === this.forms.length - 1;
+        this.busy = true;
+        this.ring?.destroy();
+        const ms = this.state.reducedMotion ? 1 : BUSY_MS;
+        this.tweens.add({ targets: from, alpha: 0, duration: ms / 2 });
+        this.events.emit('sfx', `renderer_step_${this.stage + 1}`);
+        this.machineWorks(last ? 'product' : `form_${this.stage + 1}`, this.stage + 1);
+        this.time.delayedCall(ms, () => {
+            this.stage++;
+            if (last) return this.reveal();
+            const to = this.forms[this.stage];
+            if (this.state.reducedMotion) to.setAlpha(1);
+            else this.tweens.add({ targets: to, alpha: { from: 0, to: 1 }, y: { from: to.y - 24, to: to.y }, duration: 320, ease: 'Back.easeOut' });
+            this.prompt.show(this.prompts().next, 'Space');
+            this.showStage();
+            this.busy = false;
+            if (this.queued) { this.queued = false; this.time.delayedCall(240, () => this.press()); }
+        });
     }
 
-    update(_t: number, delta: number) {
-        const gg = this.gauge;
-        if (!gg) return;
-        const dt = delta / 1000;
-        gg.x = Math.min(1, Math.max(0, gg.x + gg.v * dt));
-        if (gg.x >= 1 || gg.x <= 0) gg.v = -gg.v;
-        const inBand = gg.x > 0.4 && gg.x < 0.6;
-        if (inBand) gg.held += delta;
-        gg.spent += delta;
-        const w = 300, x0 = -150, y = 18;
-        gg.g.clear();
-        gg.g.fillStyle(colour.ink, 0.15).fillRoundedRect(x0, y - 9, w, 18, 9);
-        gg.g.fillStyle(colour.cream, 1).fillRect(x0 + w * 0.4, y - 9, w * 0.2, 18);
-        gg.g.lineStyle(2, colour.ink, 0.6).strokeRoundedRect(x0 + w * 0.4, y - 9, w * 0.2, 18, 3);
-        gg.g.fillStyle(colour.ink, 1).fillTriangle(x0 + w * gg.x, y + 12, x0 + w * gg.x - 9, y + 26, x0 + w * gg.x + 9, y + 26);
-        gg.g.fillStyle(colour.offsite, 1).fillRect(x0, y + 32, w * Math.min(1, gg.held / this.p.tend.hold_ms), 4);
-        if (gg.held >= this.p.tend.hold_ms || gg.spent >= this.p.tend.give_up_ms) {
-            gg.box.destroy();
-            this.gauge = undefined;
-            this.prompt.show(this.prompts().watch, 'Space');
-            this.timer = this.time.delayedCall(400, () => this.advance());
+    /** The chips, the inset (with the stage's caption) and the hint ring for the current stage. */
+    private showStage() {
+        const s = this.p.stages[this.stage];
+        const at = this.anchor(`form_${this.stage}`);
+        this.ring = this.hint(at.x, at.y + 30, 96);
+        this.markChips(this.stage);
+        this.showInset(`s06_form_${this.stage}`, s.chip, s.caption);
+    }
+
+    /** The product: sacks of meal on the pallet and the oil drum; then on to where it is used. */
+    private reveal() {
+        this.busy = false;
+        this.phase = 'leave';
+        this.markChips(this.p.stages.length);
+        const pr = this.p.product;
+        if (this.state.reducedMotion) this.product.setAlpha(1);
+        else this.tweens.add({ targets: this.product, alpha: { from: 0, to: 1 }, y: { from: this.product.y - 30, to: this.product.y }, duration: 420, ease: 'Back.easeOut' });
+        const meal = this.anchor('product_meal');
+        const oil = this.anchor('product_oil');
+        labelCard(this, meal.x - 60, meal.y - 130, pr.meal, { band: colour.income, size: 30 });
+        labelCard(this, oil.x + 40, oil.y - 120, pr.oil, { band: colour.pay, size: 28 });
+        this.showInset('s06_product', pr.chip, pr.uses);
+        this.prompt.show(this.prompts().leave, '→');
+    }
+
+    /** A puff at the machine that is working: crushed bits, steam, oil drips or meal dust. */
+    private machineWorks(_into: string, stage: number) {
+        if (this.state.reducedMotion) return;
+        const m = this.anchor(`machine_${Math.min(stage, this.p.stages.length - 1)}`);
+        const kind = ['', 'bits', 'steam', 'oil', 'dust', 'dust'][stage] ?? 'dust';
+        const tint = { bits: 0xa2584c, steam: 0xf4ecde, oil: 0xd9a23a, dust: 0xc9b48e }[kind] ?? 0xc9b48e;
+        for (let i = 0; i < 10; i++) {
+            const dot = this.add.circle(m.x + (Math.random() - 0.5) * 60, m.y + (Math.random() - 0.5) * 20, kind === 'steam' ? 10 : 4, tint, 0.85).setDepth(26);
+            const rise = kind === 'oil' ? 60 : kind === 'bits' ? 30 : -90;
+            this.tweens.add({
+                targets: dot, y: dot.y + rise + Math.random() * 20, x: dot.x + (Math.random() - 0.5) * 40,
+                alpha: 0, scale: kind === 'steam' ? 2.2 : 1, delay: i * 40, duration: 600, ease: 'Sine.easeOut',
+                onComplete: () => dot.destroy(),
+            });
         }
     }
 
-    /** Space while tending: push the needle back toward the band, and it drifts the other way. */
-    private nudge() {
-        const gg = this.gauge!;
-        gg.x += (0.5 - gg.x) * 0.6;
-        gg.v = (Math.random() < 0.5 ? -1 : 1) * (0.25 + Math.random() * 0.25);
-        this.events.emit('sfx', 'valve');
+    // --- UI: the stage strip and the inset -------------------------------------------------------
+
+    /** Bone & offal → Crushed → Cooked → Pressed → Meal → Product, as small chips under the header. */
+    private chipStrip(x: number, y: number) {
+        const names = [...this.p.stages.map((s) => s.chip), this.p.product.chip];
+        this.chips = [];
+        names.forEach((name, i) => {
+            const t = this.add.text(0, 0, name, { fontFamily: font.display, fontSize: 22, fontStyle: '700', color: css.ink }).setOrigin(0.5);
+            const w = t.width + 28;
+            const g = this.add.graphics();
+            const c = this.add.container(x + w / 2, y, [g, t]).setDepth(35).setSize(w, 40);
+            c.setData({ g, t, w });
+            this.chips.push(c);
+            x += w + 10;
+            if (i < names.length - 1) {
+                this.add.text(x + 2, y, '→', { fontFamily: font.display, fontSize: 24, fontStyle: '700', color: css.cream }).setOrigin(0, 0.5).setDepth(35);
+                x += 32;
+            }
+        });
     }
 
-    private showOutputs() {
-        this.material.setVisible(false);
-        (['out_meal', 'out_oil'] as const).forEach((name, i) => {
-            const at = this.anchor(name);
-            labelCard(this, at.x, at.y - 80, this.p.outputs[i], { band: colour.offsite, size: 30 });
+    private markChips(current: number) {
+        this.chips.forEach((c, i) => {
+            const g = c.getData('g') as GameObjects.Graphics, t = c.getData('t') as GameObjects.Text, w = c.getData('w') as number;
+            const fill = i === current ? colour.offsite : i < current ? colour.cream : colour.card;
+            g.clear().fillStyle(fill, i > current ? 0.75 : 1).fillRoundedRect(-w / 2, -20, w, 40, 10);
+            g.lineStyle(2, colour.ink, i > current ? 0.4 : 1).strokeRoundedRect(-w / 2, -20, w, 40, 10);
+            t.setColor(i === current ? css.cream : i < current ? css.muted : css.ink);
         });
-        this.phase = 'leave';
-        this.prompt.show(this.prompts().leave, '→');
-        this.timer = this.time.delayedCall(AUTO_LEAVE_MS, () => this.leave());
+    }
+
+    /** The current form, enlarged, in a card at the top right: what the kilo looks like now. */
+    private showInset(key: string, title: string, sub?: string) {
+        this.inset?.destroy();
+        const { x, y, w, h } = INSET;
+        const g = this.add.graphics();
+        drawCard(g, 0, 0, w, h, colour.offsite);
+        const head = this.add.text(20, 24, `${this.p.inset_label}: ${title}`, { fontFamily: font.display, fontSize: 26, fontStyle: '700', color: css.ink });
+        const img = this.add.image(w / 2, 62 + (h - 150) / 2, key);
+        img.setScale(Math.min((w - 40) / img.width, (h - 160) / img.height, 3));
+        const parts: GameObjects.GameObject[] = [g, head, img];
+        if (sub) parts.push(this.add.text(w / 2, h - 44, sub, { fontFamily: font.body, fontSize: 22, color: css.ink, wordWrap: { width: w - 36 }, align: 'center' }).setOrigin(0.5));
+        this.inset = this.add.container(x, y, parts).setDepth(34);
+        if (!this.state.reducedMotion) this.tweens.add({ targets: this.inset, alpha: { from: 0, to: 1 }, duration: motion.normal });
     }
 }

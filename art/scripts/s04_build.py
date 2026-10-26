@@ -26,6 +26,7 @@ sys.path[:0] = [str(HERE / "lib"), str(HERE)]
 
 import geo  # noqa: E402
 import kit  # noqa: E402
+import human  # noqa: E402  (low-poly rigged people, s02 on; s01 keeps lib/people)
 import people  # noqa: E402
 import rig  # noqa: E402
 import s03_art_build as s03  # noqa: E402  (shared materials and the crate, so s03 and s04 match)
@@ -212,7 +213,7 @@ def riyaz(st):
     """Riyaz as in s01 and s03 (same costume, the clean worn apron), hands loose and still wet."""
     mats = people.costume_materials("riyaz", apron="#D6CFC0", cap="#E6E2D8", wet_hands=True)
     mats["apron"] = s03.apron_worn("MAT_riyaz_apron_worn")
-    people.figure("RIYAZ_idle", RIYAZ_AT, 15, mats, (-0.34, -0.12, 0.8), (0.34, -0.12, 0.8), st.char("riyaz", "idle"))
+    human.figure("RIYAZ_idle", RIYAZ_AT, 15, mats, (-0.34, -0.12, 0.8), (0.34, -0.12, 0.8), st.char("riyaz", "idle"))
     st.anchor("riyaz_head", (RIYAZ_AT[0], RIYAZ_AT[1], 1.75))
 
 

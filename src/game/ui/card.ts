@@ -22,3 +22,15 @@ export function drawChip(g: GameObjects.Graphics, x: number, y: number, w: numbe
     g.lineStyle(2, stroke, 1);
     g.strokeRoundedRect(x, y, w, h, 6);
 }
+
+// The HUD's own corners: the clock and prompt band along the top, the docked tag and the i/menu
+// buttons at the top right. A card placed from an anchor must not land on them.
+const HUD_BOTTOM = 104;
+const DOCK = { left: 1520, bottom: 176 };
+
+/** Nudge a card centred at (c.x, c.y), w × h, down out of the HUD band and clear of the docked tag. */
+export function keepClear(c: { x: number; y: number; setY(y: number): unknown }, w: number, h: number) {
+    let top = Math.max(c.y - h / 2, HUD_BOTTOM);
+    if (c.x + w / 2 > DOCK.left) top = Math.max(top, DOCK.bottom);
+    c.setY(top + h / 2);
+}
