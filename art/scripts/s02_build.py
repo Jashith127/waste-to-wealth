@@ -31,6 +31,7 @@ sys.path[:0] = [str(HERE / "lib"), str(HERE)]
 import bpy  # noqa: E402
 
 import geo  # noqa: E402
+import goods  # noqa: E402
 import kit  # noqa: E402
 import materials as M  # noqa: E402
 import people  # noqa: E402
@@ -76,8 +77,11 @@ def materials(m):
         sign_a=M.image("MAT_s02_sign_a", signs / "s01-neighbour_left.png", box_uv=True) if (signs / "s01-neighbour_left.png").exists() else m["board_faded_a"],
         sign_b=M.image("MAT_s02_sign_b", signs / "s01-neighbour_right.png", box_uv=True) if (signs / "s01-neighbour_right.png").exists() else m["board_faded_b"],
         sack_white=M.plastic("MAT_sack_dirty_white", "#BDB5A6", 0.5),
-        sack_black=M.plastic("MAT_sack_black", "#1F1D1C", 0.22),         # garbage-bag plastic: dark, with a sheen
+        sack_black=goods.bin_plastic("MAT_sack_black"),                    # garbage-bag film: near black, crinkled
         sack_grey=M.plastic("MAT_sack_grey", "#4A4E52", 0.25),
+        sack_woven=goods.woven_pp("MAT_sack_woven"),                       # the white market sack (V05)
+        sack_band=M.cloth("MAT_sack_band", "#3F6F8E", rough=0.55, weave=0.22, scale=220.0),
+        sack_twine=goods.rope("MAT_sack_twine"),
         bone=M.matte("MAT_bone", "#E3D2BE", 0.6),
         cardboard=M.matte("MAT_cardboard", "#8C7558", 0.85),
         leaf=M.matte("MAT_leaf_dry", "#6E6A45", 0.7),
@@ -230,7 +234,10 @@ def dress(st):
     kit.ph("MANHOLE", "water_manhole_cover", (8.2, 1.6, 0.002), 0, 1.0, col)
     kit.tarp_heap("TARP_heap", (-4.2, 2.55, 0), m, col)
     for i, (x, y, h, k, stride) in enumerate(((-1.8, 0.75, 80, 0, 0.15), (1.6, 0.9, -100, 1, -0.15), (8.4, 0.8, 95, 2, 0.12))):
-        kit.pedestrian(f"PED_{i}", (x, y, 0), h, col, kind=k, stride=stride)
+        ped = kit.pedestrian(f"PED_{i}", (x, y, 0), h, col, kind=k, stride=stride)
+        if i == 2:                                       # beside the handcart's start: the cart must not be clipped by him
+            for o in [ped, *ped.children_recursive]:
+                o["sprite_clear"] = True
     # the market end (V05): boundary wall, pink plaster over a stone base, under a rain tree
     geo.box("BWALL_base", (11.45, 2.55, 0), (15.0, 2.8, 0.7), m["stone_base"], col, 0.02)
     geo.box("BWALL", (11.45, 2.57, 0.7), (15.0, 2.78, 2.3), m["pink_wall"], col, 0.02)
@@ -241,21 +248,16 @@ def dress(st):
 
 
 def cart(st):
-    """PROP_cart: a steel handcart with a blue tarp bundle (F01), which crosses the pavement
-    mid-walk. Its own layer, so Station02 can roll it across."""
+    """PROP_cart: a loaded thela, the wooden handcart of the wholesale lanes (F01 shows its steel
+    cousin), which crosses the pavement mid-walk. Tomato crates, onion net sacks, striped
+    watermelons, bananas, taped cartons, a rice sack and a tarp, all lashed down (lib/goods.py).
+    Its own layer, so Station02 can roll it across."""
     m, col = st.m, st.prop("cart")
     c = CART_AT
-    geo.box("CART_bed", (c.x - 0.75, c.y - 0.4, 0.55), (c.x + 0.75, c.y + 0.4, 0.62), m["cart_steel"], col, 0.01)
-    for name, lo, hi in (("rail_f", (c.x - 0.75, c.y - 0.42, 0.62), (c.x + 0.75, c.y - 0.38, 0.75)),
-                         ("rail_b", (c.x - 0.75, c.y + 0.38, 0.62), (c.x + 0.75, c.y + 0.42, 0.75))):
-        geo.box(f"CART_{name}", lo, hi, m["cart_steel"], col, 0.005)
-    for i, x in enumerate((c.x - 0.45, c.x + 0.45)):
-        geo.cylinder(f"CART_wheel{i}", (x, c.y - 0.44, 0.28), 0.28, 0.06, m["tyre"], col, axis="Y", segments=28, bevel=0.01)
-        geo.cylinder(f"CART_wheel{i}b", (x, c.y + 0.38, 0.28), 0.28, 0.06, m["tyre"], col, axis="Y", segments=28, bevel=0.01)
-    geo.limb("CART_handle", (c.x - 0.75, c.y, 0.6), (c.x - 1.15, c.y, 0.95), 0.02, 0.02, m["cart_steel"], col)
-    geo.box("CART_tarp", (c.x - 0.6, c.y - 0.32, 0.62), (c.x + 0.55, c.y + 0.32, 1.05), m["tarp"], col, 0, subsurf=2)
-    kit.shadow_catcher("CART_shadow_catcher", (c.x, c.y, 0.003), (2.2, 1.4), m, col)
-    st.anchor("cart_centre", (c.x, c.y, 0.6))
+    mats = goods.materials()
+    goods.thela("CART", (c.x, c.y, 0.0), mats, col, m["tarp"])
+    kit.shadow_catcher("CART_shadow_catcher", (c.x - 0.2, c.y, 0.003), (3.0, 1.5), m, col)
+    st.anchor("cart_centre", (c.x, c.y, 0.9))
 
 
 def litter(st):
@@ -263,22 +265,31 @@ def litter(st):
     cardboard, a dry leaf, wet stains, two crows. It is a PROP so Run 2 can show the clean pavement."""
     m, col = st.m, st.prop("litter")
     c = LITTER_AT
-    sacks = ((-0.5, 0.05, "sack_black", 1.5), (0.05, -0.2, "sack_black", 1.6), (0.5, 0.1, "sack_grey", 1.4),
-             (0.0, 0.35, "sack_grey", 1.3), (-0.75, -0.3, "bag_waste", 1.0), (0.75, -0.35, "bag_waste", 0.9))
-    for i, (dx, dy, mat, k) in enumerate(sacks):
+    woven = dict(sack=m["sack_woven"], band=m["sack_band"], rope=m["sack_twine"], inside=m["stain"])
+    # back row: two black bin bags and a tied woven sack against the wall; in front, the split woven sack
+    # tipped over toward the street, its bone and offal spilling (below), and two knotted carry bags
+    goods.bin_bag("LITTER_sack0", (c.x - 0.3, c.y + 0.4, 0), m["sack_black"], col, (0.6, 0.5, 0.56), rot=15, seed=1)
+    goods.bin_bag("LITTER_sack1", (c.x + 0.3, c.y + 0.5, 0), m["sack_black"], col, (0.64, 0.52, 0.6), rot=-25, seed=2)
+    goods.woven_sack("LITTER_sack2", (c.x - 0.95, c.y + 0.35, 0), woven, col, (0.5, 0.36, 0.68), rot=8, seed=3)
+    _, mouth = goods.woven_sack("LITTER_sack3", (c.x - 0.35, c.y - 0.15, 0), woven, col, (0.48, 0.38, 0.62), rot=-60, tip=78, seed=4, split=True)
+    for i, (dx, dy, k) in enumerate(((-0.8, -0.3, 1.0), (0.75, -0.35, 0.9)), start=4):
         root = geo.empty(f"LITTER_sack{i}_root", (c.x + dx, c.y + dy, 0), col)
-        objs, _ = kit.kilo_bag(f"LITTER_sack{i}", (c.x + dx, c.y + dy, 0.12), 0.0, {"bag": m[mat]}, col)
-        for o in objs:                               # scale about the sack's base, not the world origin
+        objs, _ = kit.kilo_bag(f"LITTER_sack{i}", (c.x + dx, c.y + dy, 0.12), 0.0, {"bag": m["bag_waste"]}, col)
+        for o in objs:                               # scale about the bag's base, not the world origin
             o.parent = root
             o.matrix_parent_inverse = Matrix.Translation(-root.location)
-        root.scale = (k, k, k)                    # sacks, not carry bags: scaled about their base
+        root.scale = (k, k, k)
     # the split sack spills bone and offal onto the paving
-    for i in range(7):
-        a = i * 0.9
-        geo.sphere(f"LITTER_bone{i}", (c.x - 0.2 + math.cos(a) * 0.35, c.y - 0.55 + math.sin(a) * 0.12, 0.03), 0.035,
-                   (2.2, 0.8, 0.7), m["bone"], col, rot=(0, 0, a))
+    # spilled from the split sack's mouth, fanning out onto the paving
+    for i in range(8):
+        a = -1.3 + i * 0.37
+        dist = 0.12 + 0.07 * (i % 3)
+        p0 = Vector((mouth.x + math.cos(a) * dist * 1.6 + 0.05 * (i % 2), mouth.y - 0.1 + math.sin(a) * dist, 0.018))
+        d_ = Vector((math.cos(a * 2.3 + i), math.sin(a * 2.3 + i), 0)) * (0.07 + 0.02 * (i % 3))
+        goods.bone(f"LITTER_bone{i}", p0, p0 + d_, m["bone"], col)
     for i in range(4):
-        geo.sphere(f"LITTER_offal{i}", (c.x + 0.25 + i * 0.12, c.y - 0.45 - (i % 2) * 0.08, 0.03), 0.05, (1.3, 1.0, 0.45), m["meat"], col)
+        geo.sphere(f"LITTER_offal{i}", (mouth.x + 0.15 + i * 0.09, mouth.y - 0.22 - (i % 2) * 0.07, 0.025), 0.045,
+                   (1.4, 1.0, 0.4), m["meat"], col, rot=(0, 0, i * 0.8))
     kit.ph("LITTER_cardboard", "cardboard_box_01", (c.x + 0.95, c.y - 0.3, 0), 18, 1.0, col)
     kit.ph("LITTER_rat", "street_rat", (c.x - 1.2, c.y - 0.8, 0), -60, 1.0, col)
     geo.box("LITTER_leaf", (c.x - 1.1, c.y - 0.1, 0.0), (c.x - 0.6, c.y + 0.25, 0.008), m["leaf"], col, 0)

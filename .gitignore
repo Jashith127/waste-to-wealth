@@ -41,6 +41,7 @@ playwright-report/
 # Blender backups and renders (rebuildable)
 art/blender/backups/
 art/build/renders/
+art/build/renders_old_*/
 
 # Poly Haven models: re-fetch with python tools/fetch_polyhaven.py
 art/external/polyhaven/*/

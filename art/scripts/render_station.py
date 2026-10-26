@@ -122,6 +122,13 @@ def main():
         for o in objs:
             geo.set_render_role(o, "holdout")
 
+    def release(objs):
+        """A prop that travels (the s02 handcart) is not cut by dressing tagged ["sprite_clear"]: it
+        is drawn over the plate, so a pedestrian beside its start spot must not clip it. Still casts."""
+        for o in objs:
+            if o.get("sprite_clear"):
+                geo.set_render_role(o, "hidden")
+
     def idle_shadows(role="hidden"):
         for name, c in chars.items():
             if name.endswith("_idle"):
@@ -155,12 +162,12 @@ def main():
         geometry = objects(c)
         catcher = [o for o in geometry if o.get("shadow_catcher")]
         body = [o for o in geometry if not o.get("shadow_catcher")]
-        reset(); show(c); holdout(env); idle_shadows("holdout")
+        reset(); show(c); holdout(env); release(env); idle_shadows("holdout")
         for o in catcher:
             o.hide_render = True
         render(name, 96, body)
         if catcher:
-            reset(); show(c); holdout(env); idle_shadows("holdout")
+            reset(); show(c); holdout(env); release(env); idle_shadows("holdout")
             for o in body:
                 geo.set_render_role(o, "hidden")
             for o in catcher:

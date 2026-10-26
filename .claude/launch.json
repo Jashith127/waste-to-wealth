@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "game",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 8080
+    },
+    {
+      "name": "game-latest",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "C:/Users/Jash/Desktop/wtw-lead", "run", "dev"],
+      "port": 8080
+    }
+  ]
+}

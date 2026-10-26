@@ -346,6 +346,49 @@ def checker_cloth(name, a="#3E5A7A", b="#C9C2B2", size=0.035):
     return n.mat
 
 
+def cloth(name, colour, rough=0.9, weave=0.35, scale=140.0, stripe=None):
+    """Woven cotton: a fine warp and weft in the colour and a slightly darker one, and the same
+    weave as a bump. `stripe` is an optional second colour for a pinstripe."""
+    n = Nodes(name)
+    waves = []
+    for direction in ("X", "Y"):
+        w = n.add("ShaderNodeTexWave", wave_type="BANDS", bands_direction=direction)
+        w.inputs["Scale"].default_value = scale
+        w.inputs["Distortion"].default_value = 1.5
+        w.inputs["Detail"].default_value = 2.0
+        n.link(n.coords("Object"), w.inputs["Vector"])
+        waves.append(w.outputs["Fac"])
+    both = n.add("ShaderNodeMath", operation="MULTIPLY")
+    n.link(waves[0], both.inputs[0])
+    n.link(waves[1], both.inputs[1])
+    base = rgb(colour)
+    dark = tuple(c * 0.78 for c in base[:3]) + (1.0,)
+    fabric = n.mix(n.maprange(both.outputs[0], 0.0, 1.0, 0.0, weave), base, dark)
+    fabric = n.mix(n.maprange(n.noise(9.0, 3), 0.4, 0.8, 0.0, 0.25), fabric, rgb("grime"))   # worn, a little dirty
+    if stripe:
+        fabric = n.mix(n.stripes("X", 0.05), fabric, rgb(stripe))
+    n.link(fabric, n.bsdf.inputs["Base Color"])
+    n.set("Roughness", rough)
+    n.bump(both.outputs[0], 0.25, 0.004)
+    return n.mat
+
+
+def hair(name, colour, grey=0.0):
+    """Hair with a faint sheen; `grey` (0-1) mixes in grey strands."""
+    n = Nodes(name)
+    n.link(n.mix(n.maprange(n.noise(60.0, 3), 0.35, 0.7, 0.0, 0.5 * grey), rgb(colour), rgb("#A8A39A")), n.bsdf.inputs["Base Color"])
+    n.set("Roughness", 0.5)
+    return n.mat
+
+
+def leather(name, colour="#4A3224"):
+    n = Nodes(name)
+    n.link(n.mix(n.maprange(n.noise(30.0, 4), 0.4, 0.7, 0.0, 0.5), rgb(colour), rgb("#1E140E")), n.bsdf.inputs["Base Color"])
+    n.set("Roughness", 0.55)
+    n.bump(n.noise(80.0, 2), 0.2, 0.002)
+    return n.mat
+
+
 def matte(name, colour, rough=0.7, metallic=0.0):
     n = Nodes(name)
     n.link(n.mix(n.noise(10.0, 3), rgb(colour), n.mix(0.2, rgb(colour), rgb("grime"))), n.bsdf.inputs["Base Color"])
