@@ -3,6 +3,8 @@
 // whose width is set, so callers can lay them out.
 import { GameObjects, Scene } from 'phaser';
 import type { MouseHint } from '../content';
+import { touchLabel, verbFromKeys, type TouchVerb } from '../controls';
+import { isPhone } from '../device';
 import { colour, css, font, hud } from '../theme';
 
 export function keycap(scene: Scene, label: string, h = 40): GameObjects.Container {
@@ -45,9 +47,32 @@ export function mouseGlyph(scene: Scene, kind: MouseHint, h = 40): GameObjects.C
     return scene.add.container(0, 0, parts).setSize(width, h);
 }
 
+/** A cream chip with a fingertip, used on a phone wherever a desktop layout shows a key cap. */
+export function touchChip(scene: Scene, verb: TouchVerb, h = 40): GameObjects.Container {
+    const t = scene.add.text(h * 0.15, -2, touchLabel(verb), {
+        fontFamily: font.display, fontSize: Math.round(h * 0.46), fontStyle: '700', color: css.ink,
+    }).setOrigin(0.5);
+    const w = Math.max(h * 1.7, t.width + h * 1.15);
+    t.setX(h * 0.28);
+    const g = scene.add.graphics();
+    const r = Math.min(12, h / 3);
+    g.fillStyle(hud.keyLip, 1).fillRoundedRect(-w / 2, -h / 2 + 4, w, h, r);
+    g.fillStyle(colour.cream, 1).fillRoundedRect(-w / 2, -h / 2, w, h - 4, r);
+    g.lineStyle(2.5, colour.ink, 1).strokeRoundedRect(-w / 2, -h / 2, w, h + 4, r);
+    const tip = h * 0.16;
+    g.fillStyle(colour.pay, 1).fillCircle(-w / 2 + h * 0.42, -2, tip);
+    g.lineStyle(2, colour.ink, 1).strokeCircle(-w / 2 + h * 0.42, -2, tip);
+    return scene.add.container(0, 0, [g, t]).setSize(w, h);
+}
+
 /** Keys joined by thin gaps, then "or" and the mouse, on one line; arrows are grouped as one cluster.
+ * On a phone the whole row collapses to one touch chip (Tap, Move, Swipe, Drag).
  * `light` sets the "or" for a cream card instead of a dark panel. */
 export function inputRow(scene: Scene, keys: string[], mouse?: MouseHint, h = 40, light = false): GameObjects.Container {
+    if (isPhone()) {
+        const verb = verbFromKeys(keys, mouse);
+        return verb ? touchChip(scene, verb, h) : scene.add.container(0, 0).setSize(0, h);
+    }
     const items: GameObjects.Container[] = keys.map((k) => keycap(scene, k, h));
     const row = scene.add.container(0, 0);
     let x = 0;

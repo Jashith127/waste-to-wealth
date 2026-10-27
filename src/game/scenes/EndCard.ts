@@ -5,9 +5,11 @@ import { GameObjects, Math as PMath, Scene } from 'phaser';
 import endcard from '../../data/endcard.json';
 import { parseBeat } from '../flow';
 import { getState, setState } from '../state';
+import { setControlHint } from '../controls';
+import { isPhone } from '../device';
 import { colour, css, font, FRAME, motion, type Meaning } from '../theme';
 import { drawCard, drawChip } from '../ui/card';
-import { keycap } from '../ui/keys';
+import { keycap, touchChip } from '../ui/keys';
 
 type Column = { heading: string; proposed?: boolean; lines: { text: string; value: string; meaning: string }[] };
 
@@ -48,6 +50,7 @@ export class EndCard extends Scene {
         }).setOrigin(0.5).setLetterSpacing(3);
 
         endcard.beliefs.forEach((b, i) => this.beliefs.push(this.beliefRow(i + 1, b.before, b.after, BELIEF_Y + i * BELIEF_STEP)));
+        setControlHint('Space');
         this.nextHint = this.keyHint('Space');
         this.replay = this.button(endcard.replay, FRAME.width / 2, 985, () => this.playAgain());
         this.replay.setVisible(false);
@@ -165,7 +168,7 @@ export class EndCard extends Scene {
     }
 
     private keyHint(key: string) {
-        const c = keycap(this, key, 40);
+        const c = isPhone() ? touchChip(this, 'tap', 78) : keycap(this, key, 40);
         if (!getState(this).reducedMotion) this.tweens.add({ targets: c, alpha: 0.45, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
         return c;
     }
@@ -176,9 +179,10 @@ export class EndCard extends Scene {
 
     /** The saffron game button, with its key. */
     private button(text: string, x: number, y: number, onClick: () => void) {
-        const label = this.add.text(0, 0, `${text}  ▶`, { fontFamily: font.display, fontSize: 34, fontStyle: '800', color: css.ink }).setOrigin(0, 0.5);
-        const cap = keycap(this, 'Enter', 36);
-        const w = label.width + cap.width + 76, h = 70;
+        const phone = isPhone();
+        const label = this.add.text(0, 0, `${text}  ▶`, { fontFamily: font.display, fontSize: phone ? 44 : 34, fontStyle: '800', color: css.ink }).setOrigin(0, 0.5);
+        const cap = phone ? touchChip(this, 'tap', 64) : keycap(this, 'Enter', 36);
+        const w = label.width + cap.width + (phone ? 88 : 76), h = phone ? 100 : 70;
         const bg = this.add.graphics();
         const draw = (hover: boolean) => {
             bg.clear().fillStyle(0xb8761a, 1).fillRoundedRect(-w / 2, -h / 2 + 6, w, h, h / 2);

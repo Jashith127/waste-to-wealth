@@ -4,8 +4,9 @@
 import { GameObjects, Math as PMath, Scene } from 'phaser';
 import { howTo, runs } from '../content';
 import { getState, type Run } from '../state';
+import { isPhone } from '../device';
 import { colour, css, font, FRAME, hud } from '../theme';
-import { drawPanel, keycap } from './keys';
+import { drawPanel, keycap, touchChip } from './keys';
 
 export interface LevelInfo {
     level: number;          // the beat's place in its run, from 1
@@ -37,7 +38,8 @@ const CONFETTI = [colour.pay, colour.cost, colour.income, colour.offsite, colour
 
 export class LevelComplete extends GameObjects.Container {
     constructor(scene: Scene, info: LevelInfo, onGo: () => void) {
-        super(scene, FRAME.width / 2, Y);
+        const y = isPhone() ? 560 : Y;
+        super(scene, FRAME.width / 2, y);
         const still = getState(scene).reducedMotion;
 
         // the panel: the station's title, the ticked steps, the button
@@ -83,8 +85,8 @@ export class LevelComplete extends GameObjects.Container {
         if (still) return;
 
         // slam in: the panel rises, the ribbon bounces down onto it, the ticks pop one by one
-        this.setAlpha(0).setY(Y + 40);
-        scene.tweens.add({ targets: this, alpha: 1, y: Y, duration: 260, ease: 'Cubic.easeOut' });
+        this.setAlpha(0).setY(y + 40);
+        scene.tweens.add({ targets: this, alpha: 1, y, duration: 260, ease: 'Cubic.easeOut' });
         banner.setScale(2.2).setAlpha(0);
         scene.tweens.add({ targets: banner, scale: 1, alpha: 1, duration: 420, delay: 120, ease: 'Back.easeOut', onComplete: () => this.confetti(ry) });
         chips.forEach((ch, i) => {
@@ -96,9 +98,10 @@ export class LevelComplete extends GameObjects.Container {
 
     private button(cta: string, key: string, onGo: () => void) {
         const s = this.scene;
-        const t = s.add.text(0, 0, `${cta}  ▶`, { fontFamily: font.display, fontSize: 34, fontStyle: '800', color: css.ink }).setOrigin(0, 0.5);
-        const cap = keycap(s, key, 36);
-        const bw = t.width + cap.width + 76, bh = 68;
+        const phone = isPhone();
+        const t = s.add.text(0, 0, `${cta}  ▶`, { fontFamily: font.display, fontSize: phone ? 44 : 34, fontStyle: '800', color: css.ink }).setOrigin(0, 0.5);
+        const cap = phone ? touchChip(s, 'tap', 64) : keycap(s, key, 36);
+        const bw = t.width + cap.width + (phone ? 88 : 76), bh = phone ? 100 : 68;
         const bg = s.add.graphics();
         const draw = (hover: boolean) => {
             bg.clear().fillStyle(0xb8761a, 1).fillRoundedRect(-bw / 2, -bh / 2 + 6, bw, bh, bh / 2);

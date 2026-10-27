@@ -1,3 +1,25 @@
 html, body { margin: 0; padding: 0; height: 100%; background: #1C1714; overflow: hidden; }
-#app { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
-#game-container { width: 100%; height: 100%; }
+html, body { position: fixed; inset: 0; width: 100%; height: 100%; height: 100dvh; touch-action: none; overscroll-behavior: none; -webkit-user-select: none; user-select: none; }
+#app {
+    width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; box-sizing: border-box;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+#game-container { width: 100%; height: 100%; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+#rotate-gate {
+    display: none; position: fixed; inset: 0; z-index: 40; background: #1C1714; color: #F4ECDE;
+    flex-direction: column; align-items: center; justify-content: center; gap: 14px; text-align: center; padding: 32px;
+    font-family: "Baloo 2", system-ui, sans-serif;
+}
+#rotate-gate p { margin: 8px 0 0; font-size: 32px; font-weight: 800; }
+#rotate-gate span { font-family: Hind, system-ui, sans-serif; font-size: 18px; color: #B8AE9C; }
+.rotate-phone {
+    width: 58px; height: 96px; border: 4px solid #F4ECDE; border-radius: 12px; position: relative;
+    animation: turn-sideways 1.6s ease-in-out infinite;
+}
+.rotate-phone::after { content: ""; position: absolute; left: 22px; bottom: 8px; width: 14px; height: 4px; border-radius: 2px; background: #F0A31F; }
+html[data-device="phone"][data-orient="portrait"] #rotate-gate { display: flex; }
+@keyframes turn-sideways {
+    0%, 20% { transform: rotate(0deg); }
+    45%, 80% { transform: rotate(-90deg); }
+    100% { transform: rotate(0deg); }
+}

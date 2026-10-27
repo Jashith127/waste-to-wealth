@@ -4,12 +4,14 @@ import { GameObjects, Scene } from 'phaser';
 import { blueprint, howTo, runData, runs, station, type StationData } from '../content';
 import { goNext, type Beat } from '../flow';
 import { getState, setState, type GameState } from '../state';
+import { verbFromKeys } from '../controls';
+import { isPhone } from '../device';
 import { colour, FRAME, layout, motion } from '../theme';
 import { mountAudio } from '../audio';
 import { BlueprintPanel } from '../ui/BlueprintPanel';
 import { EvidencePanel } from '../ui/EvidencePanel';
 import { beatTitle } from '../ui/Briefing';
-import { keycap } from '../ui/keys';
+import { keycap, touchChip } from '../ui/keys';
 import { LevelComplete, levelInfo } from '../ui/LevelComplete';
 import { Prompt } from '../ui/Prompt';
 
@@ -142,7 +144,10 @@ export abstract class StationScene extends Scene {
             this.tweens.add({ targets: halo, scale: 1.25, alpha: 0, duration: 1100, repeat: -1, ease: 'Sine.easeOut' });
         }
         const key = this.prompt.key;
-        const cap = key && key !== 'Wait' && key !== 'Arrows' ? keycap(this, key, 40).setDepth(41) : undefined;
+        const verb = key ? verbFromKeys(key === 'Arrows' ? ['←', '↑', '↓', '→'] : key.split(' ')) : undefined;
+        const cap = key && key !== 'Wait' && key !== 'Arrows'
+            ? (isPhone() && verb ? touchChip(this, verb, 72) : keycap(this, key, 40)).setDepth(41)
+            : undefined;
         const bob = { y: 0 };
         if (cap && !this.state.reducedMotion) this.tweens.add({ targets: bob, y: -8, duration: 500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
         const follow = () => {

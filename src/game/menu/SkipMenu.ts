@@ -9,12 +9,12 @@ import { hasStation, runs, station, type Tag } from '../content';
 import { parseBeat, type Beat } from '../flow';
 import { LOCALES, locale, setLocale } from '../i18n';
 import { getState, setState, type KiloTagState, type Run } from '../state';
+import { isPhone } from '../device';
 import { colour, css, font, FRAME } from '../theme';
 import { drawCard } from '../ui/card';
 
 const NOT_PLAYING = new Set(['SkipMenu', 'Hud', 'Boot', 'HowTo']);
-const PANEL = { x: 260, y: 110, w: 1400, h: 860 };
-const ROW_H = 62;
+const DESKTOP_PANEL = { x: 260, y: 110, w: 1400, h: 860 };
 
 // The tag after s03's flip, when s03's own data is not in yet (task 03 params.tag_after).
 const PAID_FALLBACK: Tag = { label: 'Hub payout', value: '+₹3', meaning: 'income', note: 'Estimate: ₹3/kg sorted' };
@@ -48,12 +48,18 @@ export class SkipMenu extends Scene {
     private cursor = 0;
     private paused: string[] = [];
     private motionText!: GameObjects.Text;
+    private panelBox = DESKTOP_PANEL;
+    private rowH = 62;
 
     constructor() {
         super({ key: 'SkipMenu', active: true });
     }
 
     create() {
+        if (isPhone()) {
+            this.panelBox = { x: 36, y: 24, w: 1848, h: 1032 };
+            this.rowH = 78;
+        }
         this.panel = this.add.container(0, 0).setVisible(false);
         this.buildPanel();
         const kb = this.input.keyboard!;
@@ -69,35 +75,35 @@ export class SkipMenu extends Scene {
     private buildPanel() {
         const blocker = this.add.rectangle(0, 0, FRAME.width, FRAME.height, colour.void, 0.72).setOrigin(0).setInteractive();
         const g = this.add.graphics();
-        drawCard(g, PANEL.x, PANEL.y, PANEL.w, PANEL.h, colour.pay);
+        drawCard(g, this.panelBox.x, this.panelBox.y, this.panelBox.w, this.panelBox.h, colour.pay);
         this.focus = this.add.graphics();
         this.panel.add([blocker, g, this.focus]);
-        this.panel.add(this.add.text(PANEL.x + 48, PANEL.y + 66, hud.menu.title, { fontFamily: font.display, fontSize: 48, fontStyle: '800', color: css.ink }).setOrigin(0, 0.5));
+        this.panel.add(this.add.text(this.panelBox.x + 48, this.panelBox.y + 66, hud.menu.title, { fontFamily: font.display, fontSize: isPhone() ? 64 : 48, fontStyle: '800', color: css.ink }).setOrigin(0, 0.5));
 
-        const colW = (PANEL.w - 144) / 2;
+        const colW = (this.panelBox.w - 144) / 2;
         ([1, 2] as Run[]).forEach((run, col) => {
-            const x = PANEL.x + 48 + col * (colW + 48);
-            this.panel.add(this.add.text(x, PANEL.y + 150, runs[run].title, { fontFamily: font.display, fontSize: 34, fontStyle: '700', color: css.muted }).setOrigin(0, 0.5));
+            const x = this.panelBox.x + 48 + col * (colW + 48);
+            this.panel.add(this.add.text(x, this.panelBox.y + (isPhone() ? 160 : 150), runs[run].title, { fontFamily: font.display, fontSize: isPhone() ? 42 : 34, fontStyle: '700', color: css.muted }).setOrigin(0, 0.5));
             const beats = runs[run].beats.map((_, i) => parseBeat(run, i));
-            beats.forEach((beat, row) => this.addItem(col, row, x, PANEL.y + 214 + row * ROW_H, colW, beatLabel(beat), () => this.jump(beat)));
+            beats.forEach((beat, row) => this.addItem(col, row, x, this.panelBox.y + 214 + row * this.rowH, colW, beatLabel(beat), () => this.jump(beat)));
         });
 
-        const by = PANEL.y + PANEL.h - 70;
-        this.addItem(2, 0, PANEL.x + 48, by, 440, hud.menu.restart, () => this.jump(parseBeat(1, 0), true));
-        this.motionText = this.addItem(2, 1, PANEL.x + 508, by, 340, '', () => this.toggleMotion()).text!;
+        const by = this.panelBox.y + this.panelBox.h - 70;
+        this.addItem(2, 0, this.panelBox.x + 48, by, 440, hud.menu.restart, () => this.jump(parseBeat(1, 0), true));
+        this.motionText = this.addItem(2, 1, this.panelBox.x + 508, by, 340, '', () => this.toggleMotion()).text!;
         // the language, named in its own script; choosing the next one reloads in it
         const name = LOCALES.find((l) => l.id === locale)!.name;
-        this.addItem(2, 2, PANEL.x + 868, by, 300, `Language: ${name}`, () => {
+        this.addItem(2, 2, this.panelBox.x + 868, by, 300, `Language: ${name}`, () => {
             const i = LOCALES.findIndex((l) => l.id === locale);
             setLocale(LOCALES[(i + 1) % LOCALES.length].id);
         });
-        this.addItem(2, 3, PANEL.x + PANEL.w - 228, by, 180, hud.menu.close, () => this.close());
-        this.panel.add(this.add.graphics().lineStyle(2, colour.ink, 0.15).lineBetween(PANEL.x + 48, by - 52, PANEL.x + PANEL.w - 48, by - 52));
+        this.addItem(2, 3, this.panelBox.x + this.panelBox.w - 228, by, 180, hud.menu.close, () => this.close());
+        this.panel.add(this.add.graphics().lineStyle(2, colour.ink, 0.15).lineBetween(this.panelBox.x + 48, by - 52, this.panelBox.x + this.panelBox.w - 48, by - 52));
     }
 
     private addItem(col: number, row: number, x: number, y: number, w: number, label: string, choose: () => void): Item {
-        const text = this.add.text(x + 20, y, label, { fontFamily: font.body, fontSize: 30, color: css.ink }).setOrigin(0, 0.5);
-        const hit = this.add.rectangle(x, y, w, ROW_H - 8, 0, 0).setOrigin(0, 0.5).setInteractive({ useHandCursor: true });
+        const text = this.add.text(x + 20, y, label, { fontFamily: font.body, fontSize: isPhone() ? 36 : 30, color: css.ink }).setOrigin(0, 0.5);
+        const hit = this.add.rectangle(x, y, w, this.rowH - 8, 0, 0).setOrigin(0, 0.5).setInteractive({ useHandCursor: true });
         const item: Item = { col, row, label, choose, text, x, y, w };
         const index = this.items.push(item) - 1;
         hit.on('pointerover', () => this.setCursor(index)).on('pointerup', () => choose());
@@ -131,8 +137,8 @@ export class SkipMenu extends Scene {
     private setCursor(i: number) {
         this.cursor = i;
         const it = this.items[i];
-        this.focus.clear().fillStyle(colour.pay, 0.28).fillRoundedRect(it.x, it.y - (ROW_H - 8) / 2, it.w, ROW_H - 8, 10);
-        this.focus.lineStyle(3, colour.ink, 1).strokeRoundedRect(it.x, it.y - (ROW_H - 8) / 2, it.w, ROW_H - 8, 10);
+        this.focus.clear().fillStyle(colour.pay, 0.28).fillRoundedRect(it.x, it.y - (this.rowH - 8) / 2, it.w, this.rowH - 8, 10);
+        this.focus.lineStyle(3, colour.ink, 1).strokeRoundedRect(it.x, it.y - (this.rowH - 8) / 2, it.w, this.rowH - 8, 10);
     }
 
     private move(d: number) {

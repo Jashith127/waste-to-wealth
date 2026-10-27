@@ -4,11 +4,12 @@
 // −₹5; tap a pile to clear it and watch it come back. Run 2: open the hub's drop window and the kilos
 // converge (stalls hold theirs while it is shut), one pickup leaves for Renderer (example), and the
 // loop comes back to the stalls (How it could close). Lenses 1/2/3: waste, money, power.
-import { GameObjects, Math as PMath, Scene } from 'phaser';
+import { GameObjects, Geom, Math as PMath, Scene } from 'phaser';
 import data from '../../data/map.json';
 import { howTo, runs } from '../content';
 import { goNext, type Beat } from '../flow';
 import { getState } from '../state';
+import { isPhone } from '../device';
 import { colour, css, font, FRAME, layout, motion } from '../theme';
 import { drawCard, drawChip } from '../ui/card';
 import { labelCard } from '../ui/greybox';
@@ -145,36 +146,41 @@ export class MarketMap extends Scene {
     }
 
     private sidePanel() {
-        const x = layout.gutter, y = layout.hudBottom + 10;
+        const phone = isPhone();
+        const x = layout.gutter, y = phone ? 250 : layout.hudBottom + 10;
+        const pw = phone ? 620 : 450, ph = phone ? 700 : 560;
         const g = this.add.graphics();
-        drawCard(g, x, y, 450, 560);
-        this.add.text(x + 28, y + 48, data.title, { fontFamily: font.display, fontSize: 40, fontStyle: '800', color: css.ink }).setOrigin(0, 0.5);
+        drawCard(g, x, y, pw, ph);
+        this.add.text(x + 28, y + (phone ? 64 : 48), data.title, { fontFamily: font.display, fontSize: phone ? 52 : 40, fontStyle: '800', color: css.ink }).setOrigin(0, 0.5);
         const run = data.runs[String(this.run) as '1' | '2'];
-        this.add.text(x + 28, y + 98, run.subtitle, { fontFamily: font.body, fontSize: 28, color: css.ink, wordWrap: { width: 400 } }).setOrigin(0, 0.5);
+        this.add.text(x + 28, y + (phone ? 124 : 98), run.subtitle, { fontFamily: font.body, fontSize: phone ? 36 : 28, color: css.ink, wordWrap: { width: pw - 56 } }).setOrigin(0, 0.5);
         if ('proposed' in run && run.proposed) {
             const cg = this.add.graphics();
             drawChip(cg, x + 28, y + 130, 130, 36, colour.brown);
             this.add.text(x + 93, y + 148, 'Proposed', { fontFamily: font.display, fontSize: 22, fontStyle: '700', color: css.cream }).setOrigin(0.5);
         }
         (['waste', 'money', 'power'] as Lens[]).forEach((lens, i) => {
-            const by = y + 220 + i * 78;
+            const bh = phone ? 96 : 62, bw = phone ? 560 : 390, gap = phone ? 112 : 78;
+            const by = y + (phone ? 250 : 220) + i * gap;
             const c = this.add.container(x + 28, by);
             const bg = this.add.graphics();
-            const t = this.add.text(70, 0, data.lenses[lens], { fontFamily: font.display, fontSize: 30, fontStyle: '700', color: css.ink }).setOrigin(0, 0.5);
-            const key = this.add.text(26, 0, String(i + 1), { fontFamily: font.display, fontSize: 24, fontStyle: '700', color: css.cream }).setOrigin(0.5);
-            c.add([bg, key, t]).setSize(390, 62).setInteractive({ useHandCursor: true }).on('pointerup', () => this.setLens(lens));
+            const t = this.add.text(phone ? 88 : 70, 0, data.lenses[lens], { fontFamily: font.display, fontSize: phone ? 42 : 30, fontStyle: '700', color: css.ink }).setOrigin(0, 0.5);
+            const key = this.add.text(phone ? 36 : 26, 0, String(i + 1), { fontFamily: font.display, fontSize: phone ? 34 : 24, fontStyle: '700', color: css.cream }).setOrigin(0.5);
+            c.add([bg, key, t]).setSize(bw, bh).setInteractive({ useHandCursor: true }).on('pointerup', () => this.setLens(lens));
+            c.setData('size', { w: bw, h: bh });
             c.setData('bg', bg);
             this.lensButtons[lens] = c;
         });
-        this.add.text(x + 28, y + 500, data.stall_count_note, { fontFamily: font.body, fontSize: 21, color: css.muted, wordWrap: { width: 400 } }).setOrigin(0, 0.5);
+        this.add.text(x + 28, y + (phone ? 640 : 500), data.stall_count_note, { fontFamily: font.body, fontSize: phone ? 28 : 21, color: css.muted, wordWrap: { width: pw - 56 } }).setOrigin(0, 0.5);
     }
 
     private setLens(lens: Lens) {
         this.lens = lens;
         for (const [k, c] of Object.entries(this.lensButtons) as [Lens, GameObjects.Container][]) {
             const bg = c.getData('bg') as GameObjects.Graphics;
-            bg.clear().fillStyle(k === lens ? colour.ink : colour.cream, 1).fillRoundedRect(0, -31, 390, 62, 14);
-            bg.fillStyle(k === lens ? colour.cream : colour.ink, 1).fillRoundedRect(8, -20, 36, 40, 8);
+            const size = c.getData('size') as { w: number; h: number };
+            bg.clear().fillStyle(k === lens ? colour.ink : colour.cream, 1).fillRoundedRect(0, -size.h / 2, size.w, size.h, 16);
+            bg.fillStyle(k === lens ? colour.cream : colour.ink, 1).fillRoundedRect(10, -size.h / 2 + 14, size.h * 0.55, size.h - 28, 10);
             (c.list[1] as GameObjects.Text).setColor(k === lens ? css.ink : css.cream);
             (c.list[2] as GameObjects.Text).setColor(k === lens ? css.cream : css.ink);
             this.layer[k].setVisible(k === lens);
@@ -191,10 +197,11 @@ export class MarketMap extends Scene {
         const m = this.market;
         for (const [dx, dy] of [[70, 40], [-60, 70], [95, -30], [-20, -85]]) {
             const at = { x: m.x + dx, y: m.y + dy };
-            const pile = this.add.circle(at.x, at.y, 8, 0x5e5249, 1).setStrokeStyle(2, colour.ink, 0.8);
+            const pile = this.add.circle(at.x, at.y, isPhone() ? 18 : 8, 0x5e5249, 1).setStrokeStyle(2, colour.ink, 0.8);
             this.layer.waste.add(pile);
             this.dumps.push({ at, pile, size: 6 });
-            pile.setInteractive({ useHandCursor: true }).on('pointerup', () => this.clearPile(this.dumps.find((d) => d.pile === pile)!));
+            pile.setInteractive(new Geom.Circle(0, 0, isPhone() ? 52 : 16), Geom.Circle.Contains);
+            pile.on('pointerup', () => this.clearPile(this.dumps.find((d) => d.pile === pile)!));
         }
         this.time.addEvent({ delay: 260, loop: true, callback: () => this.emitRun1() });
         this.time.addEvent({ delay: 1400, loop: true, callback: () => this.truckTrip() });

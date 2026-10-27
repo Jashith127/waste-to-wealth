@@ -8,6 +8,7 @@ import { MarketMap } from './scenes/MarketMap';
 import { SkipMenu } from './menu/SkipMenu';
 import { Placeholder } from './scenes/Placeholder';
 import { StationCard } from './scenes/StationCard';
+import { installDevice } from './device';
 import { install as installLanguage } from './i18n';
 import { initState } from './state';
 import { FRAME } from './theme';
@@ -23,6 +24,7 @@ const config: Types.Core.GameConfig = {
     width: FRAME.width,
     height: FRAME.height,
     backgroundColor: '#1C1714',
+    input: { activePointers: 3 },
     scale: {
         mode: Scale.FIT,
         autoCenter: Scale.CENTER_BOTH,
@@ -31,8 +33,10 @@ const config: Types.Core.GameConfig = {
 };
 
 const StartGame = (parent: string) => {
+    installDevice();
     installLanguage();
     const game = new Game({ ...config, parent });
+    game.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
     initState(game, { 1: runs[1].beats, 2: runs[2].beats });
     (window as unknown as { __game: Game }).__game = game;   // for Playwright screenshots
     return game;

@@ -6,9 +6,10 @@ import { howToText, runs } from '../content';
 import { sceneFor, type Beat } from '../flow';
 import { LOCALES, locale, setLocale, tr } from '../i18n';
 import { getState } from '../state';
+import { isPhone } from '../device';
 import { colour, css, font, FRAME, motion } from '../theme';
 import { beatTitle, briefingCard, hasBriefing } from '../ui/Briefing';
-import { keycap } from '../ui/keys';
+import { keycap, touchChip } from '../ui/keys';
 
 export class StationCard extends Scene {
     private waiting?: () => void;
@@ -56,17 +57,17 @@ export class StationCard extends Scene {
         const t = howToText.briefing;
         const parts: GameObjects.GameObject[] = [
             this.add.image(0, 0, 'skyline').setOrigin(0),
-            this.add.text(FRAME.width / 2, 400, t.title, { fontFamily: font.display, fontSize: 132, fontStyle: '800', color: css.cream }).setOrigin(0.5).setShadow(0, 8, '#000000', 0, false, true),
-            this.add.text(FRAME.width / 2, 500, t.tagline, { fontFamily: font.body, fontSize: 36, color: '#D8CCB8' }).setOrigin(0.5),
+            this.add.text(FRAME.width / 2, 400, t.title, { fontFamily: font.display, fontSize: isPhone() ? 108 : 132, fontStyle: '800', color: css.cream }).setOrigin(0.5).setShadow(0, 8, '#000000', 0, false, true),
+            this.add.text(FRAME.width / 2, 500, t.tagline, { fontFamily: font.body, fontSize: isPhone() ? 44 : 36, color: '#D8CCB8', align: 'center', wordWrap: { width: isPhone() ? 1600 : 1400 } }).setOrigin(0.5),
         ];
         const g = this.add.graphics();
         g.fillStyle(colour.pay, 1).fillRect(FRAME.width / 2 - 180, 560, 360, 6);
         const press = this.add.container(FRAME.width / 2, 700);
         // "Press [Space] to begin": the cap sits where the word was
         const [before, after = ''] = tr(t.press).split('Space');     // every translation keeps the key's name
-        const style = { fontFamily: font.display, fontSize: 38, fontStyle: '700', color: css.cream };
+        const style = { fontFamily: font.display, fontSize: isPhone() ? 48 : 38, fontStyle: '700', color: css.cream };
         const label = this.add.text(0, 0, before.trim(), style).setOrigin(0, 0.5);
-        const cap = keycap(this, 'Space', 48);
+        const cap = isPhone() ? touchChip(this, 'tap', 72) : keycap(this, 'Space', 48);
         const tail = this.add.text(0, 0, after.trim(), style).setOrigin(0, 0.5);
         const w = label.width + 16 + cap.width + 16 + tail.width;
         label.setX(-w / 2);
@@ -93,23 +94,25 @@ export class StationCard extends Scene {
 
     /** The language row under the title: each language named in its own script; L cycles. */
     private languages() {
-        const w = 200, gap = 20, y = 860;
+        const phone = isPhone();
+        const w = phone ? 280 : 200, gap = phone ? 24 : 20, y = phone ? 820 : 860, bh = phone ? 96 : 64;
         const x0 = FRAME.width / 2 - (LOCALES.length * w + (LOCALES.length - 1) * gap) / 2 + w / 2;
         const out: GameObjects.GameObject[] = [];
         LOCALES.forEach((l, i) => {
             const on = l.id === locale;
             const g = this.add.graphics();
             const draw = (hover: boolean) => {
-                g.clear().fillStyle(on ? colour.pay : colour.ink, on ? 1 : 0.85).fillRoundedRect(-w / 2, -32, w, 64, 32);
-                g.lineStyle(2.5, on || hover ? colour.pay : colour.cream, on || hover ? 1 : 0.3).strokeRoundedRect(-w / 2, -32, w, 64, 32);
+                g.clear().fillStyle(on ? colour.pay : colour.ink, on ? 1 : 0.85).fillRoundedRect(-w / 2, -bh / 2, w, bh, bh / 2);
+                g.lineStyle(2.5, on || hover ? colour.pay : colour.cream, on || hover ? 1 : 0.3).strokeRoundedRect(-w / 2, -bh / 2, w, bh, bh / 2);
             };
             draw(false);
-            const t = this.add.text(0, 0, l.name, { fontFamily: font.display, fontSize: 30, fontStyle: '700', color: on ? css.ink : css.cream }).setOrigin(0.5);
-            const b = this.add.container(x0 + i * (w + gap), y, [g, t]).setSize(w, 64);
+            const t = this.add.text(0, 0, l.name, { fontFamily: font.display, fontSize: phone ? 40 : 30, fontStyle: '700', color: on ? css.ink : css.cream }).setOrigin(0.5);
+            const b = this.add.container(x0 + i * (w + gap), y, [g, t]).setSize(w, bh);
             b.setInteractive({ useHandCursor: true }).on('pointerover', () => draw(true)).on('pointerout', () => draw(false))
                 .on('pointerup', () => { if (!on) setLocale(l.id); });
             out.push(b);
         });
+        if (phone) return out;
         const hint = this.add.container(FRAME.width / 2, y + 62);
         const cap = keycap(this, 'L', 30);
         const label = this.add.text(0, 0, 'Language', { fontFamily: font.body, fontSize: 22, color: '#B8AE9C' }).setOrigin(0, 0.5);

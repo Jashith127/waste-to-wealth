@@ -3,6 +3,7 @@
 // the player tracks.
 import { GameObjects, Math as PMath, Scene } from 'phaser';
 import type { KiloTagState } from '../state';
+import { isPhone } from '../device';
 import { colour, css, font, motion } from '../theme';
 
 const MIN_W = 176;
@@ -38,6 +39,7 @@ export class KiloTag extends GameObjects.Container {
         this.value = scene.add.text(0, 68, '', { fontFamily: font.display, fontSize: 42, fontStyle: '800', color: css.ink }).setOrigin(0.5, 0.5);
         this.note = scene.add.text(0, 99, '', { fontFamily: font.body, fontSize: 17, color: css.muted }).setOrigin(0.5, 0.5);
         this.face.add([this.card, this.label, this.value, this.note]);
+        if (isPhone()) this.setScale(1.35);
         this.add([this.string, this.face]);
         this.render(tag);
         scene.add.existing(this);

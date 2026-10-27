@@ -4,7 +4,9 @@
 // paused beat on H (HowTo). Text from howto.json; the station's own title and place from its data.
 import { GameObjects, Scene } from 'phaser';
 import marketMap from '../../data/map.json';
+import { touchText } from '../controls';
 import { hasStation, howTo, howToText, runs, station } from '../content';
+import { isPhone } from '../device';
 import { getState, type Run } from '../state';
 import { colour, css, font, FRAME, hud, motion } from '../theme';
 import { drawCard, drawChip } from './card';
@@ -32,6 +34,7 @@ export function hasBriefing(run: Run, beat: string) {
 
 /** The card, centred on the frame. `onGo` runs on the button (callers bind their own keys too). */
 export function briefingCard(scene: Scene, run: Run, beat: string, cta: string, onGo: () => void): GameObjects.Container {
+    if (isPhone()) return phoneBriefing(scene, run, beat, cta, onGo);
     const info = howTo(run, beat)!;
     const head = beatTitle(beat);
     const phase = runs[run].clock?.[beat];
@@ -117,6 +120,90 @@ export function briefingCard(scene: Scene, run: Run, beat: string, cta: string, 
     btn.add([bg, bt, cap]).setSize(bw, bh);
     btn.setInteractive({ useHandCursor: true })
         .on('pointerover', () => draw(true)).on('pointerout', () => draw(false)).on('pointerup', onGo);
+    add(btn);
+    if (!getState(scene).reducedMotion) {
+        scene.tweens.add({ targets: btn, scale: 1.04, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+        c.setAlpha(0).setY(c.y + 24);
+        scene.tweens.add({ targets: c, alpha: 1, y: c.y - 24, duration: motion.normal + 80, ease: 'Cubic.easeOut' });
+    }
+    return c;
+}
+
+/** Full-frame card for a phone: steps stack, type is large enough to read after FIT scales the canvas down. */
+function phoneBriefing(scene: Scene, run: Run, beat: string, cta: string, onGo: () => void): GameObjects.Container {
+    const info = howTo(run, beat)!;
+    const head = beatTitle(beat);
+    const phase = runs[run].clock?.[beat];
+    const CARD = { w: 1840, h: 1020 };
+    const left = -CARD.w / 2, top = -CARD.h / 2;
+    const c = scene.add.container(FRAME.width / 2, FRAME.height / 2);
+    const add = <T extends GameObjects.GameObject>(o: T) => (c.add(o), o);
+    const g = add(scene.add.graphics());
+    g.fillStyle(hud.shadow, 0.4).fillRoundedRect(left + 6, top + 12, CARD.w, CARD.h, 22);
+    drawCard(g, left, top, CARD.w, CARD.h, run === 1 ? colour.cost : colour.income);
+
+    const by = top + 78;
+    g.fillStyle(colour.pay, 1).fillCircle(left + 78, by, 40).lineStyle(4, colour.ink, 1).strokeCircle(left + 78, by, 40);
+    add(scene.add.text(left + 78, by + 2, head.badge, { fontFamily: font.display, fontSize: head.badge.length > 2 ? 28 : 36, fontStyle: '800', color: css.ink }).setOrigin(0.5));
+    add(scene.add.text(left + 140, by - 16, head.title, { fontFamily: font.display, fontSize: 48, fontStyle: '800', color: css.ink }).setOrigin(0, 0.5));
+    const place = add(scene.add.text(left + 142, by + 28, head.place, { fontFamily: font.body, fontSize: 30, color: css.muted }).setOrigin(0, 0.5));
+    if (phase) {
+        const px = place.x + place.width + 24;
+        drawPhaseIcon(g, px + 16, by + 36, phase, 16, colour.ink, colour.card);
+        add(scene.add.text(px + 44, by + 28, phaseLabel(phase), { fontFamily: font.body, fontSize: 30, color: css.muted }).setOrigin(0, 0.5));
+    }
+    const runText = add(scene.add.text(0, by - 16, runs[run].title, { fontFamily: font.display, fontSize: 28, fontStyle: '700', color: css.cream }).setOrigin(1, 0.5));
+    const chipW = runText.width + 40, chipX = -left - 36 - chipW;
+    drawChip(g, chipX, by - 40, chipW, 48, run === 1 ? colour.cost : colour.income);
+    runText.setX(chipX + chipW - 20);
+
+    const gy = top + 168;
+    const goalLabel = add(scene.add.text(left + 56, gy, howToText.briefing.goal.toUpperCase(), { fontFamily: font.display, fontSize: 26, fontStyle: '800', color: css.cream }).setOrigin(0, 0.5).setLetterSpacing(2));
+    drawChip(g, left + 36, gy - 24, goalLabel.width + 44, 48, colour.ink);
+    add(scene.add.text(left + 36 + goalLabel.width + 64, gy, touchText(info.goal), { fontFamily: font.display, fontSize: 40, fontStyle: '700', color: css.ink }).setOrigin(0, 0.5));
+    if (info.tip) add(scene.add.text(left + 40, gy + 44, touchText(info.tip), { fontFamily: font.body, fontSize: 30, color: css.muted }).setOrigin(0, 0.5));
+
+    const n = info.steps.length;
+    const gap = 14;
+    const areaTop = top + (info.tip ? 250 : 214);
+    const areaBot = -top - 148;
+    const th = (areaBot - areaTop - gap * (n - 1)) / n;
+    info.steps.forEach((st, i) => {
+        const tx = left + 36, ty = areaTop + i * (th + gap);
+        g.fillStyle(colour.cream, 1).fillRoundedRect(tx, ty, CARD.w - 72, th, 16);
+        g.lineStyle(2.5, colour.ink, 0.45).strokeRoundedRect(tx, ty, CARD.w - 72, th, 16);
+        g.fillStyle(colour.ink, 1).fillCircle(tx + 40, ty + 40, 24);
+        add(scene.add.text(tx + 40, ty + 41, String(i + 1), { fontFamily: font.display, fontSize: 28, fontStyle: '800', color: css.pay }).setOrigin(0.5));
+        add(scene.add.text(tx + 78, ty + 40, st.label, { fontFamily: font.display, fontSize: 40, fontStyle: '800', color: css.ink }).setOrigin(0, 0.5));
+        if (st.keys.length || st.mouse) {
+            const row = inputRow(scene, st.keys, st.mouse, 64, true);
+            row.setPosition(tx + CARD.w - 72 - 36 - row.width / 2, ty + 40);
+            add(row);
+        }
+        const body = touchText(st.text);
+        add(scene.add.text(tx + 28, ty + 78, body, {
+            fontFamily: font.body, fontSize: 36, color: css.ink, wordWrap: { width: CARD.w - 140 }, lineSpacing: 4,
+        }));
+    });
+
+    const fy = -top - 72;
+    add(scene.add.text(left + 40, fy, 'Blueprint, Evidence, How to play and Menu sit along the bottom.', {
+        fontFamily: font.body, fontSize: 28, color: css.muted,
+    }).setOrigin(0, 0.5));
+
+    const bt = scene.add.text(0, 0, `${cta}  ▶`, { fontFamily: font.display, fontSize: 42, fontStyle: '800', color: css.cream }).setOrigin(0, 0.5);
+    const bw = bt.width + 80, bh = 100;
+    const btn = scene.add.container(-left - 40 - bw / 2, fy);
+    const bg = scene.add.graphics();
+    const draw = (hover: boolean) => {
+        bg.clear().fillStyle(hud.shadow, 0.3).fillRoundedRect(-bw / 2, -bh / 2 + 6, bw, bh, bh / 2);
+        bg.fillStyle(hover ? colour.brown : colour.ink, 1).fillRoundedRect(-bw / 2, -bh / 2, bw, bh, bh / 2);
+        bg.lineStyle(4, colour.pay, 1).strokeRoundedRect(-bw / 2, -bh / 2, bw, bh, bh / 2);
+    };
+    draw(false);
+    bt.setX(-bt.width / 2);
+    btn.add([bg, bt]).setSize(bw, bh);
+    btn.setInteractive({ useHandCursor: true }).on('pointerover', () => draw(true)).on('pointerout', () => draw(false)).on('pointerup', onGo);
     add(btn);
     if (!getState(scene).reducedMotion) {
         scene.tweens.add({ targets: btn, scale: 1.04, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });

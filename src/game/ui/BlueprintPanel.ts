@@ -3,6 +3,7 @@
 import { GameObjects, Scene } from 'phaser';
 import { LANE_LABELS, type BlueprintItem, type Lane, type StationData } from '../content';
 import type { Run } from '../state';
+import { isPhone } from '../device';
 import { colour, css, font, FRAME, layout, motion } from '../theme';
 import { drawCard, drawChip } from './card';
 
@@ -23,7 +24,7 @@ export class BlueprintPanel extends GameObjects.Container {
         this.add(scene.add.text(x + 32, 26, `Service blueprint · ${station.number} ${station.title}`, {
             fontFamily: font.display, fontSize: 30, fontStyle: '700', color: css.ink,
         }));
-        this.add(scene.add.text(x + w - 32, 30, `${runLabel}   ·   B to close`, {
+        this.add(scene.add.text(x + w - 32, 30, `${runLabel}   ·   ${isPhone() ? 'Tap Blueprint to close' : 'B to close'}`, {
             fontFamily: font.body, fontSize: 22, color: css.muted,
         }).setOrigin(1, 0));
 

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="./favicon.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Hind:wght@400;500;700&family=Baloo+Tamma+2:wght@600;700;800&family=Noto+Sans+Kannada:wght@400;500;700&family=Noto+Nastaliq+Urdu:wght@400;700&display=swap">
@@ -13,6 +13,11 @@
 <body>
     <div id="app">
         <div id="game-container"></div>
+    </div>
+    <div id="rotate-gate" role="dialog" aria-label="Rotate your phone">
+        <div class="rotate-phone" aria-hidden="true"></div>
+        <p>Turn your phone sideways</p>
+        <span>Waste to Wealth plays across the screen.</span>
     </div>
     <script type="module" src="/src/main.ts"></script>
 </body>
