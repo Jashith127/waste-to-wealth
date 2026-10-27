@@ -104,6 +104,24 @@
       "title": "The News Minute: chicken shops bandh over waste fee (Sept 2026)",
       "supports": "₹5/kg animal waste, ₹3/kg bone"
     },
+    "C-mbm-price": {
+      "kind": "report",
+      "url": "https://www.exportersindia.com/indian-suppliers/meat-bone-meal.htm",
+      "title": "ExportersIndia: meat and bone meal listings",
+      "supports": "Meat and bone meal sells near ₹35–37/kg (for the payout estimate)"
+    },
+    "C-render-yield": {
+      "kind": "report",
+      "url": "https://www.freepressjournal.in/bhopal/bhopals-first-rendering-plant-turning-animal-waste-into-revenue-and-jobs",
+      "title": "Free Press Journal: Bhopal's first rendering plant",
+      "supports": "About 450 g of product from 1 kg of raw waste (for the payout estimate)"
+    },
+    "C-fee-kannur": {
+      "kind": "report",
+      "url": "https://krishijagran.com/animal-husbandry/kannur-to-become-the-first-poultry-waste-free-district-in-kerala/",
+      "title": "Krishi Jagran: Kannur poultry-waste-free district (Dec 2021)",
+      "supports": "Shops pay collectors ₹7/kg in Kannur"
+    },
     "SPEC-journey": {
       "kind": "proposal",
       "file": "docs/game-concept.md",

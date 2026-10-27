@@ -43,7 +43,7 @@ export class KiloTag extends GameObjects.Container {
         scene.add.existing(this);
     }
 
-    /** The card grows to fit its note ("₹[__]/kg, payout to be set" ran past a fixed-width card). */
+    /** The card grows to fit its note (a long note ran past a fixed-width card). */
     private render(tag: KiloTagState) {
         this.label.setText((tag.label ?? '').toUpperCase());
         this.value.setText(tag.value).setColor(css[tag.meaning]);
@@ -71,7 +71,7 @@ export class KiloTag extends GameObjects.Container {
         this.scene.tweens.add({ targets: this, angle: 0, duration: 900, ease: 'Elastic.easeOut', easeParams: [1, 0.45] });
     }
 
-    /** −₹5 → +₹[__]: flip on the vertical axis (300 ms). */
+    /** −₹5 → +₹3: flip on the vertical axis (300 ms). */
     flipTo(tag: KiloTagState) {
         if (this.reducedMotion) return this.render(tag);
         this.scene.tweens.add({

@@ -203,7 +203,7 @@
       "properties": {
         "value": {
           "type": "string",
-          "description": "As shown: \"−₹5\", or the payout placeholder \"+₹[__]\". Never a payout number (truth rules)."
+          "description": "As shown: \"−₹5\", or the payout \"+₹3\". A payout is our estimate (endcard.json payout_note) and its note says so (truth rules)."
         },
         "meaning": {
           "enum": [

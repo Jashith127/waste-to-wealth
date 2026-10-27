@@ -17,7 +17,7 @@ const PANEL = { x: 260, y: 110, w: 1400, h: 860 };
 const ROW_H = 62;
 
 // The tag after s03's flip, when s03's own data is not in yet (task 03 params.tag_after).
-const PAID_FALLBACK: Tag = { label: 'Hub payout', value: '+₹[__]', meaning: 'income', note: '₹[__]/kg, payout to be set' };
+const PAID_FALLBACK: Tag = { label: 'Hub payout', value: '+₹3', meaning: 'income', note: 'Estimate: ₹3/kg sorted' };
 
 interface Item { col: number; row: number; label: string; choose: () => void; text?: GameObjects.Text; y: number; x: number; w: number }
 
@@ -29,7 +29,7 @@ function beatLabel(beat: Beat): string {
     return `${s.number} · ${s.title}${beat.variant ? ` (${beat.variant})` : ''}`;
 }
 
-/** The kilo's tag at the start of a beat: none before s01, −₹5 until s03, +₹[__] from s03 on in Run 2. */
+/** The kilo's tag at the start of a beat: none before s01, −₹5 until s03, the estimated payout (+₹3) from s03 on in Run 2. */
 function tagAt(beat: Beat): KiloTagState | null {
     if (beat.run === 1 && beat.index === 0) return null;
     if (beat.run === 2 && beat.index === 0) return null;

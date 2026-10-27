@@ -10,7 +10,9 @@
     "D-p23",
     "D-p20",
     "D-p26",
-    "D-p22"
+    "D-p22",
+    "C-mbm-price",
+    "C-render-yield"
   ],
   "runs": {
     "2": {
@@ -19,7 +21,7 @@
       "prompts": {
         "sort": "Sort it: crate or bin",
         "drag": "Put the crate on the scale",
-        "number": "Say your number",
+        "number": "Talk to the attendant",
         "wait": "The attendant types it in",
         "paid": "Paid",
         "leave": "Into the cold room"
@@ -30,7 +32,7 @@
     "2": [
       {
         "lane": "vendor",
-        "text": "Puts the crate on the scale and says his number.",
+        "text": "Puts the crate on the scale and talks it through with the attendant.",
         "evidence": [
           "SPEC-journey",
           "D-p23"
@@ -78,36 +80,82 @@
     "rate_board": [
       {
         "line": "Bone, sorted",
-        "rate": "₹[__]/kg"
+        "rate": "≈₹3/kg"
       },
       {
         "line": "Offal, sorted",
-        "rate": "₹[__]/kg"
+        "rate": "≈₹3/kg"
       },
       {
         "line": "Mixed",
-        "rate": "₹[__]/kg"
+        "rate": "≈₹1/kg"
       }
     ],
-    "rate_note": "Sorted earns more",
+    "rate_note": "Estimates · sorted earns more",
     "speech": "My number is…",
     "number_masked": "••••• •••••",
     "slip": {
       "title": "Hub slip",
       "lines": [
         "1.0 kg · sorted",
-        "₹[__] by UPI"
+        "≈₹3 by UPI"
       ],
       "lines_mixed": [
         "1.0 kg · mixed",
-        "₹[__] by UPI"
+        "≈₹1 by UPI"
       ]
     },
     "tag_after": {
       "label": "Hub payout",
-      "value": "+₹[__]",
+      "value": "+₹3",
       "meaning": "income",
-      "note": "₹[__]/kg, payout to be set"
+      "note": "Estimate: ₹3/kg sorted"
+    },
+    "tag_after_mixed": {
+      "label": "Hub payout",
+      "value": "+₹1",
+      "meaning": "income",
+      "note": "Estimate: ₹1/kg mixed"
+    },
+    "talk_note": "The weigh-in as it might sound at a Shivajinagar counter: Dakhni and English, the way the market talks. The rates are our estimate (see endcard payout_note); the number is never shown.",
+    "talk": [
+      {
+        "who": "attendant",
+        "text": "Salaam, Riyaz bhai! Rakh do, rakh do. Ek kilo, full.",
+        "mixed": "Salaam, Riyaz bhai! Ek kilo… arre, plastic dikh raha hai andar."
+      },
+      {
+        "who": "riyaz",
+        "text": "Walaikum salaam. All sorted at the stall itself. Aaj ka rate kya hai?",
+        "mixed": "Arre, rush mein gir gaya hoga. Rate kya hai?"
+      },
+      {
+        "who": "attendant",
+        "text": "Sorted hai na, so ₹3 a kilo. Number bolo.",
+        "mixed": "Mixed hai, bhai, so only ₹1 a kilo. Next time alag karo. Number bolo."
+      },
+      {
+        "who": "riyaz",
+        "text": "Same as last time. Nine-eight… you have it, no?",
+        "do": "mask"
+      },
+      {
+        "who": "attendant",
+        "text": "Hau, hau. Done. Phone dekho.",
+        "do": "pay"
+      },
+      {
+        "who": "riyaz",
+        "text": "Aa gaya! Shukriya, bhai."
+      },
+      {
+        "who": "attendant",
+        "text": "Khuda hafiz. Meat bacha toh Chamber A mein rakh do, free hai."
+      }
+    ],
+    "speakers": {
+      "riyaz": "Riyaz",
+      "attendant": "Hub attendant"
     },
     "sort": {
       "title": "Sort before you weigh",

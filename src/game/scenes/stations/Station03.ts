@@ -1,6 +1,7 @@
 // Station 3 · Weigh-in and payment, the hub's front counter (Run 2).
-// Drag the crate onto the platform scale, say the number, watch the attendant type it, then the
-// UPI ping flips the tag from −₹5 to +₹[__]. Every rate is ₹[__]/kg: no payout is invented.
+// Drag the crate onto the platform scale, then talk it through with the attendant (Space per line):
+// the weight, the rate, the number (masked on screen), and the UPI ping flips the tag from −₹5 to
+// the estimated payout (≈₹3/kg sorted, ≈₹1/kg mixed; endcard.json payout_note says how).
 //
 // Layers and anchors come from the lead's final s03 art (lead/s03-art): bg, crate + crate_shadow,
 // riyaz_idle, attendant_idle, attendant_type, and the scale_pan / scale_display / rate_board /
@@ -13,21 +14,25 @@ import { drawCard, drawChip } from '../../ui/card';
 import { KiloTag } from '../../ui/KiloTag';
 import { StationScene } from '../StationScene';
 
-type Phase = 'sort' | 'drag' | 'number' | 'wait' | 'paid' | 'leave';
+type Phase = 'sort' | 'drag' | 'talk' | 'leave';
 interface SortItem { label: string; kind: string; keep: boolean; why: string }
 interface SortParams {
     title: string; keep_label: string; reject_label: string; keys: string; count: string; done: string; score: string;
     verdict_clean: string; verdict_mixed: string; verdict_lost: string; items: SortItem[];
 }
 
+interface TalkLine { who: 'riyaz' | 'attendant'; text: string; mixed?: string; do?: 'mask' | 'pay' }
+
 interface S03Params {
     weight_label: string;
     rate_board: { line: string; rate: string }[];
     rate_note: string;
-    speech: string;
     number_masked: string;
     slip: { title: string; lines: string[]; lines_mixed: string[] };
     tag_after: KiloTagState;
+    tag_after_mixed?: KiloTagState;
+    talk: TalkLine[];
+    speakers: Record<TalkLine['who'], string>;
     sort: SortParams;
 }
 
@@ -283,7 +288,7 @@ export default class Station03 extends StationScene {
     private press() {
         if (this.phase === 'sort') return;              // the sort has its own keys (← →)
         if (this.phase === 'drag') this.snap();
-        else if (this.phase === 'number') this.sayNumber();
+        else if (this.phase === 'talk') this.nextLine();
         else if (this.phase === 'leave') this.leave();
     }
 
@@ -312,7 +317,7 @@ export default class Station03 extends StationScene {
             else this.springBack();
             return;
         }
-        if (this.phase === 'number') this.sayNumber();
+        if (this.phase === 'talk') this.nextLine();          // a click carries the conversation on
     }
 
     private springBack() {
@@ -336,8 +341,6 @@ export default class Station03 extends StationScene {
         this.dragging = false;
         this.ring?.destroy();
         this.ring = undefined;
-        this.phase = 'number';
-
         const pan = this.anchor('scale_pan');
         const to = {
             x: pan.x - this.centreOffset.x,
@@ -356,40 +359,53 @@ export default class Station03 extends StationScene {
         setState(this, { kilo: { carried: false, tag: this.state.kilo.tag } });
         this.popCard(this.scaleDisplayCard(), this.state.reducedMotion);
         this.prompt.show(this.prompts().number, 'Space');
+        this.phase = 'talk';
+        this.line = -1;
+        this.time.delayedCall(this.state.reducedMotion ? 0 : 450, () => this.nextLine());
     }
 
-    /** Riyaz says the number; the attendant switches to the phone and masks it. */
-    private sayNumber() {
-        if (this.phase !== 'number') return;
-        this.phase = 'wait';
-        this.prompt.show(this.prompts().wait);
+    // --- the weigh-in, as a conversation -----------------------------------------------------------
+    //
+    // The attendant and Riyaz talk it through the way a Shivajinagar counter does, in Dakhni and
+    // English (s03.json talk). Each Space or click plays the next line as a bubble over its speaker;
+    // a mixed crate gets the lines that go with it. The number is said but never shown: the screen
+    // masks it ("mask"), and the UPI ping lands on "pay".
 
-        this.speechCard = this.popCard(this.speechBubble(), this.state.reducedMotion);
-        this.attendantIdle.setVisible(false);
-        this.attendantType.setVisible(true);
+    private line = -1;
+    private talkBusy = false;
 
-        this.time.delayedCall(220, () => {
+    private nextLine() {
+        if (this.phase !== 'talk' || this.talkBusy) return;
+        const talk = this.params().talk;
+        this.fadeOut(this.speechCard);
+        this.speechCard = undefined;
+        if (++this.line >= talk.length) return this.toLeave();
+        const l = talk[this.line];
+        this.speechCard = this.popCard(this.bubble(l.who, !this.clean && l.mixed ? l.mixed : l.text), this.state.reducedMotion);
+        if (l.do === 'mask') this.time.delayedCall(220, () => {
+            this.attendantIdle.setVisible(false);
+            this.attendantType.setVisible(true);
             this.numberCard = this.popCard(this.maskedNumberCard(), this.state.reducedMotion);
+            this.prompt.show(this.prompts().wait);
         });
-        this.time.delayedCall(1000, () => this.paid());
+        if (l.do === 'pay') {
+            this.talkBusy = true;                        // a beat for the ping before the next line
+            this.time.delayedCall(this.state.reducedMotion ? 0 : 700, () => { this.paid(); this.talkBusy = false; });
+        }
     }
 
     /** UPI confirms by sound; the tag flips and the slip lands. */
     private paid() {
-        if (this.phase !== 'wait') return;
-        this.phase = 'paid';
         const p = this.params();
-
+        const tag = !this.clean && p.tag_after_mixed ? p.tag_after_mixed : p.tag_after;
         this.events.emit('sfx', 'upi_ping');
-        this.tag.flipTo({ ...p.tag_after });
-        setState(this, { kilo: { carried: false, tag: { ...p.tag_after } } });
-
-        this.prompt.show(this.prompts().paid);
-        this.fadeOut(this.speechCard);
+        this.tag.flipTo({ ...tag });
+        setState(this, { kilo: { carried: false, tag: { ...tag } } });
+        this.attendantType.setVisible(false);
+        this.attendantIdle.setVisible(true);
+        this.prompt.show(this.prompts().paid, 'Space');
         this.fadeOut(this.numberCard);
         this.popCard(this.slip(), this.state.reducedMotion);
-
-        this.time.delayedCall(this.state.reducedMotion ? 900 : 1800, () => this.toLeave());
     }
 
     private toLeave() {
@@ -474,21 +490,24 @@ export default class Station03 extends StationScene {
         return this.add.container(a.x - w / 2, a.y - h / 2, [g, t]).setDepth(18);
     }
 
-    /** Riyaz speaks; his hands stay wet and empty (task 03: he never touches a phone). */
-    private speechBubble() {
-        const head = this.anchor('riyaz_head');
-        const w = 300, h = 80;
-        const x = head.x - w / 2, y = head.y - 150;
+    /** A speech bubble over its speaker, with their name on a tab and a nudge to carry on. Riyaz's
+     * hands stay wet and empty (task 03: he never touches a phone). */
+    private bubble(who: TalkLine['who'], text: string) {
+        const head = this.anchor(who === 'riyaz' ? 'riyaz_head' : 'attendant_head');
+        const t = this.add.text(22, 46, text, { fontFamily: font.body, fontSize: 27, color: css.ink, wordWrap: { width: 400 }, lineSpacing: 2 });
+        const name = this.add.text(22, 0, this.params().speakers[who], { fontFamily: font.display, fontSize: 20, fontStyle: '800', color: css.cream }).setOrigin(0, 0.5);
+        const w = Math.max(t.width + 44, name.width + 60, 220), h = t.height + 76;
+        const tx = who === 'riyaz' ? 70 : w - 36;                   // the tail leans to the speaker; the attendant's stays left of the slip
         const g = this.add.graphics();
-        g.fillStyle(colour.card, 1);
-        g.beginPath().moveTo(w / 2 - 14, h - 1).lineTo(w / 2, h + 24).lineTo(w / 2 + 14, h - 1).closePath().fillPath();
-        g.lineStyle(3, colour.ink, 1);
-        g.beginPath().moveTo(w / 2 - 14, h - 1).lineTo(w / 2, h + 24).lineTo(w / 2 + 14, h - 1).strokePath();
-        drawCard(g, 0, 0, w, h);
-        const t = this.add.text(w / 2, h / 2, this.params().speech, {
-            fontFamily: font.body, fontSize: 28, color: css.ink,
-        }).setOrigin(0.5);
-        return this.add.container(x, y, [g, t]).setDepth(20);
+        drawCard(g, 0, 0, w, h, who === 'riyaz' ? colour.ink : colour.income);
+        g.fillStyle(colour.card, 1).fillTriangle(tx - 14, h - 2, tx, h + 24, tx + 14, h - 2);
+        g.lineStyle(3, who === 'riyaz' ? colour.ink : colour.income, 1).beginPath().moveTo(tx - 14, h - 1).lineTo(tx, h + 24).lineTo(tx + 14, h - 1).strokePath();
+        g.fillStyle(who === 'riyaz' ? colour.ink : colour.income, 1).fillRoundedRect(12, -16, name.width + 20, 32, 16);
+        name.setPosition(22, 0);
+        const more = this.add.text(w - 16, h - 14, '▸', { fontFamily: font.display, fontSize: 22, color: css.muted }).setOrigin(1, 1);
+        if (!this.state.reducedMotion) this.tweens.add({ targets: more, alpha: 0.2, duration: 500, yoyo: true, repeat: -1 });
+        const x = Math.min(Math.max(head.x - tx, 40), 1880 - w), y = head.y - 60 - h;
+        return this.add.container(x, y, [g, t, name, more]).setDepth(24);
     }
 
     /** The attendant's screen, beside the phone: the number is masked, never read out. */
@@ -527,7 +546,7 @@ export default class Station03 extends StationScene {
         }).setOrigin(0.5);
 
         // Left of the docked tag: its long payout note hangs past the card and must stay readable.
-        return this.add.container(1120, 110, [g, title, ...lines, done, chip]).setDepth(22);
+        return this.add.container(1180, 110, [g, title, ...lines, done, chip]).setDepth(22);
     }
 
     /** A card that rises in. Reduced motion shows it already in place. */

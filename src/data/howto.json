@@ -57,7 +57,7 @@
       "steps": [
         { "label": "Sort", "prompts": ["sort"], "keys": ["←", "→"], "mouse": "drag", "text": "Meat waste into the crate (←), rubbish into the bin (→). Rubbish in the crate makes it a mixed crate." },
         { "label": "Weigh", "prompts": ["drag"], "keys": ["Space"], "mouse": "drag", "text": "Drag the crate onto the scale." },
-        { "label": "Get paid", "prompts": ["number", "wait", "paid"], "keys": ["Space"], "text": "Say your number. Listen for the payment and watch the tag." },
+        { "label": "Get paid", "prompts": ["number", "wait", "paid"], "keys": ["Space"], "text": "Chat with the attendant: Space for each line. Listen for the payment and watch the tag." },
         { "label": "Move on", "prompts": ["leave"], "keys": ["Space"], "mouse": "click", "text": "Into the cold room." }
       ]
     },

@@ -315,7 +315,7 @@ export class MarketMap extends Scene {
         this.dots.push({ o, from, to, t: 0, speed: getState(this).reducedMotion ? 1 : speed, done });
     }
 
-    /** −₹5 leaving a stall (Run 1) or +₹[__] arriving (Run 2), on the money lens. */
+    /** −₹5 leaving a stall (Run 1) or the estimated payout arriving (Run 2), on the money lens. */
     private moneyTag(at: Pt, text: string, fill: number, rising: boolean) {
         if (PMath.Between(0, 2) > 0) return;
         const t = this.add.text(at.x, at.y - 12, text, { fontFamily: font.display, fontSize: 22, fontStyle: '800', color: `#${fill.toString(16).padStart(6, '0')}` }).setOrigin(0.5);

@@ -5,7 +5,7 @@ import type { Meaning } from './theme';
 export type Run = 1 | 2;
 
 export interface KiloTagState {
-    value: string;      // as shown, e.g. "−₹5" or "+₹[__]"
+    value: string;      // as shown, e.g. "−₹5" or "+₹3" (an estimate)
     meaning: Meaning;
     note?: string;
     label?: string;     // the small caption over the value, e.g. "Disposal fee"

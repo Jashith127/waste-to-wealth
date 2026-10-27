@@ -15,7 +15,9 @@
       "required": ["1", "2"],
       "properties": { "1": { "$ref": "#/$defs/column" }, "2": { "$ref": "#/$defs/column" } }
     },
-    "payout_note": { "type": "string" },
+    "payout_note": { "type": "string", "description": "How the payout estimate was reached; shown in the Estimate strip." },
+    "estimate_label": { "type": "string" },
+    "beliefs_heading": { "type": "string" },
     "beliefs": {
       "type": "array",
       "minItems": 4,

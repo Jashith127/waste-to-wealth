@@ -7,12 +7,14 @@ import { parseBeat } from '../flow';
 import { getState, setState } from '../state';
 import { colour, css, font, FRAME, motion, type Meaning } from '../theme';
 import { drawCard, drawChip } from '../ui/card';
+import { keycap } from '../ui/keys';
 
 type Column = { heading: string; proposed?: boolean; lines: { text: string; value: string; meaning: string }[] };
 
 const PANEL = { x: 176, y: 268, w: 1568, h: 752 };
-const BELIEF_Y = 640;
-const BELIEF_STEP = 82;
+const BELIEF_Y = 710;
+const BELIEF_STEP = 66;
+const NOTE_Y = 576;           // the estimate strip, between the ledger and the beliefs
 
 export class EndCard extends Scene {
     private beliefs: GameObjects.Container[] = [];
@@ -39,13 +41,15 @@ export class EndCard extends Scene {
 
         this.ledgerColumn(PANEL.x + 32, endcard.ledger['1'], colour.cost);
         this.ledgerColumn(PANEL.x + PANEL.w / 2 + 16, endcard.ledger['2'], colour.income);
-        this.add.text(FRAME.width / 2, 566, endcard.payout_note, {
-            fontFamily: font.body, fontSize: 29, color: css.muted, align: 'center', wordWrap: { width: PANEL.w - 96 },
-        }).setOrigin(0.5);
+        this.versus();
+        this.estimateNote();
+        this.add.text(FRAME.width / 2, BELIEF_Y - 52, endcard.beliefs_heading.toUpperCase(), {
+            fontFamily: font.display, fontSize: 22, fontStyle: '800', color: css.brown,
+        }).setOrigin(0.5).setLetterSpacing(3);
 
-        endcard.beliefs.forEach((b, i) => this.beliefs.push(this.beliefRow(b.before, b.after, BELIEF_Y + i * BELIEF_STEP)));
+        endcard.beliefs.forEach((b, i) => this.beliefs.push(this.beliefRow(i + 1, b.before, b.after, BELIEF_Y + i * BELIEF_STEP)));
         this.nextHint = this.keyHint('Space');
-        this.replay = this.button(endcard.replay, FRAME.width / 2, 965, () => this.playAgain());
+        this.replay = this.button(endcard.replay, FRAME.width / 2, 985, () => this.playAgain());
         this.replay.setVisible(false);
         this.placeHint();
 
@@ -111,23 +115,57 @@ export class EndCard extends Scene {
         });
     }
 
-    private beliefRow(before: string, after: string, y: number) {
-        const cx = FRAME.width / 2, half = PANEL.w / 2 - 96;
+    /** "VS" between the two ledgers: the same kilo, two endings. */
+    private versus() {
+        const x = FRAME.width / 2, y = PANEL.y + 28 + 112;
+        const g = this.add.graphics();
+        g.fillStyle(colour.ink, 0.28).fillCircle(x + 2, y + 5, 34);
+        g.fillStyle(colour.pay, 1).fillCircle(x, y, 34).lineStyle(4, colour.ink, 1).strokeCircle(x, y, 34);
+        this.add.text(x, y + 1, 'VS', { fontFamily: font.display, fontSize: 28, fontStyle: '800', color: css.ink }).setOrigin(0.5);
+    }
+
+    /** How the payout was estimated: its own strip with an "Estimate" chip, never mistaken for a quote. */
+    private estimateNote() {
+        const w = PANEL.w - 64, x = PANEL.x + 32;
+        const chip = this.add.text(0, 0, endcard.estimate_label.toUpperCase(), { fontFamily: font.display, fontSize: 18, fontStyle: '800', color: css.cream })
+            .setLetterSpacing(1.5).setOrigin(0, 0.5);
+        const t = this.add.text(x + chip.width + 64, NOTE_Y, endcard.payout_note, {
+            fontFamily: font.body, fontSize: 22, color: css.ink, wordWrap: { width: w - chip.width - 88 }, lineSpacing: 2,
+        }).setOrigin(0, 0.5);
+        const h = Math.max(64, t.height + 22);
+        const g = this.add.graphics();
+        g.fillStyle(colour.cream, 1).fillRoundedRect(x, NOTE_Y - h / 2, w, h, 12);
+        g.lineStyle(2, colour.brown, 0.5).strokeRoundedRect(x, NOTE_Y - h / 2, w, h, 12);
+        drawChip(g, x + 16, NOTE_Y - 16, chip.width + 28, 32, colour.brown, colour.brown);
+        chip.setPosition(x + 30, NOTE_Y).setDepth(1);
+        t.setDepth(1);
+    }
+
+    /** One belief: a numbered pill, the old belief (struck through as it shows) → the new one. */
+    private beliefRow(n: number, before: string, after: string, y: number) {
+        const cx = FRAME.width / 2, half = PANEL.w / 2 - 120, w = PANEL.w - 64;
         const row = this.add.container(0, y).setVisible(false);
-        row.add([
-            this.add.text(cx - 52, 0, before, { fontFamily: font.body, fontSize: 30, color: css.muted, align: 'right', wordWrap: { width: half } }).setOrigin(1, 0.5),
-            this.add.text(cx, 0, '→', { fontFamily: font.display, fontSize: 44, fontStyle: '800', color: css.brown }).setOrigin(0.5, 0.55),
-            this.add.text(cx + 52, 0, after, { fontFamily: font.display, fontSize: 32, fontStyle: '700', color: css.ink, wordWrap: { width: half } }).setOrigin(0, 0.5),
-        ]);
+        const g = this.add.graphics();
+        g.fillStyle(colour.cream, 1).fillRoundedRect(PANEL.x + 32, -27, w, 54, 27);
+        g.fillStyle(colour.ink, 1).fillCircle(PANEL.x + 62, 0, 18);
+        const num = this.add.text(PANEL.x + 62, 1, String(n), { fontFamily: font.display, fontSize: 22, fontStyle: '800', color: css.pay }).setOrigin(0.5);
+        const was = this.add.text(cx - 56, 0, before, { fontFamily: font.body, fontSize: 26, color: css.muted, align: 'right', wordWrap: { width: half } }).setOrigin(1, 0.5);
+        const strike = this.add.graphics();
+        const arrow = this.add.text(cx, 0, '→', { fontFamily: font.display, fontSize: 40, fontStyle: '800', color: css.brown }).setOrigin(0.5, 0.55);
+        const now = this.add.text(cx + 56, 0, after, { fontFamily: font.display, fontSize: 28, fontStyle: '700', color: css.income, wordWrap: { width: half } }).setOrigin(0, 0.5);
+        row.add([g, num, was, strike, arrow, now]);
+        row.setData('strike', () => {
+            const x0 = was.x - was.width, x1 = was.x;
+            const p = { t: 0 };
+            const draw = () => strike.clear().lineStyle(3, colour.cost, 0.85).lineBetween(x0, 2, x0 + (x1 - x0) * p.t, 2);
+            if (getState(this).reducedMotion) { p.t = 1; draw(); return; }
+            this.tweens.add({ targets: p, t: 1, duration: 360, delay: 200, ease: 'Sine.easeOut', onUpdate: draw });
+        });
         return row;
     }
 
     private keyHint(key: string) {
-        const c = this.add.container(0, 0);
-        const label = this.add.text(0, 0, key, { fontFamily: font.display, fontSize: 24, fontStyle: '700', color: css.cream }).setOrigin(0.5);
-        const w = label.width + 32;
-        const bg = this.add.graphics().fillStyle(colour.ink, 0.92).fillRoundedRect(-w / 2, -21, w, 42, 9);
-        c.add([bg, label]);
+        const c = keycap(this, key, 40);
         if (!getState(this).reducedMotion) this.tweens.add({ targets: c, alpha: 0.45, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
         return c;
     }
@@ -136,17 +174,23 @@ export class EndCard extends Scene {
         this.nextHint.setPosition(FRAME.width / 2, BELIEF_Y + this.shown * BELIEF_STEP).setVisible(this.shown < this.beliefs.length);
     }
 
+    /** The saffron game button, with its key. */
     private button(text: string, x: number, y: number, onClick: () => void) {
-        const label = this.add.text(0, 0, text, { fontFamily: font.display, fontSize: 34, fontStyle: '700', color: css.cream }).setOrigin(0.5);
-        const w = label.width + 80, h = 68;
+        const label = this.add.text(0, 0, `${text}  ▶`, { fontFamily: font.display, fontSize: 34, fontStyle: '800', color: css.ink }).setOrigin(0, 0.5);
+        const cap = keycap(this, 'Enter', 36);
+        const w = label.width + cap.width + 76, h = 70;
         const bg = this.add.graphics();
         const draw = (hover: boolean) => {
-            bg.clear().fillStyle(hover ? colour.cost : colour.ink, 1).fillRoundedRect(-w / 2, -h / 2, w, h, h / 2);
-            bg.lineStyle(4, colour.pay, 1).strokeRoundedRect(-w / 2, -h / 2, w, h, h / 2);
+            bg.clear().fillStyle(0xb8761a, 1).fillRoundedRect(-w / 2, -h / 2 + 6, w, h, h / 2);
+            bg.fillStyle(hover ? 0xffbe45 : colour.pay, 1).fillRoundedRect(-w / 2, -h / 2, w, h, h / 2);
+            bg.lineStyle(3, colour.ink, 1).strokeRoundedRect(-w / 2, -h / 2, w, h, h / 2);
         };
         draw(false);
-        const c = this.add.container(x, y, [bg, label]).setSize(w, h).setInteractive({ useHandCursor: true });
+        label.setX(-w / 2 + 32);
+        cap.setPosition(w / 2 - 30 - cap.width / 2, -2);
+        const c = this.add.container(x, y, [bg, label, cap]).setSize(w, h).setInteractive({ useHandCursor: true });
         c.on('pointerover', () => draw(true)).on('pointerout', () => draw(false)).on('pointerup', onClick);
+        if (!getState(this).reducedMotion) this.tweens.add({ targets: c, scale: 1.04, duration: 650, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
         return c;
     }
 
@@ -154,6 +198,7 @@ export class EndCard extends Scene {
     private advance(reducedMotion: boolean) {
         if (this.shown >= this.beliefs.length) return;
         const row = this.beliefs[this.shown++].setVisible(true);
+        (row.getData('strike') as () => void)();
         if (!reducedMotion) {
             row.setAlpha(0).setX(-24);
             this.tweens.add({ targets: row, alpha: 1, x: 0, duration: motion.normal, ease: 'Sine.easeOut' });
