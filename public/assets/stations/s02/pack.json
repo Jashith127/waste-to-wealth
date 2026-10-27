@@ -8,13 +8,73 @@
       },
       {
         "type": "image",
+        "key": "s02_anthony_beckon_a",
+        "url": "assets/stations/s02/anthony_beckon_a.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_anthony_beckon_b",
+        "url": "assets/stations/s02/anthony_beckon_b.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_anthony_call",
+        "url": "assets/stations/s02/anthony_call.png"
+      },
+      {
+        "type": "image",
         "key": "s02_anthony_idle",
         "url": "assets/stations/s02/anthony_idle.png"
       },
       {
         "type": "image",
+        "key": "s02_anthony_look_l",
+        "url": "assets/stations/s02/anthony_look_l.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_anthony_look_r",
+        "url": "assets/stations/s02/anthony_look_r.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_anthony_show",
+        "url": "assets/stations/s02/anthony_show.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_arif_fold",
+        "url": "assets/stations/s02/arif_fold.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_arif_fold_look",
+        "url": "assets/stations/s02/arif_fold_look.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_arif_hat",
+        "url": "assets/stations/s02/arif_hat.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_arif_hips",
+        "url": "assets/stations/s02/arif_hips.png"
+      },
+      {
+        "type": "image",
         "key": "s02_arif_idle",
         "url": "assets/stations/s02/arif_idle.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_arif_wave_a",
+        "url": "assets/stations/s02/arif_wave_a.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_arif_wave_b",
+        "url": "assets/stations/s02/arif_wave_b.png"
       },
       {
         "type": "image",
@@ -43,18 +103,573 @@
       },
       {
         "type": "image",
-        "key": "s02_riyaz_walk",
-        "url": "assets/stations/s02/riyaz_walk.png"
+        "key": "s02_loader_push0",
+        "url": "assets/stations/s02/loader_push0.png"
       },
       {
         "type": "image",
-        "key": "s02_riyaz_walk_a",
-        "url": "assets/stations/s02/riyaz_walk_a.png"
+        "key": "s02_loader_push1",
+        "url": "assets/stations/s02/loader_push1.png"
       },
       {
         "type": "image",
-        "key": "s02_riyaz_walk_b",
-        "url": "assets/stations/s02/riyaz_walk_b.png"
+        "key": "s02_loader_push2",
+        "url": "assets/stations/s02/loader_push2.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_loader_push3",
+        "url": "assets/stations/s02/loader_push3.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_loader_push4",
+        "url": "assets/stations/s02/loader_push4.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_loader_push5",
+        "url": "assets/stations/s02/loader_push5.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_loader_push6",
+        "url": "assets/stations/s02/loader_push6.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_loader_push7",
+        "url": "assets/stations/s02/loader_push7.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_occ_auto0",
+        "url": "assets/stations/s02/occ_auto0.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_occ_auto1",
+        "url": "assets/stations/s02/occ_auto1.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_occ_auto2",
+        "url": "assets/stations/s02/occ_auto2.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_occ_bollards",
+        "url": "assets/stations/s02/occ_bollards.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_occ_chair_a",
+        "url": "assets/stations/s02/occ_chair_a.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_occ_chair_b",
+        "url": "assets/stations/s02/occ_chair_b.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_occ_crates",
+        "url": "assets/stations/s02/occ_crates.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_occ_drum",
+        "url": "assets/stations/s02/occ_drum.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_occ_kerb_a0",
+        "url": "assets/stations/s02/occ_kerb_a0.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_occ_kerb_a1",
+        "url": "assets/stations/s02/occ_kerb_a1.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_occ_kerb_a2",
+        "url": "assets/stations/s02/occ_kerb_a2.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_occ_kerb_b0",
+        "url": "assets/stations/s02/occ_kerb_b0.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_occ_kerb_b1",
+        "url": "assets/stations/s02/occ_kerb_b1.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_occ_pole",
+        "url": "assets/stations/s02/occ_pole.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_occ_scooter",
+        "url": "assets/stations/s02/occ_scooter.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_occ_stall",
+        "url": "assets/stations/s02/occ_stall.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_occ_stove",
+        "url": "assets/stations/s02/occ_stove.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_occ_tree",
+        "url": "assets/stations/s02/occ_tree.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_ped0_walk_e0",
+        "url": "assets/stations/s02/ped0_walk_e0.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_ped0_walk_e1",
+        "url": "assets/stations/s02/ped0_walk_e1.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_ped0_walk_e2",
+        "url": "assets/stations/s02/ped0_walk_e2.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_ped0_walk_e3",
+        "url": "assets/stations/s02/ped0_walk_e3.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_ped0_walk_e4",
+        "url": "assets/stations/s02/ped0_walk_e4.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_ped0_walk_e5",
+        "url": "assets/stations/s02/ped0_walk_e5.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_ped0_walk_e6",
+        "url": "assets/stations/s02/ped0_walk_e6.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_ped0_walk_e7",
+        "url": "assets/stations/s02/ped0_walk_e7.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_ped0_walk_w0",
+        "url": "assets/stations/s02/ped0_walk_w0.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_ped0_walk_w1",
+        "url": "assets/stations/s02/ped0_walk_w1.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_ped0_walk_w2",
+        "url": "assets/stations/s02/ped0_walk_w2.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_ped0_walk_w3",
+        "url": "assets/stations/s02/ped0_walk_w3.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_ped0_walk_w4",
+        "url": "assets/stations/s02/ped0_walk_w4.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_ped0_walk_w5",
+        "url": "assets/stations/s02/ped0_walk_w5.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_ped0_walk_w6",
+        "url": "assets/stations/s02/ped0_walk_w6.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_ped0_walk_w7",
+        "url": "assets/stations/s02/ped0_walk_w7.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_ped1_walk_e0",
+        "url": "assets/stations/s02/ped1_walk_e0.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_ped1_walk_e1",
+        "url": "assets/stations/s02/ped1_walk_e1.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_ped1_walk_e2",
+        "url": "assets/stations/s02/ped1_walk_e2.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_ped1_walk_e3",
+        "url": "assets/stations/s02/ped1_walk_e3.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_ped1_walk_e4",
+        "url": "assets/stations/s02/ped1_walk_e4.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_ped1_walk_e5",
+        "url": "assets/stations/s02/ped1_walk_e5.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_ped1_walk_e6",
+        "url": "assets/stations/s02/ped1_walk_e6.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_ped1_walk_e7",
+        "url": "assets/stations/s02/ped1_walk_e7.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_ped1_walk_w0",
+        "url": "assets/stations/s02/ped1_walk_w0.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_ped1_walk_w1",
+        "url": "assets/stations/s02/ped1_walk_w1.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_ped1_walk_w2",
+        "url": "assets/stations/s02/ped1_walk_w2.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_ped1_walk_w3",
+        "url": "assets/stations/s02/ped1_walk_w3.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_ped1_walk_w4",
+        "url": "assets/stations/s02/ped1_walk_w4.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_ped1_walk_w5",
+        "url": "assets/stations/s02/ped1_walk_w5.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_ped1_walk_w6",
+        "url": "assets/stations/s02/ped1_walk_w6.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_ped1_walk_w7",
+        "url": "assets/stations/s02/ped1_walk_w7.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_ped2_walk_e0",
+        "url": "assets/stations/s02/ped2_walk_e0.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_ped2_walk_e1",
+        "url": "assets/stations/s02/ped2_walk_e1.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_ped2_walk_e2",
+        "url": "assets/stations/s02/ped2_walk_e2.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_ped2_walk_e3",
+        "url": "assets/stations/s02/ped2_walk_e3.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_ped2_walk_e4",
+        "url": "assets/stations/s02/ped2_walk_e4.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_ped2_walk_e5",
+        "url": "assets/stations/s02/ped2_walk_e5.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_ped2_walk_e6",
+        "url": "assets/stations/s02/ped2_walk_e6.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_ped2_walk_e7",
+        "url": "assets/stations/s02/ped2_walk_e7.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_ped2_walk_w0",
+        "url": "assets/stations/s02/ped2_walk_w0.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_ped2_walk_w1",
+        "url": "assets/stations/s02/ped2_walk_w1.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_ped2_walk_w2",
+        "url": "assets/stations/s02/ped2_walk_w2.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_ped2_walk_w3",
+        "url": "assets/stations/s02/ped2_walk_w3.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_ped2_walk_w4",
+        "url": "assets/stations/s02/ped2_walk_w4.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_ped2_walk_w5",
+        "url": "assets/stations/s02/ped2_walk_w5.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_ped2_walk_w6",
+        "url": "assets/stations/s02/ped2_walk_w6.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_ped2_walk_w7",
+        "url": "assets/stations/s02/ped2_walk_w7.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_riyaz_empty_e",
+        "url": "assets/stations/s02/riyaz_empty_e.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_riyaz_empty_n",
+        "url": "assets/stations/s02/riyaz_empty_n.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_riyaz_empty_s",
+        "url": "assets/stations/s02/riyaz_empty_s.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_riyaz_empty_w",
+        "url": "assets/stations/s02/riyaz_empty_w.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_riyaz_stand_e",
+        "url": "assets/stations/s02/riyaz_stand_e.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_riyaz_stand_n",
+        "url": "assets/stations/s02/riyaz_stand_n.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_riyaz_stand_s",
+        "url": "assets/stations/s02/riyaz_stand_s.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_riyaz_stand_w",
+        "url": "assets/stations/s02/riyaz_stand_w.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_riyaz_walk_e0",
+        "url": "assets/stations/s02/riyaz_walk_e0.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_riyaz_walk_e1",
+        "url": "assets/stations/s02/riyaz_walk_e1.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_riyaz_walk_e2",
+        "url": "assets/stations/s02/riyaz_walk_e2.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_riyaz_walk_e3",
+        "url": "assets/stations/s02/riyaz_walk_e3.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_riyaz_walk_e4",
+        "url": "assets/stations/s02/riyaz_walk_e4.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_riyaz_walk_e5",
+        "url": "assets/stations/s02/riyaz_walk_e5.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_riyaz_walk_e6",
+        "url": "assets/stations/s02/riyaz_walk_e6.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_riyaz_walk_e7",
+        "url": "assets/stations/s02/riyaz_walk_e7.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_riyaz_walk_n0",
+        "url": "assets/stations/s02/riyaz_walk_n0.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_riyaz_walk_n1",
+        "url": "assets/stations/s02/riyaz_walk_n1.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_riyaz_walk_n2",
+        "url": "assets/stations/s02/riyaz_walk_n2.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_riyaz_walk_n3",
+        "url": "assets/stations/s02/riyaz_walk_n3.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_riyaz_walk_n4",
+        "url": "assets/stations/s02/riyaz_walk_n4.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_riyaz_walk_n5",
+        "url": "assets/stations/s02/riyaz_walk_n5.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_riyaz_walk_n6",
+        "url": "assets/stations/s02/riyaz_walk_n6.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_riyaz_walk_n7",
+        "url": "assets/stations/s02/riyaz_walk_n7.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_riyaz_walk_s0",
+        "url": "assets/stations/s02/riyaz_walk_s0.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_riyaz_walk_s1",
+        "url": "assets/stations/s02/riyaz_walk_s1.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_riyaz_walk_s2",
+        "url": "assets/stations/s02/riyaz_walk_s2.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_riyaz_walk_s3",
+        "url": "assets/stations/s02/riyaz_walk_s3.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_riyaz_walk_s4",
+        "url": "assets/stations/s02/riyaz_walk_s4.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_riyaz_walk_s5",
+        "url": "assets/stations/s02/riyaz_walk_s5.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_riyaz_walk_s6",
+        "url": "assets/stations/s02/riyaz_walk_s6.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_riyaz_walk_s7",
+        "url": "assets/stations/s02/riyaz_walk_s7.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_riyaz_walk_w0",
+        "url": "assets/stations/s02/riyaz_walk_w0.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_riyaz_walk_w1",
+        "url": "assets/stations/s02/riyaz_walk_w1.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_riyaz_walk_w2",
+        "url": "assets/stations/s02/riyaz_walk_w2.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_riyaz_walk_w3",
+        "url": "assets/stations/s02/riyaz_walk_w3.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_riyaz_walk_w4",
+        "url": "assets/stations/s02/riyaz_walk_w4.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_riyaz_walk_w5",
+        "url": "assets/stations/s02/riyaz_walk_w5.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_riyaz_walk_w6",
+        "url": "assets/stations/s02/riyaz_walk_w6.png"
+      },
+      {
+        "type": "image",
+        "key": "s02_riyaz_walk_w7",
+        "url": "assets/stations/s02/riyaz_walk_w7.png"
       }
     ]
   }

@@ -4,6 +4,8 @@ simplified faces, no likenesses. Costumes come from photo *types*, never from a 
 A figure is built in local space (feet at the origin, facing -Y, so its right hand is at -X)
 and parented to an empty placed in the world. Poses are just hand targets in local space.
 """
+import math
+
 from mathutils import Matrix, Vector
 
 import geo
@@ -57,16 +59,18 @@ def cleaver(name, wrist, fwd, edge, mats, col):
 
 
 def figure(name, origin, heading, mats, right_hand, left_hand, col, tool=None, moustache=None, floor=0.0,
-           grip=("loose", "loose"), edge=(0, 0, -1), aim=None, stride=0.0):
+           grip=("loose", "loose"), edge=(0, 0, -1), aim=None, stride=0.0, **pose):
     """Build one pose of a figure. Hands are local wrist targets (metres from the feet, facing -Y).
     `grip`: (right, left) hand shape, "flat", "loose" or "fist" (humans.GRIPS). `moustache` is kept for the
     call sites: the model's face is what it is.
     `tool`: None or "cleaver" (held in the right hand, its edge facing `edge`, local). `aim`: where the
     right hand and its tool point (local), when the wrist is cocked away from the forearm line.
     `stride`: metres the right foot is ahead (+) or behind (-) in a walk frame; the left foot mirrors
-    it. Returns the root empty."""
+    it. `pose` passes humans.build's walk and look keywords (legs, bob, lean, head_turn). Returns the root
+    empty; root["wrist"] is the right wrist in local metres (see wrist())."""
     root, info = humans.build(name, mats["model"], origin, heading, right_hand, left_hand, col, floor=floor,
-                              aim=aim, stride=stride, wet=mats["wet"], grip=grip)
+                              aim=aim, stride=stride, wet=mats["wet"], grip=grip, **pose)
+    root["wrist"] = info["wrist"]
     if tool == "cleaver":
         f, hand = Vector(info["aim"]), Vector(info["fwd"])
         for o in cleaver(f"{name}_cleaver", Vector(info["wrist"]) + (hand - f) * 0.1, f, edge, mats, col):   # the grip stays in the palm
@@ -77,3 +81,24 @@ def figure(name, origin, heading, mats, right_hand, left_hand, col, tool=None, m
 def local(world_point, origin):
     """World point -> local hand target for an unrotated figure standing at `origin`."""
     return tuple(Vector(world_point) - Vector(origin))
+
+
+def wrist(root):
+    """The right wrist of a figure from figure(), in world metres."""
+    return root.matrix_world @ Vector(root["wrist"])
+
+
+def gait(phase, stride=0.2, lift=0.08, bob=0.025, swing=0.15, carry=False, shoulder=0.29, hand_z=0.62):
+    """One frame of a walk cycle, as figure() keywords. `phase` 0..1 runs right heel strike (0), passing
+    (0.25), left heel strike (0.5), passing (0.75). The swinging foot lifts, the body dips on each
+    contact and rises over the passing foot, and each arm swings with the opposite leg; a `carry`ing
+    right arm (the kilo) hangs nearly still under the weight. Hands hang at `hand_z` (straight arms)."""
+    c, s = math.cos(2 * math.pi * phase), math.sin(2 * math.pi * phase)
+    legs = ((stride * c, lift * max(0.0, -s)), (-stride * c, lift * max(0.0, s)))
+
+    def hand(sx, fwd):
+        return (sx * shoulder, -fwd, hand_z + 0.35 * abs(fwd))       # a forward hand comes up a little
+
+    right = hand(-1.1 if carry else -1.0, -swing * c * (0.15 if carry else 1.0))   # arms hang; the bag holds out a little
+    return dict(right_hand=right, left_hand=hand(1, swing * c),
+                pose=dict(legs=legs, bob=-bob * abs(c), lean=4.0))

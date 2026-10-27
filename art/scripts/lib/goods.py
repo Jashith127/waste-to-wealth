@@ -333,9 +333,10 @@ def tarp_roll(name, at, mats, col, tarp, length=0.5, r=0.075):
 
 
 # ---------------------------------------------------------------- the handcart
-def thela(name, c, mats, col, tarp, length=1.7, width=0.86, bed_z=0.62):
+def thela(name, c, mats, col, tarp, length=1.7, width=0.86, bed_z=0.62, handle_rise=0.34):
     """A loaded thela: a wooden-planked steel handcart on two spoked, tyred wheels, handles toward -X,
-    a prop leg at the front. `c` is the middle of its footprint; `tarp` is the station's blue tarp."""
+    a prop leg at the front. `c` is the middle of its footprint; `tarp` is the station's blue tarp.
+    `handle_rise`: how far the grips rise above the bed (lower it for a pusher's hip-height grip)."""
     cx, cy, _ = c
     hl, hw = length / 2, width / 2
     # frame: two long angles under the planks, three cross members, planks on top
@@ -371,10 +372,10 @@ def thela(name, c, mats, col, tarp, length=1.7, width=0.86, bed_z=0.62):
         geo.box(f"{name}_mudguard{s}", (ax - 0.36, wy - 0.07, 0.69), (ax + 0.36, wy + 0.07, 0.705), mats["paint"], col, 0.004)
     # push handles aft, a cloth-wrapped crossbar, and a prop leg at the front
     for s in (-1, 1):
-        a, b = (cx - hl, cy + s * (hw - 0.14), bed_z - 0.07), (cx - hl - 0.62, cy + s * (hw - 0.14), bed_z + 0.34)
+        a, b = (cx - hl, cy + s * (hw - 0.14), bed_z - 0.07), (cx - hl - 0.62, cy + s * (hw - 0.14), bed_z + handle_rise)
         geo.limb(f"{name}_handle{s}", a, b, 0.022, 0.02, mats["plank"], col, segments=10)
         geo.limb(f"{name}_handle_grip{s}", Vector(b) - Vector((0.1, 0, 0.055)), b, 0.027, 0.027, mats["grip"], col, segments=10)
-    geo.limb(f"{name}_handle_bar", (cx - hl - 0.62, cy - hw + 0.14, bed_z + 0.34), (cx - hl - 0.62, cy + hw - 0.14, bed_z + 0.34), 0.02, 0.02, mats["plank"], col, segments=10)
+    geo.limb(f"{name}_handle_bar", (cx - hl - 0.62, cy - hw + 0.14, bed_z + handle_rise), (cx - hl - 0.62, cy + hw - 0.14, bed_z + handle_rise), 0.02, 0.02, mats["plank"], col, segments=10)
     geo.limb(f"{name}_prop", (cx + hl - 0.12, cy, bed_z - 0.08), (cx + hl - 0.12, cy, 0.0), 0.022, 0.02, mats["steel"], col, segments=8)
     geo.box(f"{name}_prop_foot", (cx + hl - 0.2, cy - 0.08, 0.0), (cx + hl - 0.04, cy + 0.08, 0.025), mats["steel"], col, 0.004)
 

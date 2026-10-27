@@ -143,8 +143,11 @@ def _bone(arm, name):
 
 
 def build(name, model, origin, heading, right_hand, left_hand, col, floor=0.0, aim=None, stride=0.0, wet=False,
-          grip=("loose", "loose")):
-    """One posed figure. Returns (root empty, info); info has the right wrist and forearm direction (local m)."""
+          grip=("loose", "loose"), legs=None, bob=0.0, lean=0.0, head_turn=0.0):
+    """One posed figure. Returns (root empty, info); info has the right wrist and forearm direction (local m).
+    A walk frame (people.gait) passes `legs` ((forward, lift) of the right and left ankle, m) in place of
+    `stride`, `bob` (the hips' rise, m: negative dips them, the feet stay planted) and `lean` (the spine
+    forward, degrees). `head_turn` turns the head about the neck (degrees, + to the figure's left)."""
     t_arm, t_mesh = _template(model)
     arm = t_arm.copy()
     arm.name = f"{name}_rig"
@@ -159,9 +162,12 @@ def build(name, model, origin, heading, right_hand, left_hand, col, floor=0.0, a
     if wet and model in WET:
         mesh.material_slots[0].link = "OBJECT"
         mesh.material_slots[0].material = bpy.data.materials[f"MAT_human_{model}_wet"]
-    arm.location = (0, 0, floor)
+    arm.location = (0, 0, floor + bob)
     bpy.context.view_layer.update()
     pbs = arm.pose.bones
+    if lean:                                                            # before the arms, so they reach from the leaned shoulders
+        sh, st = _bone(arm, "spine")
+        _aim(pbs["spine"], Matrix.Rotation(math.radians(lean), 3, "X") @ (st - sh))
     info = {}
     for side, sx, target, is_right, g in (("R", -1, right_hand, True, grip[0]), ("L", 1, left_hand, False, grip[1])):
         t = Vector(target) - Vector((0, 0, floor))
@@ -203,16 +209,25 @@ def build(name, model, origin, heading, right_hand, left_hand, col, floor=0.0, a
         if is_right:
             info = dict(wrist=tuple(wrist + Vector((0, 0, floor))), fwd=tuple(hf), aim=tuple(want))
     for i, side in enumerate(("R", "L")):
-        dy = -stride if i == 0 else stride                              # local -Y is forward
-        lift = 0.04 if (stride and dy > 0) else 0.0                     # the trailing heel comes up
+        if legs:
+            fwd, lift = legs[i]
+            dy = -fwd                                                   # local -Y is forward
+        else:
+            dy = -stride if i == 0 else stride
+            lift = 0.04 if (stride and dy > 0) else 0.0                 # the trailing heel comes up
         uh, ut = _bone(arm, f"upperleg.{side}")
         lh, lt = _bone(arm, f"lowerleg.{side}")
         fh, ft = _bone(arm, f"foot.{side}")
-        ankle = lt + Vector((0, dy, lift))
+        ankle = lt + Vector((0, dy, lift - bob))                        # a dipped body keeps its planted foot on the floor
         knee = two_bone(uh, ankle, (ut - uh).length, (lt - lh).length, (0, -1, 0))
         _aim(pbs[f"upperleg.{side}"], knee - uh)
         _aim(pbs[f"lowerleg.{side}"], ankle - knee)
-        _aim(pbs[f"foot.{side}"], ft - fh)
+        toe = ft - fh
+        if legs and lift > 0.02:                                        # a swinging foot hangs toe-down a little
+            toe = Matrix.Rotation(math.radians(25 * min(lift / 0.08, 1)), 3, "X") @ toe
+        _aim(pbs[f"foot.{side}"], toe)
+    if head_turn:
+        _spin(pbs["head"], math.radians(head_turn))
     root = geo.empty(f"{name}_root", (0, 0, 0), col)
     arm.parent = root
     root.location = origin

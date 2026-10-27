@@ -2,7 +2,8 @@
 
 Usage: python tools/pack_layers.py s01
 
-Reads art/build/renders/<id>/ (written by art/scripts/render_station.py) and writes to
+Reads art/build/renders/<id>/ (written by art/scripts/render_station.py: one PNG per layer, some cropped
+with an _offsets/ note, and atlas renders cut up by _atlas/ notes) and writes to
 public/assets/stations/<id>/:
   bg.png              the full-frame background, every FX off
   fx_<name>.png       only the pixels that bg_fx_<name>.png changes (an overlay the game toggles)
@@ -72,21 +73,52 @@ def main(station):
                     emit(name, overlay, box)
 
     anchors = json.loads((src / "anchors.json").read_text(encoding="utf-8"))
+    frame = Image.open(src / "bg.png").size
+
+    def placed(im, at):
+        """A crop put back where it sits in the frame."""
+        full = Image.new("RGBA", frame, (0, 0, 0, 0))
+        full.paste(im, tuple(at))
+        return full
+
+    # sprites: one PNG per layer (cropped to its render border if _offsets/ says so), or a cell of an
+    # atlas render (_atlas/<name>.json: its box in the atlas, and where that box sits in the frame)
+    sprites, atlases = {}, {}
     for png in sorted(src.glob("*.png")):
-        if png.stem == "bg" or png.stem.startswith("bg_"):
+        if png.stem == "bg" or png.stem.startswith(("bg_", "atlas_")):
             continue
-        im = Image.open(png).convert("RGBA")
-        prop = png.stem.split("_shadow")[0]
-        if "_shadow" in png.stem:          # a contact shadow lives near its prop: clear stray catcher alpha
+        sidecar = src / "_offsets" / f"{png.stem}.json"
+        sprites[png.stem] = (png, json.loads(sidecar.read_text(encoding="utf-8")) if sidecar.exists() else None)
+    for sidecar in sorted((src / "_atlas").glob("*.json")) if (src / "_atlas").exists() else []:
+        sprites[sidecar.stem] = (None, json.loads(sidecar.read_text(encoding="utf-8")))
+    for stem in sorted(sprites):
+        png, info = sprites[stem]
+        if png is None:
+            if info["atlas"] not in atlases:
+                atlases[info["atlas"]] = Image.open(src / info["atlas"]).convert("RGBA")
+            im = placed(atlases[info["atlas"]].crop(tuple(info["box"])), info["at"])
+        else:
+            im = Image.open(png).convert("RGBA")
+            if info:
+                im = placed(im, info)
+        prop = stem.split("_shadow")[0]
+        if "_shadow" in stem:              # a contact shadow lives near its prop: clear stray catcher alpha
             cx, cy = anchors[prop + "_centre"]
+            dx, dy = 170, 90
+            if prop + "_shadow_extent" in anchors:          # a long prop (the s02 handcart) names its far corner
+                ex, ey = anchors[prop + "_shadow_extent"]
+                dx, dy = max(dx, abs(ex - cx) + 80), max(dy, abs(ey - cy) + 160)
             keep = Image.new("L", im.size, 0)
-            keep.paste(255, (int(cx - 170), int(cy - 70), int(cx + 170), int(cy + 90)))
+            keep.paste(255, (int(cx - dx), int(cy - max(70, dy - 20)), int(cx + dx), int(cy + dy)))
             im.putalpha(ImageChops.multiply(im.getchannel("A"), keep))
         im, box = crop_to_alpha(im)
         if im:
-            emit(png.stem, im, box)
+            emit(stem, im, box)
 
-    (out / "layers.json").write_text(json.dumps({"frame": FRAME, "layers": layers, "anchors": anchors}, indent=2), encoding="utf-8")
+    packed = {"frame": FRAME, "layers": layers, "anchors": anchors}
+    if (src / "world.json").exists():                      # world-space data for free movement (s02)
+        packed["world"] = json.loads((src / "world.json").read_text(encoding="utf-8"))
+    (out / "layers.json").write_text(json.dumps(packed, indent=2), encoding="utf-8")
     (out / "pack.json").write_text(json.dumps({station: {"files": files}}, indent=2), encoding="utf-8")
     old = final.with_name(station + ".old")
     shutil.rmtree(old, ignore_errors=True)

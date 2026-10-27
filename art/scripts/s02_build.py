@@ -21,6 +21,7 @@ behind Russell Market, SPEC-journey) and the deck's Five senses: Smell (p. 34), 
 bone, cardboard and stains with no gore (art bible §4). Signboards are the s01 composite trades
 (no real shop names, §7).
 """
+import json
 import math
 import sys
 from pathlib import Path
@@ -45,14 +46,39 @@ TARGET = (0.0, 3.0, 1.0)                 # camera focal point: the start of the 
 PLATE_W, PLATE_H = 3200, 1920             # the street plate: 1920x1080 start frame plus the pan
 PLATE_TARGET = (6.0, 2.19, 1.0)           # plate centre; 640 px right and 420 px down of TARGET
 PPM = 1920 / 11.0                         # keep the 11 m / 1920 px camera scale
-RIYAZ_AT = (0.2, 2.75, 0.0)              # on the pavement, near the shopfronts, walking +X
-HEADING = 90                              # facing along the street
-HAND_R = (-0.3, 0.02, 0.74)               # local: the right arm down at his side, carrying the bag
+RIYAZ_AT = (0.6, 1.3, 0.0)               # where the walk starts; every Riyaz frame is rendered here
+HAND_R = (-0.32, 0.02, 0.6)               # local: the right arm hanging at his side, carrying the bag
+REST = ((-0.3, 0.02, 0.6), (0.3, 0.02, 0.6))   # local: both arms hanging relaxed (a straight arm)
 ANTHONY_AT = (3.0, 2.25, 0.0)
 ARIF_AT = (7.0, 2.8, 0.0)
 LITTER_AT = Vector((13.0, 1.95, 0.0))      # against the market's boundary wall (V05)
 PILE_TOP = 0.42
-CART_AT = Vector((6.1, 2.25, 0.0))        # the handcart that crosses the walk (the mini-game)
+CART_AT = Vector((9.2, 1.15, 0.0))        # the handcart that comes down the pavement (the mini-game)
+PUSHER_BACK = 1.78                        # its pusher walks this far behind the cart's middle
+
+# Riyaz and the passers-by move freely, so each is rendered on its own (no set in front of it) in
+# every direction they walk, and Station02 places, flips and depth-sorts them. Headings face along
+# the axes: e +X (on down the street), w -X, n +Y (toward the shops), s -Y (toward the road).
+DIRS = {"e": 90, "w": 270, "n": 180, "s": 0}
+WALK_FRAMES = 8                           # one walk cycle: right contact, down, passing, up, left contact...
+PEDS = (                                  # name, look, lane start (x, y), the way they set off
+    ("ped0", "office", (-2.2, 0.38), "e"),
+    ("ped1", "chef", (5.4, 2.05), "e"),
+    ("ped2", "office", (9.6, 0.38), "w"),
+)
+
+# Set pieces a walker can pass behind: each is also rendered alone as occ_<name> (cut by what is in
+# front of it), so Station02 can draw it over a walker it hides. Object-name prefixes per piece.
+OCCLUDERS = {
+    "scooter": ("PROP_scooter",), "stove": ("STOVE_cart", "STOVE_lpg"),
+    "crates": ("PROP_crate0", "PROP_crate1", "PROP_crate2"), "stall": ("STALL_",),
+    "chair_a": ("PROP_chair_a",), "chair_b": ("PROP_chair_b",), "drum": ("PROP_drum", "PROP_crate3"),
+    "pole": ("POLE",), "bollards": ("BOLLARD",), "tree": ("TREE",),
+    **{f"kerb_a{i}": (f"BIKE_kerb_a_{i}",) for i in range(3)},
+    **{f"kerb_b{i}": (f"BIKE_kerb_b_{i}",) for i in range(2)},
+    **{f"auto{i}": (f"AUTO_{i}",) for i in range(3)},
+}
+NOT_OCCLUDERS = ("POLE_wire",)            # the wires run up to the facade: never in front of a walker
 
 # Shopfront rhythm along 20 m: piers, then a bay between each pair.
 PIERS = ((-5.0, -4.7), (-1.7, -1.4), (1.7, 2.0), (4.8, 5.1), (8.0, 8.3), (10.7, 11.0))
@@ -197,8 +223,8 @@ def street_props(st):
     for i, (x, y, z, r) in enumerate(((1.0, 2.55, 0, 0), (1.02, 2.55, 0.3, 8), (1.5, 2.6, 0, -6), (9.2, 2.5, 0, 12))):
         kit.ph(f"PROP_crate{i}", "plastic_crate_01", (x, y, z), r, 1.0, col)                       # F03, R13
     geo.cylinder("PROP_drum", (9.2, 2.65, 0), 0.28, 0.85, m["drum"], col)                       # F03 blue drum
-    kit.ph("PROP_chair_a", "plastic_monobloc_chair_01", (4.3, 1.9, 0), 200, 1.0, col)            # R08
-    kit.ph("PROP_chair_b", "plastic_monobloc_chair_01", (8.9, 1.6, 0), 150, 1.0, col)
+    kit.ph("PROP_chair_a", "plastic_monobloc_chair_01", (4.3, 2.15, 0), 200, 1.0, col)            # R08
+    kit.ph("PROP_chair_b", "plastic_monobloc_chair_01", (8.0, 2.2, 0), 150, 1.0, col)     # clear of the handcart's lane
 
     # Anthony's stall: a steel counter with crates of produce (F05 density, muted)
     geo.box("STALL_counter", (2.45, 2.5, 0), (3.85, 2.95, 0.88), m["steel_dark"], col, 0.02)
@@ -220,7 +246,7 @@ def dress(st):
     market end the pink-over-stone boundary wall, the rain tree, bollards and pavement vendors."""
     s, m, col = st.street, st.m, st.props
     kit.two_wheeler_row("BIKE_a", -4.4, -3.6, 2.0, m, col, step=0.8, heading=180)          # a few nose-in at the shops
-    kit.two_wheeler_row("BIKE_b", 8.6, 9.4, 2.0, m, col, step=0.8, heading=180)
+    # (no nose-in row by the drum: the handcart comes down that stretch)
     kit.two_wheeler_row("BIKE_kerb_a", -4.2, 0.4, -0.6, m, col, step=2.1, heading=90, z=kit.ROAD_Z)   # the rest along the kerb
     kit.two_wheeler_row("BIKE_kerb_b", 10.2, 12.4, -0.6, m, col, step=2.1, heading=90, z=kit.ROAD_Z)
     for i, (x, y) in enumerate(((2.6, -1.2), (6.4, -1.25), (8.9, -2.3))):        # autos on the road (V02, V03)
@@ -233,11 +259,7 @@ def dress(st):
     kit.ph("STOVE_lpg", "small_lpg_tank", (-1.45, 1.75, 0), 0, 1.0, col)
     kit.ph("MANHOLE", "water_manhole_cover", (8.2, 1.6, 0.002), 0, 1.0, col)
     kit.tarp_heap("TARP_heap", (-4.2, 2.55, 0), m, col)
-    for i, (x, y, h, k, stride) in enumerate(((-1.8, 0.75, 80, 0, 0.15), (1.6, 0.9, -100, 1, -0.15), (8.4, 0.8, 95, 2, 0.12))):
-        ped = kit.pedestrian(f"PED_{i}", (x, y, 0), h, col, kind=k, stride=stride)
-        if i == 2:                                       # beside the handcart's start: the cart must not be clipped by him
-            for o in [ped, *ped.children_recursive]:
-                o["sprite_clear"] = True
+    # (the pedestrians walk: see peds())
     # the market end (V05): boundary wall, pink plaster over a stone base, under a rain tree
     geo.box("BWALL_base", (11.45, 2.55, 0), (15.0, 2.8, 0.7), m["stone_base"], col, 0.02)
     geo.box("BWALL", (11.45, 2.57, 0.7), (15.0, 2.78, 2.3), m["pink_wall"], col, 0.02)
@@ -249,15 +271,37 @@ def dress(st):
 
 def cart(st):
     """PROP_cart: a loaded thela, the wooden handcart of the wholesale lanes (F01 shows its steel
-    cousin), which crosses the pavement mid-walk. Tomato crates, onion net sacks, striped
-    watermelons, bananas, taped cartons, a rice sack and a tarp, all lashed down (lib/goods.py).
-    Its own layer, so Station02 can roll it across."""
+    cousin), pushed down the pavement toward Riyaz mid-walk: he steps aside to let it pass. Tomato
+    crates, onion net sacks, striped watermelons, bananas, taped cartons, a rice sack and a tarp, all
+    lashed down (lib/goods.py). It travels -X, so it is built handles-first along +X (the way a thela
+    is pushed), on its own layer, rendered alone so Station02 can roll it anywhere. Its pusher is CHAR_loader."""
     m, col = st.m, st.prop("cart")
+    col["free"] = True
     c = CART_AT
     mats = goods.materials()
-    goods.thela("CART", (c.x, c.y, 0.0), mats, col, m["tarp"])
-    kit.shadow_catcher("CART_shadow_catcher", (c.x - 0.2, c.y, 0.003), (3.0, 1.5), m, col)
+    root = geo.empty("CART", (0, 0, 0), col)
+    before = set(col.objects)
+    goods.thela("CART", (0.0, 0.0, 0.0), mats, col, m["tarp"], handle_rise=0.2)
+    for o in set(col.objects) - before:
+        if o.parent is None:
+            o.parent = root
+    root.location = c
+    root.rotation_euler = (0, 0, math.pi)              # handles toward +X: the pusher walks behind it, going -X
+    kit.shadow_catcher("CART_shadow_catcher", (c.x + 0.3, c.y, 0.003), (3.2, 1.6), m, col)
     st.anchor("cart_centre", (c.x, c.y, 0.9))
+    st.anchor("cart_shadow_extent", (c.x + 1.7, c.y - 0.8, 0.0))     # pack_layers: keep the long shadow whole
+
+    # the pusher, his hands on the grips (the bar is 1.47 m behind the middle, grips 0.29 m either side)
+    at = (c.x + PUSHER_BACK, c.y, 0.0)
+    mats_p = people.costume_materials("loader", look="worker")
+    for i in range(WALK_FRAMES):
+        g = people.gait(i / WALK_FRAMES, stride=0.16, lift=0.06, bob=0.02)
+        g["pose"]["lean"] = 12.0                        # leaning into the load
+        pc = st.char("loader", f"push{i}")
+        pc["free"] = True
+        people.figure(f"LOADER_push{i}", at, DIRS["w"], mats_p, (-0.3, -0.3, 0.82), (0.3, -0.3, 0.82), pc,
+                      grip=("fist", "fist"), **g["pose"])
+    st.world["chars"]["loader"] = at[:2]
 
 
 def litter(st):
@@ -317,41 +361,143 @@ def crow(name, at, rot, m, col):
 
 
 def riyaz(st):
-    """Riyaz walking along the street, the kilo in his right hand. Three walk frames (right foot
-    ahead, passing, left foot ahead) with the free arm swinging against the legs; the bag is its
-    own prop layer so Run 1 can leave it on the pile."""
+    """Riyaz with the kilo in his right hand, in each of the four directions: an eight-frame walk and a
+    stand, plus a stand with empty hands for after the dump. All rendered at RIYAZ_AT; the kilo rides
+    in each frame (it swings with the hand), and is also its own free prop so Run 1 can throw it."""
     m = st.m
-    mats = people.costume_materials("riyaz", apron="#D6CFC0", cap="#E6E2D8", wet_hands=True)
-    mats["apron"] = s03.apron_worn("MAT_riyaz_apron_worn")
-    frames = {"walk_a": (0.17, (0.24, -0.16, 0.86)), "walk": (0.0, (0.25, 0.0, 0.82)), "walk_b": (-0.17, (0.24, 0.15, 0.86))}
-    for pose, (stride, left) in frames.items():
-        people.figure(f"RIYAZ_{pose}", RIYAZ_AT, HEADING, mats, HAND_R, left, st.char("riyaz", pose),
-                      grip=("fist", "loose"), stride=stride)
-    hand = Vector(RIYAZ_AT) + Vector((-HAND_R[1], HAND_R[0], HAND_R[2]))      # local -> world for heading 90
-    kilo = st.prop("kilo")
-    centre = Vector((hand.x + 0.04, hand.y - 0.02, hand.z - 0.27))
-    _, bag_knot = kit.kilo_bag("KILO_bag", centre, centre.z - 0.13, {"bag": m["bag_waste"]}, kilo)
-    st.anchor("riyaz_hand", bag_knot)
-    st.anchor("kilo_knot", bag_knot)
-    st.anchor("kilo_centre", centre)
+    mats = people.costume_materials("riyaz", wet_hands=True)
+    bag_mat = {"bag": m["bag_waste"]}
+
+    def frame(pose, heading, right, left, grip, carry, **kw):
+        c = st.char("riyaz", pose)
+        c["free"] = True
+        root = people.figure(f"RIYAZ_{pose}", RIYAZ_AT, heading, mats, right, left, c, grip=grip, **kw)
+        if not carry:
+            return None, None
+        bpy.context.view_layer.update()
+        w = Vector(root["wrist"])                      # the bag hangs just outside and below the fist
+        centre = root.matrix_world @ Vector((w.x - 0.05, w.y, w.z - 0.22))
+        _, knot = kit.kilo_bag(f"KILO_{pose}", centre, centre.z - 0.13, bag_mat, c)
+        return centre, knot
+
+    for d, heading in DIRS.items():
+        for i in range(WALK_FRAMES):
+            g = people.gait(i / WALK_FRAMES, stride=0.24, carry=True)
+            frame(f"walk_{d}{i}", heading, g["right_hand"], g["left_hand"], ("fist", "loose"), True, **g["pose"])
+        centre, knot = frame(f"stand_{d}", heading, HAND_R, REST[1], ("fist", "loose"), True)
+        st.anchor(f"riyaz_hand_{d}", knot)
+        frame(f"empty_{d}", heading, *REST, ("loose", "loose"), False)
+        if d == "e":                                   # the throwable kilo, where the east stand holds it
+            kilo = st.prop("kilo")
+            kilo["free"] = True
+            _, bag_knot = kit.kilo_bag("KILO_bag", centre, centre.z - 0.13, bag_mat, kilo)
+            st.anchor("kilo_knot", bag_knot)
+            st.anchor("kilo_centre", centre)
+    st.anchor("riyaz_hand", st.anchors["riyaz_hand_e"])
+    st.anchor("riyaz_feet", RIYAZ_AT)
     st.anchor("riyaz_head", (RIYAZ_AT[0], RIYAZ_AT[1], 1.75))
+    st.world["chars"]["riyaz"] = RIYAZ_AT[:2]
+
+
+def peds(st):
+    """Passers-by (V03, V05) who walk their stretch of pavement and back: an eight-frame walk east and
+    west each, rendered at their lane start and slid along by Station02."""
+    for name, look, (x, y), _ in PEDS:
+        mats = people.costume_materials(name, look=look)
+        for d in ("e", "w"):
+            for i in range(WALK_FRAMES):
+                g = people.gait(i / WALK_FRAMES, stride=0.2, swing=0.13)
+                c = st.char(name, f"walk_{d}{i}")
+                c["free"] = True
+                people.figure(f"{name.upper()}_walk_{d}{i}", (x, y, 0.0), DIRS[d], mats, g["right_hand"], g["left_hand"], c, **g["pose"])
+        st.world["chars"][name] = (x, y)
+    st.world["peds"] = [{"name": n, "lane": [x, y], "dir": d} for n, _, (x, y), d in PEDS]
+
+
+# Stall-holder poses: right hand, left hand (local wrist targets), grips, head turn. "idle" casts the
+# shadow in bg.png; Station02 cycles the rest (Anthony calls out and beckons, Arif folds his arms,
+# adjusts his hat and waves when Riyaz passes).
+ANTHONY_POSES = {
+    "idle": ((-0.3, 0.0, 0.6), (0.3, 0.0, 0.6), ("loose", "loose"), 0),
+    "call": ((-0.07, -0.16, 1.22), (0.3, 0.0, 0.6), ("loose", "loose"), 10),
+    "beckon_a": ((-0.32, -0.42, 1.04), (0.3, 0.0, 0.6), ("flat", "loose"), 15),
+    "beckon_b": ((-0.26, -0.3, 0.98), (0.3, 0.0, 0.6), ("loose", "loose"), 15),
+    "show": ((-0.3, 0.0, 0.6), (0.42, 0.08, 0.98), ("loose", "flat"), -25),
+    "look_l": ((-0.3, 0.0, 0.6), (0.3, 0.0, 0.6), ("loose", "loose"), 30),
+    "look_r": ((-0.3, 0.0, 0.6), (0.3, 0.0, 0.6), ("loose", "loose"), -30),
+}
+ARIF_POSES = {
+    "idle": ((-0.3, 0.0, 0.6), (0.3, 0.0, 0.6), ("loose", "loose"), 0),
+    "fold": ((0.13, -0.17, 0.96), (-0.13, -0.19, 0.93), ("loose", "loose"), 0),
+    "fold_look": ((0.13, -0.17, 0.96), (-0.13, -0.19, 0.93), ("loose", "loose"), 28),
+    "hat": ((-0.12, -0.21, 1.29), (0.3, 0.0, 0.6), ("loose", "loose"), -8),     # fingers to the brim
+    "wave_a": ((-0.34, -0.16, 1.32), (0.3, 0.0, 0.6), ("flat", "loose"), 25),
+    "wave_b": ((-0.44, -0.08, 1.26), (0.3, 0.0, 0.6), ("flat", "loose"), 25),
+    "hips": ((-0.3, 0.02, 0.8), (0.3, 0.02, 0.8), ("fist", "fist"), -15),
+}
 
 
 def stakeholders(st):
-    """Anthony at his stall and Arif in his doorway (task 11), in plain market clothes."""
-    for name, origin, heading, shirt, anchor in (("anthony", ANTHONY_AT, 10, "#8C8477", "anthony_head"),
-                                                 ("arif", ARIF_AT, -10, "#9AA0A4", "arif_head")):
-        mats = people.costume_materials(name, shirt=shirt, cap=None)
-        people.figure(f"{name.upper()}_idle", origin, heading, mats, (-0.26, -0.06, 0.88), (0.26, -0.06, 0.88),
-                      st.char(name, "idle"), moustache=name == "arif")
+    """Anthony at his stall and Arif in his doorway (task 11), each in a few poses Station02 animates."""
+    for name, origin, heading, poses, anchor in (("anthony", ANTHONY_AT, 10, ANTHONY_POSES, "anthony_head"),
+                                                 ("arif", ARIF_AT, -10, ARIF_POSES, "arif_head")):
+        mats = people.costume_materials(name)
+        for pose, (right, left, grip, turn) in poses.items():
+            people.figure(f"{name.upper()}_{pose}", origin, heading, mats, right, left, st.char(name, pose),
+                          grip=grip, head_turn=turn)
         st.anchor(anchor, (origin[0], origin[1], 1.75))
+        st.world["chars"][name] = origin[:2]
+
+
+def footprint(objs, below=0.5):
+    """World XY box of what stands on the ground: mesh bounds whose bottom is below `below` m (a tree's
+    trunk, not its canopy)."""
+    bpy.context.view_layer.update()
+    xs, ys = [], []
+    for o in objs:
+        if o.type not in {"MESH", "CURVE"}:
+            continue
+        pts = [o.matrix_world @ Vector(c) for c in o.bound_box]
+        if min(p.z for p in pts) > below or (max(p.x for p in pts) - min(p.x for p in pts)) > 4.0:
+            continue                                     # (a stray import with wild bounds is not ground)
+        xs += [p.x for p in pts]
+        ys += [p.y for p in pts]
+    return [round(min(xs), 3), round(max(xs), 3), round(min(ys), 3), round(max(ys), 3)] if xs else None
+
+
+def occluders(st):
+    """Tag each occluding set piece's objects ["occ"] = name (render_station renders occ_<name>), and
+    record every footprint Station02 sorts and collides by."""
+    props = bpy.data.collections["PROPS"]
+    for name, prefixes in OCCLUDERS.items():
+        objs = [o for o in props.all_objects
+                if o.name.startswith(prefixes) and not o.name.startswith(NOT_OCCLUDERS)]
+        for o in objs:
+            o["occ"] = name
+        fp = footprint(objs)
+        if fp:
+            st.world["occ"][name] = fp
+        else:
+            print(f"[warn] occluder {name}: nothing found")
+    litter = [o for o in bpy.data.collections["PROP_litter"].all_objects       # (near the pile: the rat import
+              if not o.get("shadow_catcher") and abs(o.matrix_world.translation.x - LITTER_AT.x) < 2.5]   # carries a stray part)
+    st.world["litter"] = footprint(litter)
+    cart = [o for o in bpy.data.collections["PROP_cart"].all_objects if not o.get("shadow_catcher")]
+    st.world["cart"] = footprint(cart, below=1.0)
+    # four reference points: Station02 turns world metres into plate pixels with them
+    for k, p in (("o", (0, 0, 0)), ("x", (1, 0, 0)), ("y", (0, 1, 0)), ("z", (0, 0, 1))):
+        st.anchor(f"proj_{k}", p)
 
 
 def build():
     st = station.begin("s02")
+    st.world = {"occ": {}, "chars": {}}
     materials(st.m)
+    before = set(st.set.objects)
     kit.plinth(st.street, st.m, st.set)
     kit.road(st.street, st.m, st.set)
+    for o in set(st.set.objects) - before:
+        o["ground"] = True                        # free figures keep the ground's bounce light (render_station)
     facade(st)
     market_corner(st)
     kit.kit_materials(st.m)
@@ -360,7 +506,9 @@ def build():
     cart(st)
     litter(st)
     riyaz(st)
+    peds(st)
     stakeholders(st)
+    occluders(st)
 
     st.anchor("street_start", (0.0, 3.0, 1.0))
     st.anchor("street_end", (10.0, 3.0, 1.0))
@@ -370,6 +518,7 @@ def build():
     # stays 174.5, and write anchors in plate pixels. The game crops a 1920x1080 window.
     rig.ORTHO_SCALE = 11.0 * PLATE_W / 1920
     rig.to_screen = plate_to_screen
+    bpy.context.scene["world"] = json.dumps(st.world)
     st.finish(PLATE_TARGET)
     bpy.context.scene.render.resolution_x = PLATE_W
     bpy.context.scene.render.resolution_y = PLATE_H
