@@ -1,4 +1,4 @@
-// Skip menu (task 12): M or the "≡" button (under the "i") opens it; Esc or M closes it. Jump to any beat
+// Skip menu (task 12): M or the dock's Menu button (Hud) opens it; Esc or M closes it. Jump to any beat
 // of either run, restart, or toggle reduced motion. Runs above every scene (active: true, last in main.ts)
 // and pauses the playing scene while it is open.
 import { GameObjects, Scene } from 'phaser';
@@ -7,18 +7,17 @@ import hud from '../../data/hud.json';
 import marketMap from '../../data/map.json';
 import { hasStation, runs, station, type Tag } from '../content';
 import { parseBeat, type Beat } from '../flow';
+import { LOCALES, locale, setLocale } from '../i18n';
 import { getState, setState, type KiloTagState, type Run } from '../state';
-import { colour, css, font, FRAME, layout } from '../theme';
+import { colour, css, font, FRAME } from '../theme';
 import { drawCard } from '../ui/card';
 
-const NOT_PLAYING = new Set(['SkipMenu', 'Hud', 'Boot']);
-// Under the "i": left of it is where the docked kilo tag hangs.
-const BUTTON = { x: layout.evidenceButton.x, y: layout.evidenceButton.y + 76, r: 26 };
+const NOT_PLAYING = new Set(['SkipMenu', 'Hud', 'Boot', 'HowTo']);
 const PANEL = { x: 260, y: 110, w: 1400, h: 860 };
 const ROW_H = 62;
 
 // The tag after s03's flip, when s03's own data is not in yet (task 03 params.tag_after).
-const PAID_FALLBACK: Tag = { value: '+₹[__]', meaning: 'income', note: '₹[__]/kg, payout to be set' };
+const PAID_FALLBACK: Tag = { label: 'Hub payout', value: '+₹[__]', meaning: 'income', note: '₹[__]/kg, payout to be set' };
 
 interface Item { col: number; row: number; label: string; choose: () => void; text?: GameObjects.Text; y: number; x: number; w: number }
 
@@ -43,7 +42,6 @@ function tagAt(beat: Beat): KiloTagState | null {
 }
 
 export class SkipMenu extends Scene {
-    private button!: GameObjects.Container;
     private panel!: GameObjects.Container;
     private focus!: GameObjects.Graphics;
     private items: Item[] = [];
@@ -56,33 +54,16 @@ export class SkipMenu extends Scene {
     }
 
     create() {
-        this.button = this.makeButton();
         this.panel = this.add.container(0, 0).setVisible(false);
         this.buildPanel();
         const kb = this.input.keyboard!;
-        kb.on('keydown-M', () => (this.panel.visible ? this.close() : this.open()));
+        kb.on('keydown-M', () => (this.panel.visible ? this.close() : this.open()));   // not over How to play: HowTo has paused the beat
         kb.on('keydown-ESC', () => this.panel.visible && this.close());
         kb.on('keydown-UP', () => this.move(-1));
         kb.on('keydown-DOWN', () => this.move(1));
         kb.on('keydown-LEFT', () => this.side(0));
         kb.on('keydown-RIGHT', () => this.side(1));
         kb.on('keydown-ENTER', () => this.panel.visible && this.items[this.cursor].choose());
-    }
-
-    update() {
-        // The button shows wherever the HUD would, and on the end card; never on the station cards.
-        const active = this.game.scene.getScenes(true).map((s) => s.sys.settings.key);
-        this.button.setVisible(!this.panel.visible && !active.includes('StationCard') && active.some((k) => !NOT_PLAYING.has(k)));
-    }
-
-    private makeButton() {
-        const g = this.add.graphics();
-        g.fillStyle(colour.cream, 1).fillCircle(0, 0, BUTTON.r);
-        g.lineStyle(3, colour.ink, 1).strokeCircle(0, 0, BUTTON.r);
-        for (const dy of [-8, 0, 8]) g.lineStyle(4, colour.ink, 1).lineBetween(-11, dy, 11, dy);
-        const c = this.add.container(BUTTON.x, BUTTON.y, [g]).setSize(BUTTON.r * 2, BUTTON.r * 2).setVisible(false);
-        c.setInteractive({ useHandCursor: true }).on('pointerup', () => this.open());
-        return c;
     }
 
     private buildPanel() {
@@ -102,9 +83,15 @@ export class SkipMenu extends Scene {
         });
 
         const by = PANEL.y + PANEL.h - 70;
-        this.addItem(2, 0, PANEL.x + 48, by, 520, hud.menu.restart, () => this.jump(parseBeat(1, 0), true));
-        this.motionText = this.addItem(2, 1, PANEL.x + 620, by, 380, '', () => this.toggleMotion()).text!;
-        this.addItem(2, 2, PANEL.x + PANEL.w - 268, by, 220, hud.menu.close, () => this.close());
+        this.addItem(2, 0, PANEL.x + 48, by, 440, hud.menu.restart, () => this.jump(parseBeat(1, 0), true));
+        this.motionText = this.addItem(2, 1, PANEL.x + 508, by, 340, '', () => this.toggleMotion()).text!;
+        // the language, named in its own script; choosing the next one reloads in it
+        const name = LOCALES.find((l) => l.id === locale)!.name;
+        this.addItem(2, 2, PANEL.x + 868, by, 300, `Language: ${name}`, () => {
+            const i = LOCALES.findIndex((l) => l.id === locale);
+            setLocale(LOCALES[(i + 1) % LOCALES.length].id);
+        });
+        this.addItem(2, 3, PANEL.x + PANEL.w - 228, by, 180, hud.menu.close, () => this.close());
         this.panel.add(this.add.graphics().lineStyle(2, colour.ink, 0.15).lineBetween(PANEL.x + 48, by - 52, PANEL.x + PANEL.w - 48, by - 52));
     }
 
@@ -118,8 +105,12 @@ export class SkipMenu extends Scene {
         return item;
     }
 
-    private open() {
-        if (this.panel.visible) return;
+    get isOpen() {
+        return this.panel.visible;
+    }
+
+    open() {
+        if (this.panel.visible || (this.scene.get('HowTo') as unknown as { isOpen?: boolean }).isOpen) return;
         this.paused = this.game.scene.getScenes(true).map((s) => s.sys.settings.key).filter((k) => !NOT_PLAYING.has(k));
         this.paused.forEach((k) => this.game.scene.pause(k));
         this.motionText.setText(`${hud.menu.reduced_motion}: ${getState(this).reducedMotion ? 'on' : 'off'}`);

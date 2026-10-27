@@ -395,12 +395,14 @@ def two_wheeler_row(prefix, x0, x1, y, m, col, step=0.75, heading=-70, z=0.0):
         i += 1
 
 
-def flex_board(name, x, z, h, st, m, mat, col, proud=0.7):
+def flex_board(name, x, z, h, st, m, mat, col, proud=0.7, sign=None):
     """A flex board projecting from the facade on a steel frame (V04, F05), its face to the street's
     length so it reads from the camera: text-free colour blocks (the illegible-board rule, §7)."""
     y = st.wall_y
     geo.box(f"{name}_frame", (x - 0.03, y - proud, z - h / 2), (x + 0.03, y, z + h / 2), m["steel_dark"], col, 0.004)
     geo.box(f"{name}_board", (x + 0.03, y - proud + 0.03, z - h / 2 + 0.03), (x + 0.05, y - 0.03, z + h / 2 - 0.03), mat, col, 0.003)
+    if sign is not None:                                   # a printed face (tools/render_signs.mjs), seen from +X
+        geo.panel(f"{name}_print", (x + 0.053, y - proud / 2, z), (proud - 0.08, h - 0.08), "+X", sign, col)
 
 
 def banner(name, x, z0, z1, w, st, mat, col):
@@ -453,15 +455,19 @@ def rain_tree(name, x, y, m, col, height=6.5):
                    rnd.uniform(0.55, 0.85), (1.3, 1.2, 0.6), m["canopy"], col, segments=12, rings=8)
 
 
+BODY = None                       # the figure module for passers-by: lib/people (default) or lib/human
+
+
 def pedestrian(name, origin, heading, col, kind=0, stride=0.0):
     """A passer-by (V03, V05): white kurta and skullcap, or a shirt and trousers. Plain faces,
     no likenesses (§7)."""
     import people
+    body = BODY or people
     looks = (dict(shirt="#E2DED4", trousers="#D8D4CA", cap="#EAE6DC"), dict(shirt="#7E9AAE", trousers="#3A3633", cap=None),
              dict(shirt="#B9A07E", trousers="#2E2B2A", cap=None), dict(shirt="#8C5A50", trousers="#4A4440", cap=None))
     mats = people.costume_materials(f"ped{kind}", **looks[kind % len(looks)])
-    swing = 0.12 if stride else 0.0
-    return people.figure(name, origin, heading, mats, (-0.26, -swing, 0.86), (0.26, swing, 0.86), col,
+    swing = 0.12 if stride else 0.0                    # arms hang at the sides (wrists at 0.6 m), swinging with a stride
+    return body.figure(name, origin, heading, mats, (-0.3, -swing, 0.6), (0.3, swing, 0.6), col,
                          moustache=kind % 2 == 0, stride=stride)
 
 

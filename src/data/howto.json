@@ -1,0 +1,105 @@
+{
+  "note": "How to play, per beat of each run (runs.json beats). Shown on the briefing before a beat and on the H help overlay; each step's `prompts` are the station's prompt keys (stations/<id>.json runs.<n>.prompts, or map.json for \"map\"), so the HUD's step dots advance as the prompts change. UI text only: no numbers or claims beyond what the station data already shows.",
+  "dock": { "blueprint": "Blueprint", "evidence": "Evidence", "help": "How to play", "menu": "Menu" },
+  "briefing": { "goal": "Goal", "start": "Start", "resume": "Resume", "press": "Press Space to begin", "title": "Waste to Wealth", "tagline": "One kilo of meat waste in Shivajinagar" },
+  "1": {
+    "s01": {
+      "goal": "Finish the morning cut and bag the waste.",
+      "steps": [
+        { "label": "Chop", "prompts": ["cut"], "keys": ["Space"], "mouse": "click", "text": "Press as the ring round the block draws in tight for a clean cut. Three chops." },
+        { "label": "Pick up", "prompts": ["pickup"], "keys": ["Space"], "mouse": "click", "text": "Lift the bag of bone and offal off the counter. Watch its tag." },
+        { "label": "Walk on", "prompts": ["leave"], "keys": ["→"], "mouse": "click", "text": "Head out with the kilo." }
+      ]
+    },
+    "s02": {
+      "goal": "Carry the kilo to the back of Russell Market.",
+      "steps": [
+        { "label": "Walk", "prompts": ["walk", "wait"], "keys": ["↑", "←", "↓", "→"], "mouse": "hold", "text": "Arrows or WASD to walk, or hold the mouse where you want to go. Let the handcart pass." },
+        { "label": "Drop it", "prompts": ["dump"], "keys": ["Space"], "mouse": "click", "text": "Leave the bag on the pile behind the market." },
+        { "label": "Head back", "prompts": ["leave"], "keys": ["Space"], "mouse": "click", "text": "Walk back to the stall." }
+      ]
+    },
+    "s01:night": {
+      "goal": "That night, the power goes out.",
+      "steps": [
+        { "label": "Watch", "prompts": ["night"], "keys": [], "text": "No power, no cold. Watch the leftover meat on the counter." },
+        { "label": "Next day", "prompts": ["night_leave"], "keys": ["→"], "mouse": "click", "text": "Start the same day again, this time with the hub." }
+      ]
+    },
+    "map": {
+      "goal": "See the same morning across the whole market.",
+      "tip": "1 · 2 · 3 switch the map lens: waste, money, power.",
+      "steps": [
+        { "label": "Watch", "prompts": ["watch"], "keys": [], "text": "Every stall's waste heads for its nearest dump." },
+        { "label": "Clear piles", "prompts": ["clear", "again"], "keys": [], "mouse": "click", "text": "Click a pile to clear it, then watch it come back." },
+        { "label": "Move on", "prompts": ["leave"], "keys": ["→"], "text": "Play the same day with the hub." }
+      ]
+    }
+  },
+  "2": {
+    "s01": {
+      "goal": "Finish the morning cut and bag the waste.",
+      "steps": [
+        { "label": "Chop", "prompts": ["cut"], "keys": ["Space"], "mouse": "click", "text": "Press as the ring round the block draws in tight for a clean cut. Three chops." },
+        { "label": "Pick up", "prompts": ["pickup"], "keys": ["Space"], "mouse": "click", "text": "Lift the bag of bone and offal off the counter." },
+        { "label": "Walk on", "prompts": ["leave"], "keys": ["→"], "mouse": "click", "text": "Take it to the hub this time." }
+      ]
+    },
+    "s02": {
+      "goal": "Carry the kilo down the street to the hub.",
+      "steps": [
+        { "label": "Walk", "prompts": ["walk", "wait"], "keys": ["↑", "←", "↓", "→"], "mouse": "hold", "text": "Arrows or WASD to walk, or hold the mouse where you want to go. Let the handcart pass." },
+        { "label": "Into the hub", "prompts": ["leave"], "keys": ["Space"], "mouse": "click", "text": "Step in at the hub's drop window." }
+      ]
+    },
+    "s03": {
+      "goal": "Sort the kilo, weigh it and get paid.",
+      "steps": [
+        { "label": "Sort", "prompts": ["sort"], "keys": ["←", "→"], "mouse": "drag", "text": "Meat waste into the crate (←), rubbish into the bin (→). Rubbish in the crate makes it a mixed crate." },
+        { "label": "Weigh", "prompts": ["drag"], "keys": ["Space"], "mouse": "drag", "text": "Drag the crate onto the scale." },
+        { "label": "Get paid", "prompts": ["number", "wait", "paid"], "keys": ["Space"], "text": "Say your number. Listen for the payment and watch the tag." },
+        { "label": "Move on", "prompts": ["leave"], "keys": ["Space"], "mouse": "click", "text": "Into the cold room." }
+      ]
+    },
+    "s04": {
+      "goal": "Keep everything cold, even through a power cut.",
+      "steps": [
+        { "label": "Chamber B", "prompts": ["waste"], "keys": ["Space"], "mouse": "drag", "text": "Drag the sealed crate into Chamber B." },
+        { "label": "Chamber A", "prompts": ["meat"], "keys": ["Space"], "mouse": "drag", "text": "Drag the unsold meat into Chamber A." },
+        { "label": "Power cut", "prompts": ["cut", "solar"], "keys": [], "text": "Watch the evening: the grid goes, the hub stays on its own solar." },
+        { "label": "Move on", "prompts": ["leave"], "keys": ["→"], "text": "To the pickup bay." }
+      ]
+    },
+    "s05": {
+      "goal": "Load the hub's crates onto the collector's truck.",
+      "steps": [
+        { "label": "Load", "prompts": ["load"], "keys": ["Space"], "mouse": "click", "text": "Each press loads one crate. Yours goes in last." },
+        { "label": "Follow", "prompts": ["leave"], "keys": ["→"], "text": "Follow the crate off-site." }
+      ]
+    },
+    "s06": {
+      "goal": "Run the kilo through the renderer, machine by machine.",
+      "steps": [
+        { "label": "Process", "prompts": ["start", "next"], "keys": ["Space"], "mouse": "click", "text": "Each press sends it through the next machine. The strip at the top shows the stage." },
+        { "label": "See it used", "prompts": ["leave"], "keys": ["→"], "mouse": "click", "text": "Follow the product to where it is used." }
+      ]
+    },
+    "s07": {
+      "goal": "See the meal put to use on a farm.",
+      "steps": [
+        { "label": "Hens", "prompts": ["feed"], "keys": ["Space"], "mouse": "click", "text": "Feed the hens from the scoop." },
+        { "label": "Soil", "prompts": ["soil"], "keys": ["Space"], "mouse": "click", "text": "Scatter it on the vegetable beds." },
+        { "label": "Ledger", "prompts": ["leave"], "keys": ["→"], "mouse": "click", "text": "See the day's ledger." }
+      ]
+    },
+    "map": {
+      "goal": "Play the same market with the hub.",
+      "tip": "1 · 2 · 3 switch the map lens: waste, money, power.",
+      "steps": [
+        { "label": "Open", "prompts": ["open"], "keys": ["Space"], "mouse": "click", "text": "Open the hub's drop window." },
+        { "label": "Watch", "prompts": ["window", "pickup", "loop"], "keys": [], "text": "Stalls drop inside the window, one pickup serves the market, and the loop comes back." },
+        { "label": "Ledger", "prompts": ["leave"], "keys": ["→"], "text": "See the day's ledger." }
+      ]
+    }
+  }
+}

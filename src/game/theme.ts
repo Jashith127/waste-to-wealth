@@ -29,15 +29,24 @@ export const font = {
 // Sizes at the 1920×1080 base frame (the canvas scales to fit; art-bible §8 minimums hold at 720p).
 export const size = { stationTitle: 56, cardHeading: 36, body: 28, hud: 40, small: 22 } as const;
 
-// Layout (art-bible §6.3)
+// Layout (art-bible §6.3). The HUD keeps to the corners: the objective card top left, the kilo's
+// docked tag top right, the control dock bottom left. Scene content starts below hudBottom.
 export const layout = {
-    hudBand: 96,
+    hudBottom: 140,             // the objective card's lower edge, with a little air
     blueprintTop: 660,          // nothing the player needs sits below this line
     blueprintHeight: 420,
-    evidenceButton: { x: 1830, y: 56, r: 30 },
-    prompt: { x: 316, y: 56 },   // after the HUD clock card (48 + 252 + 16)
-    clock: { x: 48, y: 56, w: 252, h: 60 },
+    prompt: { x: 32, y: 20 },   // the objective card's top-left corner
+    dock: { x: 32, y: 1036, h: 54, gap: 12 },   // the control dock's left end, vertical centre
     gutter: 48,
+} as const;
+
+// HUD surfaces: dark game panels over the set, cream deck cards for briefings.
+export const hud = {
+    panel: 0x1c1714,
+    panelAlpha: 0.9,
+    shadow: 0x000000,
+    dim: '#B8AE9C',             // secondary text on a dark panel
+    keyLip: 0xb3a691,           // the underside of a key cap
 } as const;
 
 export const motion = {

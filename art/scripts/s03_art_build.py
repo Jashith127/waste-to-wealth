@@ -80,6 +80,7 @@ class ArtStation(station.Station):
         self.m = kit.materials()
         self.set = geo.collection("SET")
         self.props = geo.collection("PROPS")
+        self.fg = geo.collection("FG")
 
 
 # ---------------------------------------------------------------- materials only this set needs
@@ -427,11 +428,12 @@ def _world(origin, heading, local):
 def riyaz(st):
     """Riyaz Q. as in s01 (deck p. 22), without the cleaver, apron clean but worn. He has just set
     down the knife and holds his wet hands away from his body (deck p. 23: wet hands make the phone
-    uncomfortable), so it is the attendant who types."""
+    uncomfortable), so it is the attendant who types. His arms hang a little out from his sides,
+    keeping the wet hands off the apron."""
     m = st.m
     mats = people.costume_materials("riyaz", apron="#D6CFC0", cap="#E6E2D8", wet_hands=True)
     mats["apron"] = apron_worn("MAT_riyaz_apron_worn")
-    right, left = (-0.52, -0.06, 0.92), (0.52, -0.06, 0.92)       # out to the sides, off the apron
+    right, left = (-0.38, 0.0, 0.62), (0.38, 0.0, 0.62)           # hanging, a little out: off the apron
     col = st.char("riyaz", "idle")
     people.figure("RIYAZ_idle", RIYAZ_AT, RIYAZ_HEADING, mats, right, left, col)
     for side, hand in (("R", right), ("L", left)):          # drips from the fingertips
@@ -447,14 +449,14 @@ def riyaz(st):
 
 def attendant(st):
     """The hub attendant (our proposal, task 14): plain muted shirt that is not a meaning colour,
-    a lanyard and badge, a phone. Idle: hands on the counter, phone by the right hand. Type: the
-    phone held up in both hands, typing the number Riyaz says (deck p. 26)."""
+    a lanyard and badge, a phone. Idle: standing easy behind the counter, phone on it by his right
+    hand. Type: the phone held up in both hands, typing the number Riyaz says (deck p. 26)."""
     m = st.m
     mats = people.costume_materials("attendant", shirt="#7E8784", trousers="#33302E", cap=None)
     top_local = COUNTER["top"] - HUB_FLOOR
     back_y = COUNTER["y1"] - ATTENDANT_AT[1]               # counter's back edge in local y (negative)
     poses = {
-        "idle": ((-0.24, back_y - 0.12, top_local + 0.04), (0.24, back_y - 0.1, top_local + 0.04)),
+        "idle": ((-0.3, 0.02, 0.6), (0.3, 0.02, 0.6)),
         "type": ((-0.07, -0.34, 1.22), (0.07, -0.34, 1.22)),
     }
     for pose, (right, left) in poses.items():

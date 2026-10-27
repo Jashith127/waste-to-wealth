@@ -39,7 +39,7 @@ export class Placeholder extends Scene {
         this.add.text(FRAME.width / 2, 975, 'Grey box · see tasks/', { fontFamily: font.body, fontSize: 22, color: '#8F877C' }).setOrigin(0.5);
 
         if (state.kilo.tag) new KiloTag(this, FRAME.width - 260, 20, state.kilo.tag, state.reducedMotion).setDepth(30);
-        new Prompt(this, layout.prompt.x, layout.prompt.y).show(isEnd ? 'The end card is a grey box for now' : 'Walk on', isEnd ? undefined : '→');
+        new Prompt(this, layout.prompt.x, layout.prompt.y, s ? { badge: String(s.number).padStart(2, '0'), title: s.title } : {}).show(isEnd ? 'The end card is a grey box for now' : 'Walk on', isEnd ? undefined : '→');
         if (!isEnd) this.input.keyboard!.once('keydown-RIGHT', () => goNext(this));
         (window as unknown as { __ready?: string }).__ready = beat.station;
         this.cameras.main.fadeIn(300, 28, 23, 20);

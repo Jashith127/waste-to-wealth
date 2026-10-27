@@ -5,7 +5,7 @@ import { GameObjects, Scene } from 'phaser';
 import { hasStation, station, type Tag } from '../content';
 import { getState, setState } from '../state';
 import { colour, css, font, FRAME } from '../theme';
-import { drawCard, drawChip } from './card';
+import { drawCard, drawChip, keepClear } from './card';
 
 const PPM = 1920 / 11;
 const GREY = { top: 0xb4aea6, front: 0x9a958e, side: 0x6e6a65 };
@@ -83,6 +83,7 @@ export function labelCard(scene: Scene, x: number, y: number, text: string, opts
         chip.setX(cx);
         c.add([cg, chip]);
     }
+    keepClear(c, w, h);
     return c.setDepth(35);
 }
 
@@ -91,7 +92,7 @@ export function labelCard(scene: Scene, x: number, y: number, text: string, opts
 export function paidTag(scene: Scene): Tag {
     const current = getState(scene).kilo.tag;
     if (current?.meaning === 'income') return current;
-    const fallback: Tag = { value: '+₹[__]', meaning: 'income', note: '₹[__]/kg, payout to be set' };
+    const fallback: Tag = { label: 'Hub payout', value: '+₹[__]', meaning: 'income', note: '₹[__]/kg, payout to be set' };
     const tag = (hasStation('s03') ? (station('s03').params?.tag_after as Tag | undefined) : undefined) ?? fallback;
     setState(scene, { kilo: { carried: false, tag } });
     return tag;

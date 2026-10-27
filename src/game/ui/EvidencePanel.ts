@@ -1,4 +1,4 @@
-// The evidence "i" (I): which field photos, interviews and reports this station rests on.
+// Evidence (I, or the dock's button): which field photos, interviews and reports this station rests on.
 import { GameObjects, Scene } from 'phaser';
 import { source, type StationData } from '../content';
 import { colour, css, font, layout, motion } from '../theme';
@@ -14,24 +14,14 @@ const KIND_LABEL: Record<string, string> = {
 };
 
 export class EvidencePanel extends GameObjects.Container {
-    readonly button: GameObjects.Container;
     private open = false;
 
     constructor(scene: Scene, station: StationData, private reducedMotion = false) {
-        const { x: bx, y: by, r } = layout.evidenceButton;
-        super(scene, bx + r - 720, by + r + 16);
-
-        // the button
-        const b = scene.add.graphics();
-        b.fillStyle(colour.card, 1).fillCircle(0, 0, r).lineStyle(3, colour.ink, 1).strokeCircle(0, 0, r);
-        const i = scene.add.text(0, 1, 'i', { fontFamily: font.display, fontSize: 34, fontStyle: '800', color: css.ink }).setOrigin(0.5);
-        this.button = scene.add.container(bx, by, [b, i]).setDepth(60).setSize(r * 2, r * 2);
-        this.button.setInteractive({ useHandCursor: true }).on('pointerup', () => this.toggle());
-
-        // the card
+        // the card opens above the control dock, over its Evidence button (Hud)
         const w = 720;
         const rows = station.evidence.map((id) => ({ id, src: source(id) }));
         const rowH = 58, h = 92 + rows.length * rowH;
+        super(scene, layout.dock.x, layout.dock.y - layout.dock.h / 2 - 16 - h);
         const g = scene.add.graphics();
         drawCard(g, 0, 0, w, h, colour.ink);
         this.add(g);
@@ -53,6 +43,10 @@ export class EvidencePanel extends GameObjects.Container {
         });
         this.setDepth(70).setVisible(false).setAlpha(0);
         scene.add.existing(this);
+    }
+
+    get isOpen() {
+        return this.open;
     }
 
     toggle(force?: boolean) {

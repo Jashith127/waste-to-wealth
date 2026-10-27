@@ -20,8 +20,8 @@ const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
 const errors = [];
 page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
 page.on("pageerror", (e) => errors.push(e.message));
-await page.goto(`http://localhost:8098/?station=s02&run=${run}`);
-await page.waitForFunction(() => window.__ready, null, { timeout: 60000 });
+await page.goto(`http://localhost:8098/?station=s02&run=${run}&noBrief`);
+await page.waitForFunction(() => window.__ready, null, { timeout: 180000 });
 
 const scene = () => page.evaluate(() => {
     const s = window.__game.scene.getScene("s02");

@@ -5,6 +5,31 @@
         "type": "image",
         "key": "s07_bg",
         "url": "assets/stations/s07/bg.png"
+      },
+      {
+        "type": "image",
+        "key": "s07_feed",
+        "url": "assets/stations/s07/feed.png"
+      },
+      {
+        "type": "image",
+        "key": "s07_hens_a",
+        "url": "assets/stations/s07/hens_a.png"
+      },
+      {
+        "type": "image",
+        "key": "s07_hens_b",
+        "url": "assets/stations/s07/hens_b.png"
+      },
+      {
+        "type": "image",
+        "key": "s07_plants_a",
+        "url": "assets/stations/s07/plants_a.png"
+      },
+      {
+        "type": "image",
+        "key": "s07_plants_b",
+        "url": "assets/stations/s07/plants_b.png"
       }
     ]
   }

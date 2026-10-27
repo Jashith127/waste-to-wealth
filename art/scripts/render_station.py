@@ -8,10 +8,10 @@ Options:
   --preset night     re-light with another rig preset; outputs get a _night suffix
   --power-cut        hide everything tagged ["practical"] (shop lights and lamps): the grid is down
 Outputs to art/build/renders/<station>/ (never saves the .blend):
-  bg.png                     SET + PROPS; every FX off; the idle pose of each character casts its shadow
+  bg.png                     SET + PROPS + FG (set in front of where sprites move); every FX off; the idle pose of each character casts its shadow
   bg_fx_<name>.png           the same with FX_<name> on (pack_layers.py turns the difference into fx_<name>)
   <char>_<pose>.png          each CHAR_<char>_<pose>; every other object is a holdout
-  <prop>.png                 each PROP_<prop>, lit by the set, cut by what is in front
+  <prop>.png                 each PROP_<prop>, lit by the set, cut by what is in front (or ["free"], as above)
   <prop>_shadow.png          its contact shadow on the catcher tagged ["shadow_catcher"]
   occ_<name>.png             set objects tagged ["occ"] = name, alone and cut by what is in front: drawn
                              over a walker that passes behind them (they stay in bg.png too)
@@ -75,13 +75,24 @@ def speed_up(scene):
         scene.cycles.denoising_use_gpu = True
 
 
+def screen_points(scene, objs):
+    """Where these objects' posed vertices land in the camera view (0..1). Posed, not their bound_box:
+    a skinned figure's bound_box is its rest pose, so a swung arm or a stride would fall outside it."""
+    cam, deps, pts = scene.camera, bpy.context.evaluated_depsgraph_get(), []
+    for o in objs:
+        if o.type not in GEOMETRY:
+            continue
+        ev = o.evaluated_get(deps)
+        me = ev.to_mesh()
+        pts += [world_to_camera_view(scene, cam, ev.matrix_world @ v.co) for v in me.vertices]
+        ev.to_mesh_clear()
+    return pts
+
+
 def border(scene, objs, pad=0.02):
     """Render only the screen rectangle these objects cover (a sprite layer is mostly empty frame),
     snapped to whole pixels, and save only that rectangle. Returns its top-left in frame pixels."""
-    cam, pts = scene.camera, []
-    for o in objs:
-        if o.type in GEOMETRY:
-            pts += [world_to_camera_view(scene, cam, o.matrix_world @ Vector(c)) for c in o.bound_box]
+    pts = screen_points(scene, objs)
     r = scene.render
     if not pts:
         r.use_border = False
@@ -114,10 +125,9 @@ def atlas(scene, cols, out, reset, show, floor):
     ppm = w0 / ortho0
     boxes = {}
     for name, c in cols.items():
-        pts = [world_to_camera_view(scene, cam, o.matrix_world @ Vector(v)) for o in c.all_objects
-               if o.type in GEOMETRY for v in o.bound_box]
-        x0, x1 = math.floor(min(p.x for p in pts) * w0) - 4, math.ceil(max(p.x for p in pts) * w0) + 4
-        y0, y1 = math.floor((1 - max(p.y for p in pts)) * h0) - 4, math.ceil((1 - min(p.y for p in pts)) * h0) + 4
+        pts = screen_points(scene, c.all_objects)
+        x0, x1 = math.floor(min(p.x for p in pts) * w0) - 8, math.ceil(max(p.x for p in pts) * w0) + 8
+        y0, y1 = math.floor((1 - max(p.y for p in pts)) * h0) - 8, math.ceil((1 - min(p.y for p in pts)) * h0) + 8
         boxes[name] = (x0, y0, x1, y1)
     cw = max(b[2] - b[0] for b in boxes.values())
     ch = max(b[3] - b[1] for b in boxes.values())
@@ -148,7 +158,7 @@ def atlas(scene, cols, out, reset, show, floor):
         patches.append(patch)
         cells[name] = {"box": [cx, cy, cx + x1 - x0, cy + y1 - y0], "at": [x0, y0]}
     r.resolution_x, r.resolution_y = w, h
-    cam.data.ortho_scale = w / ppm
+    cam.data.ortho_scale = max(w, h) / ppm          # an orthographic camera's scale spans the longer side
     cam.data.clip_end = clip0 + ATLAS_DEPTH * (len(cols) + 2)
     r.use_border = False
     scene.cycles.samples = 16 if DRAFT else 32 if FAST else 64
@@ -191,7 +201,9 @@ def main():
             bpy.data.objects.remove(o)
         rig.lights(PRESET)
 
-    env = objects(bpy.data.collections["SET"]) + objects(bpy.data.collections["PROPS"])
+    fg_col = bpy.data.collections.get("FG")
+    fg = objects(fg_col) if fg_col else []
+    env = objects(bpy.data.collections["SET"]) + objects(bpy.data.collections["PROPS"]) + fg
     fx = groups("FX_")
     chars = groups("CHAR_")                      # "riyaz_idle" -> collection
     props = groups("PROP_")
@@ -202,6 +214,8 @@ def main():
     def reset():
         for o in every:
             o.hide_render = False
+        for o in env:                            # undo the last layer's holdouts (the fg pass precedes FX)
+            geo.set_render_role(o, "normal")
         for o in practicals:
             if o.type in GEOMETRY:
                 geo.set_render_role(o, "normal")     # (this un-hides, so it comes before the cut)

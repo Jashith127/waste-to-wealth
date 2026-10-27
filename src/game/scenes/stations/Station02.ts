@@ -3,10 +3,10 @@
 // ends at the back-lane pile (the −₹5 stays on the tag); Run 2 reaches the hub's drop window.
 //
 // The set is a 3200×1920 plate at the normal 174.5 px/m (see s02_build.py), and this scene shows a
-// 1920×1080 window over it that follows Riyaz. Everyone who moves (Riyaz, three passers-by, the
-// handcart and its pusher) is rendered alone, in every direction they walk, and placed here in world
-// metres. The plate keeps every set piece; those a walker can pass behind are also rendered alone
-// (occ_<name>) and depth-sorted with the walkers by their ground footprints (layers.json `world`).
+// 1920×1080 window over it that follows Riyaz. Riyaz is rendered alone in each direction he walks
+// and placed here in world metres; the handcart rolls down across his way. Everyone else stands
+// still. The plate keeps every set piece; those he can pass behind are also rendered alone
+// (occ_<name>) and depth-sorted with him by their ground footprints (layers.json `world`).
 import { GameObjects } from 'phaser';
 import { station } from '../../content';
 import { goNext } from '../../flow';
@@ -22,33 +22,20 @@ interface Pt { x: number; y: number }
 interface World {
     occ: Record<string, Box>;
     chars: Record<string, [number, number]>;
-    peds: { name: string; lane: [number, number]; dir: 'e' | 'w' }[];
     litter: Box;
     cart: Box;
 }
 
 const FRAMES = 8;                          // one walk cycle per direction (s02_build.WALK_FRAMES)
-const CYCLE = { riyaz: 0.96, ped: 0.8, loader: 0.64 };   // metres per walk cycle: 4 × each gait's stride
+const CYCLE = 0.96;                        // metres per walk cycle: 4 × the gait's stride
 const R = 0.22;                            // a walker's radius
 const BOUNDS = { x0: -1.4, x1: 14.6, y0: 0.32, y1: 2.3 };   // the walkable pavement (kerb to awnings)
 const FEET = { x: 900, y: 610 };           // where the camera keeps Riyaz's feet on screen
-const CART_START_X = 2.6;                  // Riyaz this far down the street sets the handcart off
-const CART_SPEED = 1.0;                    // m/s
-const CART_END_X = -8.0;                   // how far it rolls back up the street (relative), then it is gone
+const CART_START_X = 3.0;                  // Riyaz this far down the street sets the handcart off
+const CART_SPEED = 0.9;                    // m/s, straight down from the shopfront toward the road
+const CART_END_DY = -3.3;                  // it rolls this far (onto the road), then it is gone
 const RUN2_END_X = 12.0;                   // Run 2: the hub's drop window at the market end
 const DUMP_REACH = 0.9;                    // Run 1: this close to the pile, he can leave the kilo
-// passers-by: x from, x to, y (the kerb-side lanes stay just clear of the handcart's)
-const PED_LANES: Record<string, [number, number, number]> = { ped0: [-2.2, 3.6, 0.34], ped1: [5.0, 7.2, 2.05], ped2: [4.4, 10.3, 0.34] };
-// The stall-holders' ambient loops (pose, ms); a nearby Riyaz gets a call or a wave instead.
-const ANTHONY_LOOP: [string, number][] = [['idle', 1800], ['look_l', 1200], ['idle', 600], ['call', 900], ['idle', 500],
-    ['show', 1400], ['idle', 1600], ['look_r', 1200]];
-const ANTHONY_NEAR: [string, number][] = [['call', 700], ['beckon_a', 260], ['beckon_b', 260], ['beckon_a', 260],
-    ['beckon_b', 260], ['beckon_a', 260], ['beckon_b', 260], ['idle', 400]];
-const ARIF_LOOP: [string, number][] = [['fold', 2500], ['fold_look', 1500], ['fold', 1500], ['idle', 600], ['hat', 900],
-    ['idle', 600], ['hips', 2200], ['idle', 800]];
-const ARIF_NEAR: [string, number][] = [['wave_a', 220], ['wave_b', 220], ['wave_a', 220], ['wave_b', 220],
-    ['wave_a', 220], ['wave_b', 220], ['idle', 500]];
-
 interface Fly { dot: GameObjects.Arc; phase: number; r: number; speed: number; home: Pt }
 
 /** One sortable thing: its ground footprint and what draws it. */
@@ -60,21 +47,15 @@ interface Walker {
     frames: Map<string, GameObjects.Image>; shown?: GameObjects.Image; shadow: GameObjects.Ellipse;
 }
 
-type Ped = Walker & { lane: [number, number]; y: number; speed: number; wait: number; blocked: number };
-
-/** A stall-holder cycling poses in place. */
-interface Holder { name: string; at: Pt; poses: Map<string, GameObjects.Image>; seq: [string, number][]; i: number; until: number; cool: number }
 
 export default class Station02 extends StationScene {
     private phase: Phase = 'walk';
     private w!: World;
     private proj!: { o: Pt; x: Pt; y: Pt };
     private riyaz!: Walker;
-    private peds: Ped[] = [];
-    private loader!: Walker;
-    private holders: Holder[] = [];
+    private holders: Pt[] = [];
     private items: Item[] = [];
-    private cart!: { img: GameObjects.Image; shadow: GameObjects.Image; home: Pt; shadowHome: Pt; dx: number; state: 'parked' | 'rolling' | 'gone'; halted: boolean };
+    private cart!: { img: GameObjects.Image; shadow: GameObjects.Image; home: Pt; shadowHome: Pt; dy: number; state: 'parked' | 'rolling' | 'gone' };
     private bag!: GameObjects.Image;
     private bagHome = { x: 0, y: 0 };
     private tag!: KiloTag;
@@ -82,8 +63,8 @@ export default class Station02 extends StationScene {
     private keys!: Record<string, Phaser.Input.Keyboard.Key>;
     private steer?: Pt;                    // screen point the pointer is held on
     private holdForward = false;
-    private detour = 0;
-    private cartBlock?: Box;               // the cart's box, when it was the last thing in a walker's way                    // which way (±Y) Riyaz is stepping round something in his way
+    private detour = 0;                    // which way (±Y) Riyaz is stepping round something in his way
+    private cartBlock?: Box;               // the cart's box, when it was the last thing in his way
     private ring?: GameObjects.Arc;
     private arrivedAt = 0;
     private left = false;
@@ -105,7 +86,6 @@ export default class Station02 extends StationScene {
         this.left = false;
         this.carrying = true;
         this.items = [];
-        this.peds = [];
         this.holders = [];
         this.waitShown = false;
         this.w = (this.layers as unknown as { world: World }).world;
@@ -128,41 +108,27 @@ export default class Station02 extends StationScene {
             this.items.push({ box: () => box, img: () => img, occ: true });
         }
 
-        // the stall-holders
-        for (const [name, loop] of [['anthony', ANTHONY_LOOP], ['arif', ARIF_LOOP]] as const) {
-            const poses = new Map<string, GameObjects.Image>();
-            for (const [pose] of [...loop, ...(name === 'anthony' ? ANTHONY_NEAR : ARIF_NEAR)]) {
-                if (!poses.has(pose) && this.layers!.layers[`${name}_${pose}`]) poses.set(pose, this.layer(`${name}_${pose}`).setVisible(false));
-            }
+        // the stall-holders, standing easy
+        for (const name of ['anthony', 'arif']) {
+            if (!this.layers!.layers[`${name}_idle`]) continue;
+            const img = this.layer(`${name}_idle`);
             const [x, y] = this.w.chars[name];
-            const h: Holder = { name, at: { x, y }, poses, seq: loop, i: 0, until: 0, cool: 0 };
-            this.holders.push(h);
-            this.showPose(h, 'idle');
-            this.items.push({ box: () => [x - 0.25, x + 0.25, y - 0.25, y + 0.25], img: () => [...poses.values()].find((p) => p.visible) });
+            this.holders.push({ x, y });
+            this.items.push({ box: () => [x - 0.25, x + 0.25, y - 0.25, y + 0.25], img: () => img });
         }
 
         // Riyaz
-        this.riyaz = this.walker('riyaz', CYCLE.riyaz, [
+        this.riyaz = this.walker('riyaz', [
             ...(['e', 'w', 'n', 's'] as Dir[]).flatMap((d) => [...Array(FRAMES).keys()].map((i) => `walk_${d}${i}`)),
             ...['e', 'w', 'n', 's'].flatMap((d) => [`stand_${d}`, `empty_${d}`]),
         ], 'e');
         this.bag = this.layer('kilo').setVisible(false);
         this.bagHome = { x: this.bag.x, y: this.bag.y };
 
-        // the passers-by
-        for (const p of this.w.peds) {
-            const wk = this.walker(p.name, CYCLE.ped, ['e', 'w'].flatMap((d) => [...Array(FRAMES).keys()].map((i) => `walk_${d}${i}`)), p.dir);
-            const [x0, x1, y] = PED_LANES[p.name] ?? [p.lane[0] - 3, p.lane[0] + 3, p.lane[1]];
-            wk.pos = { x: wk.pos.x, y };
-            this.peds.push(Object.assign(wk, { lane: [x0, x1] as [number, number], y, speed: 0.85 + 0.12 * this.peds.length, wait: 0, blocked: 0 }));
-        }
-
-        // the handcart and its pusher: parked out of sight until Riyaz is part-way down the street
+        // the handcart: parked at the shopfront until Riyaz is part-way down the street
         const cartShadow = this.layers?.layers['cart_shadow'] ? this.layer('cart_shadow').setDepth(1) : this.add.image(0, 0, '__DEFAULT').setVisible(false);
         const cartImg = this.layer('cart');
-        this.cart = { img: cartImg, shadow: cartShadow, home: { x: cartImg.x, y: cartImg.y }, shadowHome: { x: cartShadow.x, y: cartShadow.y }, dx: 0, state: 'parked', halted: false };
-        this.loader = this.walker('loader', CYCLE.loader, [...Array(FRAMES).keys()].map((i) => `push${i}`), 'w');
-        this.setCartAlpha(0);
+        this.cart = { img: cartImg, shadow: cartShadow, home: { x: cartImg.x, y: cartImg.y }, shadowHome: { x: cartShadow.x, y: cartShadow.y }, dy: 0, state: 'parked' };
         this.items.push({ box: () => this.cartBox(), img: () => this.cart.img });
 
         // flies: a cloud over the pile (Run 1) and a few round the carried bag
@@ -213,7 +179,7 @@ export default class Station02 extends StationScene {
 
     // ------------------------------------------------------------------ walkers
 
-    private walker(name: string, cycle: number, poses: string[], dir: Dir): Walker {
+    private walker(name: string, poses: string[], dir: Dir): Walker {
         const [x, y] = this.w.chars[name];
         const frames = new Map<string, GameObjects.Image>();
         for (const pose of poses) {
@@ -221,8 +187,8 @@ export default class Station02 extends StationScene {
         }
         const shadow = this.add.ellipse(0, 0, 74, 26, 0x1c1714, 0.26).setDepth(2);
         this.world.add(shadow);
-        const wk: Walker = { name, origin: { x, y }, pos: { x, y }, dir, dist: 0, cycle, frames, shadow };
-        this.items.push({ box: () => this.circleBox(wk.pos, name === 'loader' ? 0.25 : R), img: () => wk.shown });
+        const wk: Walker = { name, origin: { x, y }, pos: { x, y }, dir, dist: 0, cycle: CYCLE, frames, shadow };
+        this.items.push({ box: () => this.circleBox(wk.pos), img: () => wk.shown });
         return wk;
     }
 
@@ -245,14 +211,11 @@ export default class Station02 extends StationScene {
     }
 
     private standPose(wk: Walker) {
-        if (wk.name === 'riyaz') return `${this.carrying ? 'stand' : 'empty'}_${wk.dir}`;
-        if (wk.name === 'loader') return 'push2';
-        return `walk_${wk.dir}2`;                       // the passing frame: feet together, arms down
+        return `${this.carrying ? 'stand' : 'empty'}_${wk.dir}`;
     }
 
     private walkPose(wk: Walker) {
-        const i = Math.floor((wk.dist / wk.cycle) * FRAMES) % FRAMES;
-        return wk.name === 'loader' ? `push${i}` : `walk_${wk.dir}${i}`;
+        return `walk_${wk.dir}${Math.floor((wk.dist / wk.cycle) * FRAMES) % FRAMES}`;
     }
 
     /** The direction a move faces: whichever world axis it mostly runs along. */
@@ -267,19 +230,13 @@ export default class Station02 extends StationScene {
         return (p.x - cx) ** 2 + (p.y - cy) ** 2 < r * r;
     }
 
-    /** What a walker at `p` would run into (besides itself), or null. Riyaz also keeps to the pavement. */
-    private blocker(p: Pt, self: Walker): Box | null {
-        if (self === this.riyaz && (p.x < BOUNDS.x0 || p.x > BOUNDS.x1 || p.y < BOUNDS.y0 || p.y > BOUNDS.y1)) return [p.x, p.x, p.y, p.y];
-        for (const [name, b] of Object.entries(this.w.occ)) if (!name.startsWith('kerb') && !name.startsWith('auto') && this.hitsBox(p, R, b)) return b;
+    /** What Riyaz at `p` would run into, or null: the pavement's edges, anything standing on it, the cart. */
+    private blocker(p: Pt): Box | null {
+        if (p.x < BOUNDS.x0 || p.x > BOUNDS.x1 || p.y < BOUNDS.y0 || p.y > BOUNDS.y1) return [p.x, p.x, p.y, p.y];
+        for (const b of Object.values(this.w.occ)) if (this.hitsBox(p, R, b)) return b;
         if (this.state.run === 1 && this.hitsBox(p, R, this.w.litter)) return this.w.litter;
-        for (const h of this.holders) if (this.hitsBox(p, R, this.circleBox(h.at, 0.25))) return this.circleBox(h.at, 0.25);
-        if (this.cart.state === 'rolling') {
-            if (this.hitsBox(p, R, this.cartBox())) return (this.cartBlock = this.cartBox());
-            if (self !== this.loader && this.hitsBox(p, R, this.circleBox(this.loader.pos, 0.25))) return this.circleBox(this.loader.pos, 0.25);
-        }
-        for (const wk of [this.riyaz, ...this.peds]) {
-            if (wk !== self && this.hitsBox(p, R, this.circleBox(wk.pos))) return this.circleBox(wk.pos);
-        }
+        for (const h of this.holders) if (this.hitsBox(p, R, this.circleBox(h, 0.25))) return this.circleBox(h, 0.25);
+        if (this.cart.state !== 'gone' && this.hitsBox(p, R, this.cartBox())) return (this.cartBlock = this.cartBox());
         return null;
     }
 
@@ -289,8 +246,6 @@ export default class Station02 extends StationScene {
         const dt = Math.min(delta, 50) / 1000;
         this.moveRiyaz(dt);
         this.moveCart(dt);
-        for (const p of this.peds) this.movePed(p, dt);
-        for (const h of this.holders) this.animateHolder(h, time);
         this.follow(dt);
         this.hangTag();
         this.buzz(time);
@@ -320,10 +275,10 @@ export default class Station02 extends StationScene {
         const step = speed * dt;
         wk.dir = this.facing(v);
         // straight on; else slide along whatever is in the way; else step round it (→ held still gets there)
-        const clear = (t: Pt, d = step) => (t.x || t.y) && !this.blocker({ x: wk.pos.x + t.x * d, y: wk.pos.y + t.y * d }, wk);
-        const block = this.blocker({ x: wk.pos.x + v.x * step, y: wk.pos.y + v.y * step }, wk);
+        const clear = (t: Pt, d = step) => (t.x || t.y) && !this.blocker({ x: wk.pos.x + t.x * d, y: wk.pos.y + t.y * d });
+        const block = this.blocker({ x: wk.pos.x + v.x * step, y: wk.pos.y + v.y * step });
         if (!block) this.detour = 0;
-        else if (this.cart.state === 'rolling' && block === this.cartBlock && !this.inCartLane(wk.pos)) {
+        else if (this.cart.state === 'rolling' && block === this.cartBlock && !this.inCartPath(wk.pos)) {
             return this.bump(block);                    // out of its way already: wait for it to pass
         } else if (!this.detour) {
             // pick a side to go round by and keep it until the way ahead is clear (no dithering):
@@ -367,109 +322,42 @@ export default class Station02 extends StationScene {
 
     // ------------------------------------------------------------------ the handcart
 
-    /** Whether a walker at `p` stands in the strip of pavement the cart rolls down. */
-    private inCartLane(p: Pt) {
-        return p.y + R > this.w.cart[2] && p.y - R < this.w.cart[3];
+    /** Whether Riyaz at `p` stands in the strip of pavement the cart rolls down (across the street). */
+    private inCartPath(p: Pt) {
+        return p.x + R > this.w.cart[0] && p.x - R < this.w.cart[1];
     }
 
     private cartBox(): Box {
-        const b = this.w.cart, d = this.cart.dx;
-        return [b[0] + d, b[1] + d, b[2], b[3]];
+        const b = this.w.cart, d = this.cart.dy;
+        return [b[0], b[1], b[2] + d, b[3] + d];
     }
 
-    private setCartAlpha(a: number) {
-        for (const o of [this.cart.img, this.cart.shadow, ...this.loader.frames.values(), this.loader.shadow]) o.setAlpha(a);
-    }
-
-    /** It sets off once Riyaz is part-way down the street, rolls toward him and stops for anyone in its way. */
+    /** Once Riyaz is part-way down the street it rolls straight down to the road, stopping for him. */
     private moveCart(dt: number) {
         const c = this.cart;
-        if (c.state === 'parked') {
-            if (this.riyaz.pos.x < CART_START_X) return;
-            c.state = 'rolling';
-            this.tweens.add({ targets: [c.img, c.shadow, ...this.loader.frames.values(), this.loader.shadow], alpha: 1, duration: 300 });
-        }
+        if (c.state === 'parked' && this.riyaz.pos.x >= CART_START_X) c.state = 'rolling';
         if (c.state !== 'rolling') return;
         const step = CART_SPEED * dt;
-        const next: Box = [this.cartBox()[0] - step, this.cartBox()[1] - step, this.w.cart[2], this.w.cart[3]];
-        c.halted = [this.riyaz, ...this.peds].some((wk) => this.hitsBox(wk.pos, R, next));
-        if (!c.halted) {
-            c.dx -= step;
-            this.loader.dist += step;
-        }
-        c.img.setPosition(c.home.x + this.px({ x: c.dx, y: 0 }).x - this.px({ x: 0, y: 0 }).x, c.home.y + this.px({ x: c.dx, y: 0 }).y - this.px({ x: 0, y: 0 }).y);
-        c.shadow.setPosition(c.shadowHome.x + c.img.x - c.home.x, c.shadowHome.y + c.img.y - c.home.y);
-        this.loader.pos = { x: this.loader.origin.x + c.dx, y: this.loader.origin.y };
-        this.place(this.loader, c.halted ? undefined : this.walkPose(this.loader));
+        const next: Box = [this.w.cart[0], this.w.cart[1], this.cartBox()[2] - step, this.cartBox()[3] - step];
+        if (!this.hitsBox(this.riyaz.pos, R, next)) c.dy -= step;
+        const o = this.px({ x: 0, y: 0 }), d = this.px({ x: 0, y: c.dy });
+        c.img.setPosition(c.home.x + d.x - o.x, c.home.y + d.y - o.y);
+        c.shadow.setPosition(c.shadowHome.x + d.x - o.x, c.shadowHome.y + d.y - o.y);
 
-        // ask Riyaz to step aside while it is close and still ahead of him
-        const ahead = this.cartBox()[0] > this.riyaz.pos.x - 0.6 && this.cartBox()[0] - this.riyaz.pos.x < 5;
-        if (this.phase === 'walk' && ahead !== this.waitShown) {
-            this.waitShown = ahead;
-            this.prompt.show(ahead ? this.prompts().wait : this.prompts().walk, ahead ? '↑ ↓' : 'Arrows');
+        // ask Riyaz to let it pass while it is near him and still to cross his way
+        const near = Math.abs((this.w.cart[0] + this.w.cart[1]) / 2 - this.riyaz.pos.x) < 2.6 && this.cartBox()[2] > BOUNDS.y0 - 0.3;
+        if (this.phase === 'walk' && near !== this.waitShown) {
+            this.waitShown = near;
+            this.prompt.show(near ? this.prompts().wait : this.prompts().walk, near ? 'Wait' : 'Arrows');
         }
-        if (c.dx <= CART_END_X) {
+        if (c.dy <= CART_END_DY) {
             c.state = 'gone';
-            this.tweens.add({ targets: [c.img, c.shadow, ...this.loader.frames.values(), this.loader.shadow], alpha: 0, duration: 400 });
-        }
-    }
-
-    // ------------------------------------------------------------------ passers-by and stall-holders
-
-    private movePed(p: Ped, dt: number) {
-        if (p.wait > 0) {
-            p.wait -= dt;
-            return this.place(p);
-        }
-        const sx = p.dir === 'e' ? 1 : -1;
-        const step = p.speed * dt;
-        // drift back to the lane line, walk on; turn at the lane's ends (a pause first)
-        const next = { x: p.pos.x + sx * step, y: p.pos.y + Math.sign(p.y - p.pos.y) * Math.min(Math.abs(p.y - p.pos.y), step * 0.5) };
-        if (next.x < p.lane[0] || next.x > p.lane[1]) {
-            p.dir = p.dir === 'e' ? 'w' : 'e';
-            p.wait = 0.6 + Math.random() * 1.2;
-            return this.place(p);
-        }
-        const cartIn = this.cart.state === 'rolling' && (this.hitsBox(next, R, this.cartBox()) || this.hitsBox(next, R, this.circleBox(this.loader.pos, 0.25)));
-        if (cartIn || this.blocker(next, p)) {
-            p.blocked += dt;
-            if (p.blocked > 2.5) {                    // someone is standing in the way: go back the other way
-                p.dir = p.dir === 'e' ? 'w' : 'e';
-                p.blocked = 0;
+            this.tweens.add({ targets: [c.img, c.shadow], alpha: 0, duration: 400 });
+            if (this.phase === 'walk' && this.waitShown) {
+                this.waitShown = false;
+                this.prompt.show(this.prompts().walk, 'Arrows');
             }
-            return this.place(p);
         }
-        p.blocked = 0;
-        p.pos = next;
-        p.dist += step;
-        this.place(p, this.walkPose(p));
-    }
-
-    private showPose(h: Holder, pose: string) {
-        const img = h.poses.get(pose) ?? h.poses.get('idle');
-        for (const p of h.poses.values()) p.setVisible(p === img);
-    }
-
-    /** Ambient poses on a loop; when Riyaz comes near, Anthony calls him over and Arif waves. */
-    private animateHolder(h: Holder, time: number) {
-        if (this.state.reducedMotion) return;
-        const near = Math.hypot(this.riyaz.pos.x - h.at.x, this.riyaz.pos.y - h.at.y) < (h.name === 'anthony' ? 2.6 : 2.4);
-        const greet = h.name === 'anthony' ? ANTHONY_NEAR : ARIF_NEAR;
-        if (near && h.seq !== greet && time > h.cool && this.carrying) {
-            h.seq = greet;
-            h.i = -1;
-            h.until = 0;
-        }
-        if (time < h.until) return;
-        h.i += 1;
-        if (h.i >= h.seq.length) {
-            if (h.seq === greet) h.cool = time + 8000;
-            h.seq = h.name === 'anthony' ? ANTHONY_LOOP : ARIF_LOOP;
-            h.i = 0;
-        }
-        const [pose, ms] = h.seq[h.i];
-        this.showPose(h, pose);
-        h.until = time + ms;
     }
 
     // ------------------------------------------------------------------ camera, tag, flies, sorting
@@ -611,19 +499,6 @@ export default class Station02 extends StationScene {
     private toLeave() {
         this.phase = 'leave';
         this.prompt.show(this.prompts().leave, 'Space');
-        this.makeExit();
-    }
-
-    private makeExit() {
-        const g = this.add.graphics();
-        g.fillStyle(0x1c1714, 0.92).fillRoundedRect(-150, -36, 300, 72, 36);
-        const label = this.add.text(0, 0, 'Walk on  →', {
-            fontFamily: '"Baloo 2", system-ui, sans-serif', fontSize: 32, fontStyle: '700', color: '#F4ECDE',
-        }).setOrigin(0.5);
-        const b = this.add.container(1560, 590, [g, label]).setSize(300, 72).setDepth(45).setAlpha(0);
-        b.setInteractive({ useHandCursor: true }).on('pointerup', () => this.leave());
-        if (this.state.reducedMotion) b.setAlpha(1);
-        else this.tweens.add({ targets: b, alpha: 1, x: { from: 1540, to: 1560 }, duration: motion.normal });
     }
 
     /** The base `leave()` tweens world.x to -260, which would undo the follow. Slide on from here. */

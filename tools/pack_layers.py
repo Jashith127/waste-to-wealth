@@ -14,6 +14,7 @@ public/assets/stations/<id>/:
 import json
 import shutil
 import sys
+import time
 from pathlib import Path
 
 from PIL import Image, ImageChops
@@ -122,10 +123,32 @@ def main(station):
     (out / "pack.json").write_text(json.dumps({station: {"files": files}}, indent=2), encoding="utf-8")
     old = final.with_name(station + ".old")
     shutil.rmtree(old, ignore_errors=True)
-    if final.exists():
-        final.rename(old)
-    out.rename(final)
+    if final.exists() and not rename(final, old, tries=10):
+        # something (a dev server, a browser) holds the folder itself open: update it file by file
+        # instead, layers.json last, so a game loading meanwhile still finds a consistent pack
+        names = {f.name for f in out.iterdir()}
+        for f in sorted(out.iterdir(), key=lambda f: f.name == "layers.json"):
+            shutil.copy2(f, final / f.name)
+        for f in final.iterdir():
+            if f.name not in names:
+                f.unlink()
+        shutil.rmtree(out, ignore_errors=True)
+        return
+    if not rename(out, final):
+        raise PermissionError(f"could not move {out} to {final}")
     shutil.rmtree(old, ignore_errors=True)
+
+
+def rename(src, dst, tries=40):
+    """Rename, retrying a while (a running dev server or browser can hold a station's folder a
+    moment). Returns whether it moved."""
+    for attempt in range(tries):
+        try:
+            src.rename(dst)
+            return True
+        except PermissionError:
+            time.sleep(0.5)
+    return False
 
 
 if __name__ == "__main__":

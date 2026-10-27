@@ -1,6 +1,7 @@
 // Typed access to src/data/. All game text and numbers come from these JSON files.
 // New station files in src/data/stations/ are picked up automatically.
 import evidenceMap from '../data/evidence-map.json';
+import howToData from '../data/howto.json';
 import runsData from '../data/runs.json';
 import type { Meaning } from './theme';
 import type { Run } from './state';
@@ -14,7 +15,7 @@ export interface BlueprintItem {
     proposed?: boolean;
 }
 
-export interface Tag { value: string; meaning: Meaning; note?: string }
+export interface Tag { value: string; meaning: Meaning; note?: string; label?: string }
 
 export interface RunData { prompts?: Record<string, string>; next?: string; summary?: string; proposed?: boolean }
 
@@ -79,6 +80,17 @@ export function source(id: string): Source {
     if (!src) throw new Error(`evidence id ${id} is not in evidence-map.json`);
     return src;
 }
+
+export type MouseHint = 'click' | 'drag' | 'hold';
+export interface HowToStep { label: string; prompts: string[]; keys: string[]; mouse?: MouseHint; text: string }
+export interface HowTo { goal: string; tip?: string; steps: HowToStep[] }
+
+/** How to play a beat ("s01", "s01:night", "map"), from howto.json; undefined for the end card. */
+export function howTo(run: Run, beat: string): HowTo | undefined {
+    return (howToData[String(run) as '1' | '2'] as Record<string, HowTo>)[beat];
+}
+
+export const howToText = { dock: howToData.dock, briefing: howToData.briefing };
 
 export const LANE_LABELS: Record<Lane, string> = {
     vendor: 'Vendor action',

@@ -2,11 +2,13 @@ import { AUTO, Game, Scale, type Scene, Types } from 'phaser';
 import { runs } from './content';
 import { Boot } from './scenes/Boot';
 import { EndCard } from './scenes/EndCard';
+import { HowTo } from './scenes/HowTo';
 import { Hud } from './scenes/Hud';
 import { MarketMap } from './scenes/MarketMap';
 import { SkipMenu } from './menu/SkipMenu';
 import { Placeholder } from './scenes/Placeholder';
 import { StationCard } from './scenes/StationCard';
+import { install as installLanguage } from './i18n';
 import { initState } from './state';
 import { FRAME } from './theme';
 
@@ -25,10 +27,11 @@ const config: Types.Core.GameConfig = {
         mode: Scale.FIT,
         autoCenter: Scale.CENTER_BOTH,
     },
-    scene: [Boot, ...stationScenes, StationCard, Placeholder, MarketMap, EndCard, Hud, SkipMenu],   // Hud and SkipMenu last: they draw over every scene
+    scene: [Boot, ...stationScenes, StationCard, Placeholder, MarketMap, EndCard, Hud, HowTo, SkipMenu],   // Hud, HowTo and SkipMenu last: they draw over every scene
 };
 
 const StartGame = (parent: string) => {
+    installLanguage();
     const game = new Game({ ...config, parent });
     initState(game, { 1: runs[1].beats, 2: runs[2].beats });
     (window as unknown as { __game: Game }).__game = game;   // for Playwright screenshots

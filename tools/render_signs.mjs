@@ -40,6 +40,36 @@ const STYLES = {
       ${span(line(s, "band"), "band thin")}
       ${WEAR}
     </div>`,
+  "flex-yellow": (s) => `
+    <div class="sign flex" style="background:#E8C64A">
+      <div class="row top">${span(line(s, "top"), "kn green")}${span(line(s, "top-right"), "ur")}</div>
+      ${span(line(s, "name"), "name darkgreen")}
+      ${span(line(s, "band"), "band")}
+      ${WEAR}
+    </div>`,
+  "flex-green": (s) => `
+    <div class="sign flex" style="background:#2F6B3A">
+      <div class="row top">${span(line(s, "top"), "kn cream")}${span(line(s, "top-right"), "ur cream")}</div>
+      ${span(line(s, "name"), "name yellow")}
+      ${WEAR}
+    </div>`,
+  "flex-red-tri": (s) => `
+    <div class="sign flex" style="background:#8E2F2C">
+      <div class="row top">${span(line(s, "top"), "kn cream")}${span(line(s, "top-right"), "ur cream")}</div>
+      ${span(line(s, "name"), "name yellow")}
+      ${WEAR}
+    </div>`,
+  // Projecting flex board (V04): a portrait print with the name, the trilingual lines, and a drawn
+  // plate of food where real boards carry a photo (no photos are copied).
+  "flex-food": (s) => `
+    <div class="sign flex portrait" style="background:${s.bg ?? "#B8302A"}">
+      ${span(line(s, "top"), "kn cream center small")}
+      ${span(line(s, "name"), "pname")}
+      <div class="plate"><div class="food" style="background:${s.food ?? "#C9762E"}"></div><div class="garnish"></div></div>
+      ${span(line(s, "top-right"), "ur cream center")}
+      ${span(line(s, "band"), "band")}
+      ${WEAR}
+    </div>`,
   // QR sticker: three finder squares and deterministic noise. Decorative, does not scan.
   "sticker-upi": (s) => {
     let seed = 7;
@@ -74,6 +104,18 @@ const CSS = `
   .ur { font: 700 13vh/1.3 'Noto Nastaliq Urdu'; color: #1E1B19; direction: rtl; }
   .red { color: #A33A3F; } .cream { color: #EFE2C4; } .center { text-align: center; padding-top: 4vh; }
   .small { font-size: 12vh; }
+  .green { color: #1F4A2A; }
+  .ur.cream { color: #EFE2C4; }
+  .portrait { align-items: center; justify-content: space-between; }
+  .portrait .kn { font-size: 8vh; padding-top: 2vh; }
+  .portrait .ur { font-size: 6.5vh; line-height: 1.7; }
+  .portrait .band { font-size: 5vh; width: 100%; padding: 1.4vh 0 1.2vh; }
+  .pname { font: 400 11vh/1 'Anton'; color: #F6E7A8; text-align: center; padding: 1vh 2vw; -webkit-text-stroke: 0.3vh #3A1412; }
+  .plate { width: 70vw; height: 38vw; margin: 1.5vh auto; border-radius: 50%; background: #F4F2EC; border: 0.6vh solid #D8D2C4;
+           position: relative; box-shadow: 0 1vh 0 rgba(0,0,0,0.25); }
+  .food { position: absolute; inset: 18% 14%; border-radius: 50%; filter: saturate(0.9); }
+  .garnish { position: absolute; left: 44%; top: 30%; width: 14%; height: 18%; border-radius: 50%; background: #4E7A3A; }
+  .darkgreen { color: #1F4A2A; -webkit-text-stroke: 0.5vh #10261A; font-size: 30vh; }
   .name { font: 400 33vh/1 'Anton'; text-align: center; letter-spacing: 0.03em; flex: 1;
           display: flex; align-items: center; justify-content: center; }
   .teal { color: #22857A; -webkit-text-stroke: 0.7vh #0E3B35; text-shadow: 0.9vh 0.9vh 0 rgba(14,59,53,0.35); }

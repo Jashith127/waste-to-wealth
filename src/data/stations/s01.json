@@ -168,13 +168,32 @@
     "tag": {
       "value": "−₹5",
       "meaning": "cost",
-      "note": "₹5/kg animal waste"
+      "note": "₹5/kg animal waste",
+      "label": "Disposal fee"
     },
     "evidence": [
       "SPEC-journey",
       "C-fee-southfirst",
       "C-fee-tnm"
-    ]
+    ],
+    "story": {
+      "title": "A kilo nobody will buy",
+      "body": "The bone and offal from the morning cut can't be sold. Getting rid of it costs ₹5 for every kilo.",
+      "chain": [
+        {
+          "icon": "bone",
+          "text": "Bone and offal"
+        },
+        {
+          "icon": "no_sale",
+          "text": "Can't be sold"
+        },
+        {
+          "icon": "fee",
+          "text": "₹5 a kilo to dispose"
+        }
+      ]
+    }
   },
   "blueprint": {
     "1": [
@@ -276,15 +295,38 @@
     },
     "leftovers": {
       "tag": {
+        "label": "Overnight",
         "value": "Lost",
         "meaning": "cost",
-        "note": "Leftovers spoil without power"
+        "note": "Spoiled without power"
       },
       "evidence": [
         "D-p22",
         "D-p23",
         "SPEC-journey"
-      ]
+      ],
+      "story": {
+        "title": "The power went out",
+        "body": "With no power, the stall's cooler stops. The unsold meat on the counter warms up overnight and spoils, so by morning it can't be sold.",
+        "chain": [
+          {
+            "icon": "power_off",
+            "text": "Power cut"
+          },
+          {
+            "icon": "cold_off",
+            "text": "Cooler stops"
+          },
+          {
+            "icon": "rot",
+            "text": "Meat spoils"
+          },
+          {
+            "icon": "loss",
+            "text": "Money lost"
+          }
+        ]
+      }
     }
   }
 }

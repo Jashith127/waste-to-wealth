@@ -1,11 +1,14 @@
-// The kilo's value tag: a small deck card on a string (art-bible §8). The one thing the player tracks.
+// The kilo's value tag: a hanging price tag on a string (art-bible §8), clipped corners and a punched
+// hole, a small caption ("Disposal fee"), the value in its meaning colour, and a note. The one thing
+// the player tracks.
 import { GameObjects, Math as PMath, Scene } from 'phaser';
 import type { KiloTagState } from '../state';
 import { colour, css, font, motion } from '../theme';
-import { drawCard } from './card';
 
-const W = 168;
-const H = 92;
+const MIN_W = 176;
+const H = 116;
+const CLIP = 20;           // the clipped top corners
+const HOLE_Y = 14;         // the punched hole the string ties through
 
 /** Where the card hangs relative to the knot. Beside the kilo, never over it (art-bible §6.3 "kilo first"). */
 export interface Hang { dx: number; dy: number }
@@ -15,6 +18,7 @@ export class KiloTag extends GameObjects.Container {
     private card: GameObjects.Graphics;
     private value: GameObjects.Text;
     private note: GameObjects.Text;
+    private label: GameObjects.Text;
     private string: GameObjects.Graphics;
     private face: GameObjects.Container;
 
@@ -28,21 +32,36 @@ export class KiloTag extends GameObjects.Container {
             return new PMath.Vector2(2 * (1 - t) * t * cx + t * t * hang.dx, 2 * (1 - t) * t * cy + t * t * hang.dy);
         });
         this.string.lineStyle(3, colour.ink, 1).strokePoints(pts);
-        this.face = scene.add.container(hang.dx, hang.dy);
+        this.face = scene.add.container(hang.dx, hang.dy - HOLE_Y);      // the string ends in the hole
         this.card = scene.add.graphics();
-        this.value = scene.add.text(0, 30, '', { fontFamily: font.display, fontSize: 44, fontStyle: '700', color: css.ink }).setOrigin(0.5, 0.5);
-        this.note = scene.add.text(0, 68, '', { fontFamily: font.body, fontSize: 18, color: css.muted }).setOrigin(0.5, 0.5);
-        this.face.add([this.card, this.value, this.note]);
+        this.label = scene.add.text(0, 38, '', { fontFamily: font.display, fontSize: 15, fontStyle: '800', color: css.muted }).setOrigin(0.5).setLetterSpacing(1.5);
+        this.value = scene.add.text(0, 68, '', { fontFamily: font.display, fontSize: 42, fontStyle: '800', color: css.ink }).setOrigin(0.5, 0.5);
+        this.note = scene.add.text(0, 99, '', { fontFamily: font.body, fontSize: 17, color: css.muted }).setOrigin(0.5, 0.5);
+        this.face.add([this.card, this.label, this.value, this.note]);
         this.add([this.string, this.face]);
         this.render(tag);
         scene.add.existing(this);
     }
 
+    /** The card grows to fit its note ("₹[__]/kg, payout to be set" ran past a fixed-width card). */
     private render(tag: KiloTagState) {
-        this.card.clear();
-        drawCard(this.card, -W / 2, 0, W, H, colour[tag.meaning]);
+        this.label.setText((tag.label ?? '').toUpperCase());
         this.value.setText(tag.value).setColor(css[tag.meaning]);
         this.note.setText(tag.note ?? '');
+        const w = this.halfWidth * 2;
+        const shape = (dx: number, dy: number) => [[-w / 2 + CLIP, 0], [w / 2 - CLIP, 0], [w / 2, CLIP], [w / 2, H], [-w / 2, H], [-w / 2, CLIP]]
+            .map(([x, y]) => new PMath.Vector2(x + dx, y + dy));
+        const g = this.card.clear();
+        g.fillStyle(colour.ink, 0.3).fillPoints(shape(2, 6), true);
+        g.fillStyle(colour.card, 1).fillPoints(shape(0, 0), true);
+        g.lineStyle(3, colour.ink, 1).strokePoints(shape(0, 0), true);
+        g.fillStyle(colour[tag.meaning], 1).fillCircle(0, HOLE_Y, 8);   // a meaning-coloured eyelet
+        g.fillStyle(colour.ink, 1).fillCircle(0, HOLE_Y, 4);
+    }
+
+    /** Half the card's width, so a docked tag can keep its right edge clear of the HUD buttons. */
+    get halfWidth() {
+        return Math.max(MIN_W, this.value.width + 40, this.note.width + 32, this.label.width + 40) / 2;
     }
 
     /** Swing in from the knot. */

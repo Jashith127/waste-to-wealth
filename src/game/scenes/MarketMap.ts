@@ -6,11 +6,13 @@
 // loop comes back to the stalls (How it could close). Lenses 1/2/3: waste, money, power.
 import { GameObjects, Math as PMath, Scene } from 'phaser';
 import data from '../../data/map.json';
+import { howTo, runs } from '../content';
 import { goNext, type Beat } from '../flow';
 import { getState } from '../state';
 import { colour, css, font, FRAME, layout, motion } from '../theme';
 import { drawCard, drawChip } from '../ui/card';
 import { labelCard } from '../ui/greybox';
+import { LevelComplete, levelInfo } from '../ui/LevelComplete';
 import { Prompt } from '../ui/Prompt';
 
 interface Way { tags: Record<string, string>; geom: [number, number][] }
@@ -18,7 +20,7 @@ interface Pt { x: number; y: number }
 type Lens = 'waste' | 'money' | 'power';
 interface Dot { o: GameObjects.Arc; from: Pt; to: Pt; t: number; speed: number; done: () => void }
 
-const BOX = { x: 560, y: 110, w: 1300, h: 930 };          // the map card
+const BOX = { x: 560, y: 160, w: 1300, h: 870 };          // the map card, below the objective card
 const STALLS = 36;
 const ROADS: Record<string, number> = { primary: 5, tertiary: 4, tertiary_link: 3, unclassified: 3, residential: 2.5, living_street: 2, service: 1.6 };
 
@@ -57,7 +59,11 @@ export class MarketMap extends Scene {
         this.drawMap(this.cache.json.get('market_streets').ways as Way[]);
         for (const lens of ['waste', 'money', 'power'] as Lens[]) this.layer[lens] = this.add.container(0, 0).setDepth(10);
         this.sidePanel();
-        this.prompt = new Prompt(this, layout.prompt.x, layout.prompt.y);
+        const prompts = data.runs[String(this.run) as '1' | '2'].prompts as Record<string, string>;
+        this.prompt = new Prompt(this, layout.prompt.x, layout.prompt.y, {
+            badge: 'MAP', title: data.title, phase: runs[this.run].clock?.map,
+            steps: howTo(this.run, 'map')?.steps.map((st) => ({ label: st.label, mouse: st.mouse, match: st.prompts.map((k) => prompts[k]).filter(Boolean) })),
+        });
 
         const kb = this.input.keyboard!;
         kb.on('keydown-ONE', () => this.setLens('waste'));
@@ -139,7 +145,7 @@ export class MarketMap extends Scene {
     }
 
     private sidePanel() {
-        const x = layout.gutter, y = 150;
+        const x = layout.gutter, y = layout.hudBottom + 10;
         const g = this.add.graphics();
         drawCard(g, x, y, 450, 560);
         this.add.text(x + 28, y + 48, data.title, { fontFamily: font.display, fontSize: 40, fontStyle: '800', color: css.ink }).setOrigin(0, 0.5);
@@ -339,6 +345,8 @@ export class MarketMap extends Scene {
         if (this.phase === 'leave') return;
         this.phase = 'leave';
         this.prompt.show(text, '→');
+        const info = levelInfo(this.run, getState(this).beat, data.title);
+        if (info) this.time.delayedCall(getState(this).reducedMotion ? 0 : 650, () => !this.leaving && new LevelComplete(this, info, () => this.leave()));
     }
 
     private leave() {

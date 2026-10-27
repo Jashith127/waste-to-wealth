@@ -1,0 +1,71 @@
+{
+  "s03items": {
+    "files": [
+      {
+        "type": "image",
+        "key": "s03items_bg",
+        "url": "assets/stations/s03items/bg.png"
+      },
+      {
+        "type": "image",
+        "key": "s03items_bag",
+        "url": "assets/stations/s03items/bag.png"
+      },
+      {
+        "type": "image",
+        "key": "s03items_bin",
+        "url": "assets/stations/s03items/bin.png"
+      },
+      {
+        "type": "image",
+        "key": "s03items_bone",
+        "url": "assets/stations/s03items/bone.png"
+      },
+      {
+        "type": "image",
+        "key": "s03items_cup",
+        "url": "assets/stations/s03items/cup.png"
+      },
+      {
+        "type": "image",
+        "key": "s03items_fat",
+        "url": "assets/stations/s03items/fat.png"
+      },
+      {
+        "type": "image",
+        "key": "s03items_gut",
+        "url": "assets/stations/s03items/gut.png"
+      },
+      {
+        "type": "image",
+        "key": "s03items_liver",
+        "url": "assets/stations/s03items/liver.png"
+      },
+      {
+        "type": "image",
+        "key": "s03items_paper",
+        "url": "assets/stations/s03items/paper.png"
+      },
+      {
+        "type": "image",
+        "key": "s03items_ribs",
+        "url": "assets/stations/s03items/ribs.png"
+      },
+      {
+        "type": "image",
+        "key": "s03items_skin",
+        "url": "assets/stations/s03items/skin.png"
+      },
+      {
+        "type": "image",
+        "key": "s03items_string",
+        "url": "assets/stations/s03items/string.png"
+      },
+      {
+        "type": "image",
+        "key": "s03items_tray",
+        "url": "assets/stations/s03items/tray.png"
+      }
+    ]
+  }
+}

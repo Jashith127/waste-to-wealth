@@ -2,8 +2,9 @@
 // Run 1 ends here too, as "s01:night": the same stall in a power cut, a tray of leftovers spoiling.
 import { GameObjects, Math as PMath } from 'phaser';
 import { setState, type KiloTagState } from '../../state';
-import { colour, css, font, motion } from '../../theme';
+import { colour, motion } from '../../theme';
 import { KiloTag } from '../../ui/KiloTag';
+import { StoryCard, type Story } from '../../ui/StoryCard';
 import { StationScene } from '../StationScene';
 
 type Phase = 'cut' | 'pickup' | 'leave' | 'night' | 'night_leave';
@@ -12,6 +13,7 @@ const BEAT_MS = 800;          // half a breath of the circle: 1.6 s from wide to
 const BEAT_TARGET = 70;       // px: the circle's radius at rest
 const BEAT_TIGHT = 0.82;      // the circle breathes in to this scale; Space near it is a clean cut
 const WIND_UP_MS = 170;       // the cleaver held high before it falls
+const STORY = { x: 1540, y: 400 };   // the story cards: over the shop fronts right of the stall, clear of Riyaz and the kilo
 
 export default class Station01 extends StationScene {
     private phase: Phase = 'cut';
@@ -94,6 +96,7 @@ export default class Station01 extends StationScene {
 
         const c = this.anchor('leftovers_centre');
         const tagData = this.params().leftovers.tag;
+        this.time.delayedCall(this.state.reducedMotion ? 0 : 500, () => new StoryCard(this, STORY.x, STORY.y, this.params().leftovers.story));
         const tag = new KiloTag(this, c.x, c.y, tagData, this.state.reducedMotion, { dx: -150, dy: 0 }).setDepth(30);
         if (this.state.reducedMotion) tag.setAlpha(1);
         else {
@@ -101,23 +104,7 @@ export default class Station01 extends StationScene {
             this.tweens.add({ targets: tag, alpha: 1, duration: motion.normal, onStart: () => tag.appear() });
         }
 
-        this.prompt.show(this.prompts().night_leave, '→');
-        const go = this.arrowButton();
-        if (this.state.reducedMotion) go.setAlpha(1);
-        else {
-            go.setAlpha(0);
-            this.tweens.add({ targets: go, alpha: 1, duration: motion.normal });
-        }
-    }
-
-    /** The night's exit: a small → button, above the blueprint line. */
-    private arrowButton() {
-        const g = this.add.graphics();
-        g.fillStyle(colour.ink, 0.92).fillRoundedRect(-36, -36, 72, 72, 18);
-        const label = this.add.text(0, -2, '→', { fontFamily: font.display, fontSize: 36, fontStyle: '700', color: css.cream }).setOrigin(0.5);
-        const b = this.add.container(1700, 600, [g, label]).setSize(72, 72).setDepth(45);
-        b.setInteractive({ useHandCursor: true }).on('pointerup', () => this.leave());
-        return b;
+        this.prompt.show(this.prompts().night_leave, '→');   // the "Level complete" card has the button
     }
 
     private act() {
@@ -210,30 +197,17 @@ export default class Station01 extends StationScene {
         const tag = new KiloTag(this, knot.x, knot.y - lift, tagData, this.state.reducedMotion, { dx: -130, dy: 26 }).setDepth(30).setAlpha(0);
         this.tweens.add({ targets: tag, alpha: 1, duration: motion.normal, delay: 200, onStart: () => tag.appear() });
         setState(this, { kilo: { carried: true, tag: { ...tagData } } });
+        const story = (this.stationData.kilo as { story?: Story }).story;
+        if (story) this.time.delayedCall(this.state.reducedMotion ? 0 : 450, () => new StoryCard(this, STORY.x, STORY.y, story));
 
-        this.prompt.show(this.prompts().leave, '→');
-        this.makeExit();
-    }
-
-    private makeExit() {
-        const exit = this.anchor('exit');
-        const x = Math.min(exit.x + 360, 1720), y = 560;
-        const g = this.add.graphics();
-        g.fillStyle(colour.ink, 0.92).fillRoundedRect(-150, -36, 300, 72, 36);
-        const label = this.add.text(0, 0, 'Walk on  →', {
-            fontFamily: font.display, fontSize: 32, fontStyle: '700', color: css.cream,
-        }).setOrigin(0.5);
-        const b = this.add.container(x, y, [g, label]).setSize(300, 72).setDepth(45).setAlpha(0);
-        b.setInteractive({ useHandCursor: true }).on('pointerup', () => this.leave());
-        this.tweens.add({ targets: b, alpha: 1, x: { from: x - 20, to: x }, duration: motion.normal, delay: 350 });
-        return b;
+        this.prompt.show(this.prompts().leave, '→');   // the "Level complete" card has the button
     }
 
     private params() {
         return this.stationData.params as {
             cut: { chops: number };
             fridge: { flicker: boolean };
-            leftovers: { tag: KiloTagState };
+            leftovers: { tag: KiloTagState; story: Story };
         };
     }
 

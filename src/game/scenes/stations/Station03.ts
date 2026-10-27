@@ -14,8 +14,11 @@ import { KiloTag } from '../../ui/KiloTag';
 import { StationScene } from '../StationScene';
 
 type Phase = 'sort' | 'drag' | 'number' | 'wait' | 'paid' | 'leave';
-type ItemKind = 'bone' | 'offal' | 'fat' | 'bag' | 'cup' | 'string';
-interface SortItem { label: string; kind: ItemKind; keep: boolean }
+interface SortItem { label: string; kind: string; keep: boolean; why: string }
+interface SortParams {
+    title: string; keep_label: string; reject_label: string; keys: string; count: string; done: string; score: string;
+    verdict_clean: string; verdict_mixed: string; verdict_lost: string; items: SortItem[];
+}
 
 interface S03Params {
     weight_label: string;
@@ -23,9 +26,9 @@ interface S03Params {
     rate_note: string;
     speech: string;
     number_masked: string;
-    slip: { title: string; lines: string[] };
+    slip: { title: string; lines: string[]; lines_mixed: string[] };
     tag_after: KiloTagState;
-    sort: { title: string; keep_label: string; reject_label: string; done: string; items: SortItem[] };
+    sort: SortParams;
 }
 
 // The crate's 3D centre sits half its height (0.15 m) above the scale pan: 22.7 px at 151.6 px/m.
@@ -49,7 +52,6 @@ export default class Station03 extends StationScene {
 
     private speechCard?: GameObjects.Container;
     private numberCard?: GameObjects.Container;
-    private exitButton?: GameObjects.Container;
     private left = false;
 
     constructor() {
@@ -58,6 +60,7 @@ export default class Station03 extends StationScene {
 
     preload() {
         this.loadLayers();
+        this.load.pack('s03items', 'assets/stations/s03items/pack.json');     // the sort's rendered items
     }
 
     protected build() {
@@ -101,102 +104,171 @@ export default class Station03 extends StationScene {
     }
 
     // --- sort before you weigh (mini-game) -------------------------------------------------------
+    //
+    // The kilo comes out of the bag one piece at a time, the way it was swept off the block: bone,
+    // offal, fat and skin, and the rubbish that gets in with them (a carry bag, a tea cup, twine,
+    // newspaper, a foam tray). Each piece goes to the crate or the bin: ← / A, → / D, a click on
+    // either side, or a drag. Every choice sticks: rubbish in the crate makes it a mixed crate (the
+    // lower rate), meat waste in the bin is value thrown away. The rendered items are real models
+    // (art/scripts/items_build.py), not icons.
 
-    private tray?: GameObjects.Container;
-    private trayItems: { item: SortItem; icon: GameObjects.Container; out: boolean }[] = [];
+    private sort?: {
+        box: GameObjects.Container; item?: GameObjects.Container; queue: GameObjects.Image[]; count: GameObjects.Text;
+        zones: Record<'crate' | 'bin', GameObjects.Container>; i: number; right: number; mixed: number; lost: number; busy: boolean;
+    };
+    private clean = true;
 
-    /** The kilo, tipped onto a tray above the crate: pick out what is not meat waste. Sorted earns
-     * more (the rate board), so the crate is only sealed once the tray is clean. */
+    private static readonly PANEL = { w: 1160, h: 560 };
+
     private openTray() {
         this.phase = 'sort';
         const p = this.params().sort;
-        const c = this.crateCentre();
-        const w = 760, h = 300;
-        const box = this.add.container(Math.min(Math.max(c.x, w / 2 + 40), 1920 - w / 2 - 40), Math.max(c.y - 260, h / 2 + 110)).setDepth(40);
+        const { w, h } = Station03.PANEL;
+        const box = this.add.container(960, layout.hudBottom + Station03.PANEL.h / 2 + 8).setDepth(40);   // clear of the objective card
         const g = this.add.graphics();
         drawCard(g, -w / 2, -h / 2, w, h, colour.brown);
         box.add(g);
-        box.add(this.add.text(-w / 2 + 28, -h / 2 + 46, p.title, { fontFamily: font.display, fontSize: 34, fontStyle: '700', color: css.ink }).setOrigin(0, 0.5));
-        box.add(this.add.text(w / 2 - 28, -h / 2 + 46, p.reject_label, { fontFamily: font.body, fontSize: 24, color: css.muted }).setOrigin(1, 0.5));
-        const bin = this.add.graphics();
-        bin.lineStyle(3, colour.ink, 0.6).strokeRoundedRect(w / 2 - 150, -h / 2 + 74, 122, 64, 10);
-        box.add(bin);
-        this.trayItems = p.items.map((item, i) => {
-            const x = -w / 2 + 80 + i * 118, y = 40;
-            const icon = this.add.container(x, y);
-            icon.add(this.drawItem(item.kind));
-            icon.add(this.add.text(0, 62, item.label, { fontFamily: font.body, fontSize: 22, color: css.ink }).setOrigin(0.5));
-            icon.setSize(104, 150).setInteractive({ useHandCursor: true }).on('pointerup', () => this.pick(i));
-            box.add(icon);
-            return { item, icon, out: false };
-        });
-        this.tray = box;
-        this.prompt.show(this.prompts().sort, 'Space');
+        box.add(this.add.text(-w / 2 + 32, -h / 2 + 50, p.title, { fontFamily: font.display, fontSize: 36, fontStyle: '700', color: css.ink }).setOrigin(0, 0.5));
+        const count = this.add.text(w / 2 - 32, -h / 2 + 50, '', { fontFamily: font.display, fontSize: 28, fontStyle: '700', color: css.muted }).setOrigin(1, 0.5);
+        box.add(count);
+        const zones = { crate: this.zone(box, 'crate', -w / 2 + 190, p.keep_label, '←'), bin: this.zone(box, 'bin', w / 2 - 190, p.reject_label, '→') };
+        // the work surface in the middle: a steel tray the piece lands on
+        const tray = this.add.graphics();
+        tray.fillStyle(0xb9bdbc, 1).fillRoundedRect(-170, 10, 340, 150, 18).lineStyle(3, colour.ink, 0.5).strokeRoundedRect(-170, 10, 340, 150, 18);
+        box.add(tray);
+        box.add(this.add.text(0, h / 2 - 34, p.keys, { fontFamily: font.body, fontSize: 22, color: css.muted }).setOrigin(0.5));
+        this.sort = { box, queue: [], count, zones, i: -1, right: 0, mixed: 0, lost: 0, busy: false };
+        this.clean = true;
+
+        const kb = this.input.keyboard!;
+        const key = (k: string, to: 'crate' | 'bin') => kb.on(`keydown-${k}`, (e: KeyboardEvent) => { if (!e.repeat && this.phase === 'sort') this.choose(to); });
+        key('LEFT', 'crate'); key('A', 'crate'); key('RIGHT', 'bin'); key('D', 'bin');
+
+        this.prompt.show(this.prompts().sort, '← →');
         if (!this.state.reducedMotion) {
-            box.setAlpha(0).setScale(0.95);
+            box.setAlpha(0).setScale(0.96);
             this.tweens.add({ targets: box, alpha: 1, scale: 1, duration: motion.normal, ease: 'Back.easeOut' });
         }
+        this.nextItem();
     }
 
-    /** Simple drawn items, matte and in the world's own colours (no meaning colours, no gore). */
-    private drawItem(kind: ItemKind) {
+    /** One side of the panel: the crate or the dustbin as rendered, its label and key, clickable. */
+    private zone(box: GameObjects.Container, which: 'crate' | 'bin', x: number, label: string, key: string) {
+        const z = this.add.container(x, 40);
         const g = this.add.graphics();
-        if (kind === 'bone') {
-            g.fillStyle(0xe3d2be, 1).fillRoundedRect(-30, -8, 60, 16, 8);
-            for (const [x, y] of [[-32, -10], [-32, 8], [32, -10], [32, 8]]) g.fillCircle(x, y, 11);
-        } else if (kind === 'offal') {
-            g.fillStyle(0x9b5c42, 1).fillEllipse(-6, 0, 58, 40).fillStyle(0x7e4a3c, 1).fillEllipse(14, 6, 34, 26);
-        } else if (kind === 'fat') {
-            g.fillStyle(0xd8c4a6, 1).fillEllipse(0, 0, 60, 34).fillStyle(0xb9886f, 1).fillEllipse(-10, 4, 24, 14);
-        } else if (kind === 'bag') {
-            g.fillStyle(0xeceae4, 0.9).fillRoundedRect(-24, -24, 48, 52, 14);
-            g.lineStyle(5, 0xeceae4, 0.9).strokeEllipse(-12, -30, 16, 22).strokeEllipse(12, -30, 16, 22);
-            g.lineStyle(2, colour.ink, 0.3).strokeRoundedRect(-24, -24, 48, 52, 14);
-        } else if (kind === 'cup') {
-            g.fillStyle(0xf2efe8, 1).beginPath().moveTo(-20, -28).lineTo(20, -28).lineTo(14, 28).lineTo(-14, 28).closePath().fillPath();
-            g.fillStyle(0xa89c88, 1).fillRect(-18, -6, 36, 12);
-            g.lineStyle(2, colour.ink, 0.3).strokeRect(-20, -28, 40, 2);
-        } else {
-            g.lineStyle(4, 0xb7a17e, 1).beginPath().moveTo(-34, 6);
-            for (let k = 1; k <= 8; k++) g.lineTo(-34 + k * 8.5, 6 + Math.sin(k * 1.4) * 12);
-            g.strokePath();
+        g.fillStyle(colour.cream, 1).fillRoundedRect(-150, -170, 300, 380, 20);
+        g.lineStyle(3, colour.ink, 0.35).strokeRoundedRect(-150, -170, 300, 380, 20);
+        const img = this.add.image(0, 10, which === 'crate' ? 's03_crate' : 's03items_bin');
+        img.setScale(Math.min(240 / img.width, 220 / img.height));
+        const t = this.add.text(0, 150, label, { fontFamily: font.display, fontSize: 28, fontStyle: '700', color: css.ink }).setOrigin(0.5);
+        const kg = this.add.graphics();
+        kg.fillStyle(colour.ink, 1).fillRoundedRect(-26, -150, 52, 40, 8);
+        const kt = this.add.text(0, -130, key, { fontFamily: font.display, fontSize: 24, fontStyle: '700', color: css.cream }).setOrigin(0.5);
+        z.add([g, img, t, kg, kt]);
+        z.setData('g', g);
+        z.setSize(300, 380).setInteractive({ useHandCursor: true }).on('pointerup', () => this.phase === 'sort' && this.choose(which));
+        box.add(z);
+        return z;
+    }
+
+    /** Deal the next piece onto the tray (and show the three after it, small, waiting). */
+    private nextItem() {
+        const st = this.sort!;
+        const items = this.params().sort.items;
+        st.i++;
+        st.item?.destroy();
+        st.queue.forEach((q) => q.destroy());
+        st.queue = [];
+        if (st.i >= items.length) return this.sortDone();
+        st.count.setText(this.params().sort.count.replace('{n}', String(st.i + 1)).replace('{total}', String(items.length)));
+        const it = items[st.i];
+        const c = this.add.container(0, 70);
+        const img = this.add.image(0, 0, `s03items_${it.kind}`);
+        img.setScale(Math.min(300 / img.width, 170 / img.height, 1.6));
+        const label = this.add.text(0, -118, it.label, { fontFamily: font.display, fontSize: 34, fontStyle: '700', color: css.ink }).setOrigin(0.5);
+        c.add([img, label]);
+        c.setSize(img.displayWidth, img.displayHeight).setInteractive({ draggable: true, useHandCursor: true });
+        this.input.setDraggable(c);
+        c.on('drag', (_p: Phaser.Input.Pointer, x: number, y: number) => c.setPosition(x, y));
+        c.on('dragend', () => {
+            if (c.x < -260) this.choose('crate');
+            else if (c.x > 260) this.choose('bin');
+            else this.tweens.add({ targets: c, x: 0, y: 70, duration: 200, ease: 'Back.easeOut' });
+        });
+        st.box.add(c);
+        st.item = c;
+        if (!this.state.reducedMotion) this.tweens.add({ targets: c, alpha: { from: 0, to: 1 }, y: { from: 20, to: 70 }, duration: 260, ease: 'Back.easeOut' });
+        items.slice(st.i + 1, st.i + 4).forEach((q, k) => {
+            const qi = this.add.image(-60 + k * 60, -150, `s03items_${q.kind}`).setAlpha(0.55);
+            qi.setScale(Math.min(52 / qi.width, 40 / qi.height));
+            st.box.add(qi);
+            st.queue.push(qi);
+        });
+        st.busy = false;
+    }
+
+    /** The piece goes where it was sent. Right: a tick. Wrong: it still goes, with the reason. */
+    private choose(to: 'crate' | 'bin') {
+        const st = this.sort;
+        if (!st || st.busy || !st.item) return;
+        st.busy = true;
+        const it = this.params().sort.items[st.i];
+        const right = (to === 'crate') === it.keep;
+        if (right) st.right++;
+        else if (to === 'crate') st.mixed++;
+        else st.lost++;
+        this.events.emit('sfx', right ? 'sort_right' : 'sort_wrong');
+        const zone = st.zones[to];
+        const flash = this.add.graphics();
+        flash.fillStyle(right ? colour.income : colour.cost, 0.18).fillRoundedRect(-150, -170, 300, 380, 20);
+        zone.addAt(flash, 1);
+        this.time.delayedCall(500, () => flash.destroy());
+        const mark = this.add.text(zone.x + 110, -110, right ? '✓' : '✗', { fontFamily: font.display, fontSize: 48, fontStyle: '700', color: right ? css.income : css.cost }).setOrigin(0.5);
+        st.box.add(mark);
+        this.time.delayedCall(600, () => mark.destroy());
+        let wait = 360;
+        if (!right) {
+            const why = this.add.text(0, 200, it.why, { fontFamily: font.body, fontSize: 26, fontStyle: '600', color: css.cost, backgroundColor: css.card, padding: { x: 14, y: 6 } }).setOrigin(0.5);
+            st.box.add(why);
+            this.time.delayedCall(1300, () => why.destroy());
+            wait = 1100;
         }
-        return g;
+        const item = st.item;
+        st.item = undefined;
+        if (this.state.reducedMotion) item.destroy();
+        else this.tweens.add({ targets: item, x: zone.x, y: 40, scale: 0.35, alpha: 0.2, duration: 300, ease: 'Cubic.easeIn', onComplete: () => item.destroy() });
+        this.time.delayedCall(this.state.reducedMotion ? 300 : wait, () => this.nextItem());
     }
 
-    private pick(i: number) {
-        const t = this.trayItems[i];
-        if (this.phase !== 'sort' || t.out) return;
-        if (t.item.keep) {
-            // meat waste stays: a little wobble says so
-            if (!this.state.reducedMotion) this.tweens.add({ targets: t.icon, angle: { from: -8, to: 0 }, duration: 260, ease: 'Back.easeOut' });
-            return;
-        }
-        t.out = true;
-        t.icon.disableInteractive();
-        this.events.emit('sfx', 'sort_out');
-        const to = { x: 760 / 2 - 89, y: -300 / 2 + 106 };
-        if (this.state.reducedMotion) t.icon.setPosition(to.x, to.y).setScale(0.45);
-        else this.tweens.add({ targets: t.icon, x: to.x, y: to.y, scale: 0.45, duration: 300, ease: 'Cubic.easeIn' });
-        if (this.trayItems.every((x) => x.item.keep || x.out)) this.time.delayedCall(450, () => this.sealCrate());
-    }
-
-    /** Space: take out the next thing that is not meat waste. */
-    private removeNext() {
-        const i = this.trayItems.findIndex((x) => !x.item.keep && !x.out);
-        if (i >= 0) this.pick(i);
-    }
-
-    /** The tray is clean: everything left goes into the crate, the lid goes on, then the drag. */
-    private sealCrate() {
+    /** All dealt: the score and what it means for the rate, then the crate is sealed. */
+    private sortDone() {
+        const st = this.sort!;
         const p = this.params().sort;
-        const box = this.tray!;
-        box.add(this.add.text(0, -300 / 2 + 46, p.done, { fontFamily: font.display, fontSize: 30, fontStyle: '700', color: css.ink }).setOrigin(0.5));
+        const total = p.items.length;
+        this.clean = st.mixed === 0;
+        st.count.setText(p.done);
+        const lines = [p.score.replace('{right}', String(st.right)).replace('{total}', String(total)), this.clean ? p.verdict_clean : p.verdict_mixed];
+        if (st.lost) lines.push(p.verdict_lost);
+        const card = this.add.container(0, 60);
+        const g = this.add.graphics();
+        drawCard(g, -330, -100, 660, 200, this.clean ? colour.income : colour.cost);
+        card.add(g);
+        lines.forEach((line, k) => card.add(this.add.text(0, -46 + k * 46, line, {
+            fontFamily: k === 0 ? font.display : font.body, fontSize: k === 0 ? 34 : 26, fontStyle: k === 0 ? '700' : '400',
+            color: k === 1 ? (this.clean ? css.income : css.cost) : css.ink,
+        }).setOrigin(0.5)));
+        st.box.add(card);
+        this.highlightRate(this.clean);
+        this.time.delayedCall(this.state.reducedMotion ? 1200 : 2200, () => this.sealCrate());
+    }
+
+    /** The lid goes on the crate, then the drag to the scale. */
+    private sealCrate() {
+        const box = this.sort!.box;
         const c = this.crateCentre();
-        const keep = this.trayItems.filter((x) => x.item.keep).map((x) => x.icon);
         const done = () => {
             box.destroy();
-            this.tray = undefined;
+            this.sort = undefined;
             if (!this.state.reducedMotion) this.tweens.add({ targets: this.crate, y: this.crate.y - 6, duration: 110, yoyo: true });
             this.events.emit('sfx', 'crate_seal');
             this.phase = 'drag';
@@ -204,14 +276,13 @@ export default class Station03 extends StationScene {
             this.ring = this.hint(c.x, c.y, 78);
         };
         if (this.state.reducedMotion) return done();
-        this.tweens.add({ targets: keep, x: c.x - box.x, y: c.y - box.y, scale: 0.2, alpha: 0, duration: 420, delay: 300, ease: 'Cubic.easeIn' });
-        this.tweens.add({ targets: box, alpha: 0, duration: 300, delay: 800, onComplete: done });
+        this.tweens.add({ targets: box, alpha: 0, duration: 300, onComplete: done });
     }
 
     /** Space/Enter/→ walks the beat forward; the pointer handles the drag and the spoken number. */
     private press() {
-        if (this.phase === 'sort') this.removeNext();
-        else if (this.phase === 'drag') this.snap();
+        if (this.phase === 'sort') return;              // the sort has its own keys (← →)
+        if (this.phase === 'drag') this.snap();
         else if (this.phase === 'number') this.sayNumber();
         else if (this.phase === 'leave') this.leave();
     }
@@ -281,6 +352,7 @@ export default class Station03 extends StationScene {
             this.tweens.add({ targets: this.shadow, ...shadowTo, alpha: 0.85, duration: motion.normal, delay: 120 });
         }
 
+        this.events.emit('sfx', 'scale');
         setState(this, { kilo: { carried: false, tag: this.state.kilo.tag } });
         this.popCard(this.scaleDisplayCard(), this.state.reducedMotion);
         this.prompt.show(this.prompts().number, 'Space');
@@ -323,7 +395,6 @@ export default class Station03 extends StationScene {
     private toLeave() {
         this.phase = 'leave';
         this.prompt.show(this.prompts().leave, 'Space');
-        if (!this.exitButton) this.exitButton = this.makeExit();
     }
 
     // --- cards ---------------------------------------------------------------------------------
@@ -338,6 +409,7 @@ export default class Station03 extends StationScene {
 
         const g = this.add.graphics();
         drawCard(g, 0, 0, w, h);
+        this.rateMark = this.add.graphics();
         const rows: GameObjects.Text[] = [];
         p.rate_board.forEach((row, i) => {
             const ty = 20 + i * 44;
@@ -360,7 +432,17 @@ export default class Station03 extends StationScene {
             fontFamily: font.display, fontSize: 22, fontStyle: '700', color: css.cream,
         }).setOrigin(0.5);
 
-        this.add.container(x, y, [g, ...rows, note, chip]).setDepth(16);
+        this.add.container(x, y, [g, this.rateMark, ...rows, note, chip]).setDepth(16);
+    }
+
+    private rateMark?: GameObjects.Graphics;
+
+    /** Light up the line the crate earned: the two sorted lines, or Mixed. */
+    private highlightRate(clean: boolean) {
+        const g = this.rateMark!;
+        g.clear().fillStyle(clean ? colour.income : colour.cost, 0.16);
+        if (clean) g.fillRoundedRect(10, 14, 380, 84, 8);
+        else g.fillRoundedRect(10, 102, 380, 42, 8);
     }
 
     /** The cold-room door bands get their words here: no words are baked into the render. */
@@ -431,7 +513,7 @@ export default class Station03 extends StationScene {
             fontFamily: font.display, fontSize: 34, fontStyle: '700', color: css.ink,
         }).setOrigin(0, 0);
         g.lineStyle(1, colour.ink, 0.2).lineBetween(22, 92, w - 22, 92);
-        const lines = p.slip.lines.map((line, i) => this.add.text(24, 108 + i * 42, line, {
+        const lines = (this.clean ? p.slip.lines : p.slip.lines_mixed).map((line, i) => this.add.text(24, 108 + i * 42, line, {
             fontFamily: font.body, fontSize: 28, color: i === 1 ? css.income : css.ink,
         }).setOrigin(0, 0));
         const done = this.add.text(w - 26, 34, '✓', {
@@ -460,19 +542,6 @@ export default class Station03 extends StationScene {
         if (!card) return;
         if (this.state.reducedMotion) card.destroy();
         else this.tweens.add({ targets: card, alpha: 0, duration: motion.fast, onComplete: () => card.destroy() });
-    }
-
-    private makeExit() {
-        const g = this.add.graphics();
-        g.fillStyle(colour.ink, 0.92).fillRoundedRect(-190, -36, 380, 72, 36);
-        const label = this.add.text(0, 0, '←  Into the cold room', {
-            fontFamily: font.display, fontSize: 30, fontStyle: '700', color: css.cream,
-        }).setOrigin(0.5);
-        const b = this.add.container(240, 520, [g, label]).setSize(380, 72).setDepth(45).setAlpha(0);
-        b.setInteractive({ useHandCursor: true }).on('pointerup', () => this.leave());
-        if (this.state.reducedMotion) b.setAlpha(1);
-        else this.tweens.add({ targets: b, alpha: 1, x: { from: 220, to: 240 }, duration: motion.normal });
-        return b;
     }
 
     private params(): S03Params {

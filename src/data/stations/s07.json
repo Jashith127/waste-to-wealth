@@ -2,9 +2,9 @@
   "$schema": "../schema/station.schema.json",
   "id": "s07",
   "number": 7,
-  "title": "Farm → back to the stall",
+  "title": "The meal in use",
   "label": "How it could close",
-  "place": "A poultry farm, then Cockburn Road",
+  "place": "A small farm",
   "greybox": true,
   "evidence": [
     "SPEC-journey",
@@ -18,12 +18,12 @@
   },
   "runs": {
     "2": {
-      "summary": "Meal as poultry feed, and chicken back at the stall: how the loop could close.",
+      "summary": "The meal from the kilo feeds a flock and a vegetable bed: how the loop could close.",
       "proposed": true,
       "prompts": {
-        "watch": "How it could close",
-        "leave": "See the day's ledger",
-        "feed": "Scatter the meal into the feeder"
+        "feed": "Feed the hens",
+        "soil": "Feed the soil",
+        "leave": "See the day's ledger"
       }
     }
   },
@@ -31,7 +31,7 @@
     "2": [
       {
         "lane": "backstage",
-        "text": "Meal sold as feed to a poultry farm.",
+        "text": "Meat and bone meal sold to farms, as feed and as fertiliser.",
         "evidence": [
           "SPEC-journey",
           "C-kannur"
@@ -40,10 +40,9 @@
       },
       {
         "lane": "frontstage",
-        "text": "Chicken back at a stall like Riyaz's.",
+        "text": "A farmer feeds the flock and the vegetable beds from the renderer's sacks.",
         "evidence": [
-          "SPEC-journey",
-          "D-p22"
+          "SPEC-journey"
         ],
         "proposed": true
       },
@@ -58,22 +57,17 @@
     ]
   },
   "params": {
-    "beats": [
+    "uses": [
       {
-        "caption": "Meal becomes poultry feed",
-        "anchor": "feed"
+        "key": "feed",
+        "caption": "Meal in the feed: protein for the flock"
       },
       {
-        "caption": "Chickens raised on the farm",
-        "anchor": "flock"
-      },
-      {
-        "caption": "Back on the counter at the stall",
-        "anchor": "stall"
+        "key": "soil",
+        "caption": "Bone meal in the soil: food for the crop"
       }
     ],
     "precedent": "Precedent: Kannur, Kerala",
-    "caveat": "No supply chain back to the stall was found",
-    "handfuls": 3
+    "caveat": "No supply chain back to the stall was found"
   }
 }

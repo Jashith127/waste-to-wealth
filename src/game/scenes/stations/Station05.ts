@@ -84,6 +84,10 @@ export default class Station05 extends StationScene {
         this.prompt.show(this.prompts().leave, '→');
     }
 
+    protected advance() {
+        this.driveOff();
+    }
+
     /** The truck pulls off right with its label, then the walk-out transition follows it. */
     private driveOff() {
         if (this.busy) return;

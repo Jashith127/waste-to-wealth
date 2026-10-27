@@ -23,6 +23,7 @@ import kit  # noqa: E402
 import materials as M  # noqa: E402
 import people  # noqa: E402
 import s03_art_build as s03  # noqa: E402
+import street_life  # noqa: E402
 from mathutils import Vector  # noqa: E402
 
 SET_DATA = {"id": "s05", "set": {"blend": "art/blender/s05_pickup.blend", "lighting": "midday", "street": {"x0": -5.0, "x1": 7.0}}, "signs": []}
@@ -87,14 +88,22 @@ def truck(st):
     geo.box("TRUCK_bumper", (5.7, 0.85, 0.45), (5.8, 2.35, 0.68), m["steel_dark"], col, 0.02)
     for i, (x, y) in enumerate(((1.7, 0.68), (1.7, 2.42), (4.0, 0.68), (4.0, 2.42), (5.2, 0.7), (5.2, 2.4))):
         geo.cylinder(f"TRUCK_wheel{i}", (x, y - 0.06, 0.38), 0.38, 0.12, m["auto_dark"], col, axis="Y", segments=28, bevel=0.02)
-    st.anchor("truck_bay", (3.0, 1.6, 2.95))
-    st.anchor("truck_rear", (1.15, 1.6, 1.5))
+    # built as if at the bay, then moved out onto the road at the kerb: vehicles stay off the footpath
+    from mathutils import Vector
+    off = Vector((0.0, -2.95, kit.ROAD_Z))
+    root = geo.empty("TRUCK_root", (0, 0, 0), col)
+    for o in list(col.objects):
+        if o is not root and o.parent is None:
+            o.parent = root
+    root.location = off
+    st.anchor("truck_bay", Vector((3.0, 1.6, 2.95)) + off)
+    st.anchor("truck_rear", Vector((1.15, 1.6, 1.5)) + off)
 
 
 def dress(st):
     s, m, col = st.street, st.m, st.props
     loader = people.costume_materials("loader", shirt="#5A6670", trousers="#3A3633", cap=None)
-    people.figure("LOADER", (0.3, 1.25, 0), 70, loader, (-0.3, -0.2, 0.95), (0.3, -0.2, 0.95), col, grip=("fist", "fist"))
+    people.figure("LOADER", (0.3, 1.25, 0), 70, loader, (-0.3, 0.02, 0.6), (0.3, 0.02, 0.6), col)
     kit.lamp_pole("POLE", 6.4, 0.3, m, col, height=7.0)
     kit.bollards("BOLLARD", (-4.6, -0.8), 1.3, m, col)
     kit.ph("JERRYCAN", "plastic_jerrycan", (0.35, 2.6, BAY_TOP), 15, 1.0, col)
@@ -103,6 +112,10 @@ def dress(st):
     kit.road(s, m, st.set)
     kit.autorickshaw("AUTO_0", (-3.2, -1.25, kit.ROAD_Z), 0, m, col)
     kit.wire("WIRE_0", (s.x0, 2.9, 5.6), (6.4, 0.3, 6.6), 0.35, m["cable"], col)
+    # a few late passers-by, cables and crows (V01, V03)
+    street_life.wires(st, s.x0, 1.1)
+    street_life.crows(st, (-3.6, -1.0), 4.25)
+    street_life.people(st, [("PED_kurta", (2.4, 0.4), 95, "kurta", 0.14), ("PED_lungi", (-2.0, 0.55), -85, "lungi", 0.12)])
 
 
 def build():
