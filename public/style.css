@@ -4,7 +4,94 @@ html, body { position: fixed; inset: 0; width: 100%; height: 100%; height: 100dv
     width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; box-sizing: border-box;
     padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
-#game-container { width: 100%; height: 100%; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+#game-container { width: 100%; height: 100%; min-width: 0; min-height: 0; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+
+/* Phone landscape: the 16:9 scene in the middle, the controls in the gutters either side of it. Each rail
+   takes the width the scene leaves over, but never less than a thumb's worth, so the scene gives up only
+   what the controls need. Same colour as the scene's own background, no dividers: one surface. */
+#rail-left, #rail-right {
+    display: flex; flex-direction: column; align-items: stretch; justify-content: space-between; gap: 8px;
+    box-sizing: border-box; min-width: 0; min-height: 0; padding: 10px 8px; overflow: hidden;
+    color: #F4ECDE; background: #1C1714; font-family: Hind, system-ui, sans-serif;
+}
+#rail-left[hidden], #rail-right[hidden], #app [hidden] { display: none !important; }
+html[data-device="phone"][data-orient="landscape"] #app {
+    display: grid;
+    grid-template-columns: var(--rail-w) minmax(0, 1fr) var(--rail-w);
+    --rail-w: max(118px, calc((100vw - env(safe-area-inset-left) - env(safe-area-inset-right) - (100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom)) * 16 / 9) / 2));
+    align-items: stretch;
+}
+#rail-left.idle > *, #rail-right.idle > * { visibility: hidden; }
+
+.rail-ctl { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.rail-kicker {
+    margin: 0; font-family: "Baloo 2", system-ui, sans-serif; font-weight: 800; font-size: 13px; line-height: 1.1;
+    letter-spacing: 0.06em; text-transform: uppercase; color: #F0A31F; text-align: center;
+}
+.rail-help, .rail-screen { margin: 0; font-size: 12px; line-height: 1.3; text-align: center; color: #B8AE9C; }
+.rail-screen {
+    padding: 8px 6px; border-radius: 12px; border: 1.5px dashed rgba(244, 236, 222, 0.3);
+    color: #F4ECDE; font-size: 13px;
+}
+
+/* where you are, and what to do now */
+.rail-now { display: flex; flex-direction: column; gap: 5px; min-height: 0; }
+.rail-head { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.rail-badge {
+    flex: none; min-width: 24px; height: 24px; padding: 0 4px; border-radius: 12px; display: grid; place-items: center;
+    background: #F0A31F; color: #1C1714; border: 2px solid #1C1714; box-sizing: border-box;
+    font-family: "Baloo 2", system-ui, sans-serif; font-weight: 800; font-size: 11px; line-height: 1;
+}
+.rail-title {
+    min-width: 0; font-family: "Baloo 2", system-ui, sans-serif; font-weight: 700; font-size: 11px; line-height: 1.15;
+    letter-spacing: 0.05em; text-transform: uppercase; color: #D8CCB8;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.rail-dots { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; font-size: 11px; color: #B8AE9C; }
+.rail-dots i { width: 9px; height: 9px; border-radius: 50%; border: 1.5px solid rgba(244, 236, 222, 0.4); box-sizing: border-box; }
+.rail-dots i.done { background: #F0A31F; border-color: #F0A31F; }
+.rail-dots i.now { background: #F4ECDE; border-color: #F4ECDE; }
+.rail-dots span { margin-left: 2px; }
+.rail-objective {
+    margin: 2px 0 0; padding-left: 8px; border-left: 4px solid #F0A31F;
+    font-family: "Baloo 2", system-ui, sans-serif; font-weight: 700; font-size: 15px; line-height: 1.2; color: #F4ECDE;
+    overflow-wrap: break-word; hyphens: auto;
+}
+
+/* thumb controls */
+.stick {
+    --s: clamp(78px, 27dvh, 108px);
+    width: var(--s); height: var(--s); border-radius: 50%; flex: none; position: relative; touch-action: none;
+    background: rgba(244, 236, 222, 0.08); border: 2px solid rgba(244, 236, 222, 0.4);
+    box-shadow: inset 0 0 0 calc(var(--s) * 0.25) rgba(244, 236, 222, 0.04);
+}
+.stick-knob {
+    width: 42%; height: 42%; border-radius: 50%; background: #F0A31F; border: 3px solid #1C1714; box-sizing: border-box;
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 1;
+}
+.rail-tap {
+    --s: clamp(78px, 27dvh, 104px);
+    width: var(--s); height: var(--s); border-radius: 50%; flex: none; touch-action: none; padding: 0 6px;
+    background: #F0A31F; color: #1C1714; border: 3px solid #1C1714;
+    font-family: "Baloo 2", system-ui, sans-serif; font-weight: 800; font-size: 20px; line-height: 1.05;
+    box-shadow: 0 5px 0 #7A4B2C; overflow-wrap: anywhere;
+}
+.rail-tap.long { font-size: 14px; }
+.rail-tap.down { transform: translateY(3px); box-shadow: 0 2px 0 #7A4B2C; }
+
+/* panel buttons */
+.rail-dock { display: flex; flex-direction: column; gap: 6px; }
+.rail-dock button {
+    width: 100%; min-height: 34px; padding: 4px 6px; border-radius: 17px; touch-action: manipulation;
+    background: rgba(244, 236, 222, 0.06); color: #F4ECDE; border: 1.5px solid rgba(244, 236, 222, 0.22);
+    font-family: "Baloo 2", system-ui, sans-serif; font-weight: 700; font-size: 13px; line-height: 1.1;
+}
+.rail-dock button.lit { background: #7A4B2C; border-color: #F0A31F; }
+@media (max-height: 340px) {
+    .rail-dock button { min-height: 30px; font-size: 12px; }
+    .rail-help { display: none; }
+}
+
 #rotate-gate {
     display: none; position: fixed; inset: 0; z-index: 40; background: #1C1714; color: #F4ECDE;
     flex-direction: column; align-items: center; justify-content: center; gap: 14px; text-align: center; padding: 32px;

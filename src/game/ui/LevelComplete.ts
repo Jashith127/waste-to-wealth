@@ -38,9 +38,9 @@ const CONFETTI = [colour.pay, colour.cost, colour.income, colour.offsite, colour
 
 export class LevelComplete extends GameObjects.Container {
     constructor(scene: Scene, info: LevelInfo, onGo: () => void) {
-        const y = isPhone() ? 560 : Y;
-        super(scene, FRAME.width / 2, y);
+        super(scene, FRAME.width / 2, Y);
         const still = getState(scene).reducedMotion;
+        if (isPhone()) this.setScale(1.45);      // FIT shrinks the frame to a third on a phone
 
         // the panel: the station's title, the ticked steps, the button
         const title = scene.add.text(0, -18, info.title, { fontFamily: font.body, fontSize: 24, color: hud.dim }).setOrigin(0.5);
@@ -85,8 +85,8 @@ export class LevelComplete extends GameObjects.Container {
         if (still) return;
 
         // slam in: the panel rises, the ribbon bounces down onto it, the ticks pop one by one
-        this.setAlpha(0).setY(y + 40);
-        scene.tweens.add({ targets: this, alpha: 1, y, duration: 260, ease: 'Cubic.easeOut' });
+        this.setAlpha(0).setY(Y + 40);
+        scene.tweens.add({ targets: this, alpha: 1, y: Y, duration: 260, ease: 'Cubic.easeOut' });
         banner.setScale(2.2).setAlpha(0);
         scene.tweens.add({ targets: banner, scale: 1, alpha: 1, duration: 420, delay: 120, ease: 'Back.easeOut', onComplete: () => this.confetti(ry) });
         chips.forEach((ch, i) => {
@@ -99,9 +99,9 @@ export class LevelComplete extends GameObjects.Container {
     private button(cta: string, key: string, onGo: () => void) {
         const s = this.scene;
         const phone = isPhone();
-        const t = s.add.text(0, 0, `${cta}  ▶`, { fontFamily: font.display, fontSize: phone ? 44 : 34, fontStyle: '800', color: css.ink }).setOrigin(0, 0.5);
-        const cap = phone ? touchChip(s, 'tap', 64) : keycap(s, key, 36);
-        const bw = t.width + cap.width + (phone ? 88 : 76), bh = phone ? 100 : 68;
+        const t = s.add.text(0, 0, `${cta}  ▶`, { fontFamily: font.display, fontSize: 34, fontStyle: '800', color: css.ink }).setOrigin(0, 0.5);
+        const cap = phone ? touchChip(s, 'tap', 44) : keycap(s, key, 36);
+        const bw = t.width + cap.width + 76, bh = 68;
         const bg = s.add.graphics();
         const draw = (hover: boolean) => {
             bg.clear().fillStyle(0xb8761a, 1).fillRoundedRect(-bw / 2, -bh / 2 + 6, bw, bh, bh / 2);
@@ -123,7 +123,7 @@ export class LevelComplete extends GameObjects.Container {
     private confetti(y: number) {
         const s = this.scene;
         for (let i = 0; i < 46; i++) {
-            const bit = s.add.rectangle(this.x + PMath.Between(-120, 120), this.y + y, PMath.Between(8, 14), PMath.Between(5, 9), CONFETTI[i % CONFETTI.length])
+            const bit = s.add.rectangle(this.x + PMath.Between(-120, 120), this.y + y * this.scaleY, PMath.Between(8, 14), PMath.Between(5, 9), CONFETTI[i % CONFETTI.length])
                 .setDepth(71).setAngle(PMath.Between(0, 180));
             const vx = PMath.FloatBetween(-620, 620), vy = PMath.FloatBetween(-760, -260), spin = PMath.Between(-540, 540);
             const x0 = bit.x, y0 = bit.y, p = { t: 0 };

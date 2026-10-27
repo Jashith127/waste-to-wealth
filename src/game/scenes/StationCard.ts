@@ -58,7 +58,7 @@ export class StationCard extends Scene {
         const parts: GameObjects.GameObject[] = [
             this.add.image(0, 0, 'skyline').setOrigin(0),
             this.add.text(FRAME.width / 2, 400, t.title, { fontFamily: font.display, fontSize: isPhone() ? 108 : 132, fontStyle: '800', color: css.cream }).setOrigin(0.5).setShadow(0, 8, '#000000', 0, false, true),
-            this.add.text(FRAME.width / 2, 500, t.tagline, { fontFamily: font.body, fontSize: isPhone() ? 44 : 36, color: '#D8CCB8', align: 'center', wordWrap: { width: isPhone() ? 1600 : 1400 } }).setOrigin(0.5),
+            this.add.text(FRAME.width / 2, 500, t.tagline, { fontFamily: font.body, fontSize: isPhone() ? 56 : 36, color: '#D8CCB8', align: 'center', wordWrap: { width: isPhone() ? 1600 : 1400 } }).setOrigin(0.5),
         ];
         const g = this.add.graphics();
         g.fillStyle(colour.pay, 1).fillRect(FRAME.width / 2 - 180, 560, 360, 6);
@@ -125,10 +125,10 @@ export class StationCard extends Scene {
 
     private fadeCard(t: string, sub: string, next: () => void) {
         const title = this.add.text(FRAME.width / 2, FRAME.height / 2 - 10, t, {
-            fontFamily: font.display, fontSize: 72, fontStyle: '800', color: css.cream,
+            fontFamily: font.display, fontSize: isPhone() ? 96 : 72, fontStyle: '800', color: css.cream,
         }).setOrigin(0.5).setAlpha(0);
         const place = this.add.text(FRAME.width / 2, FRAME.height / 2 + 62, sub, {
-            fontFamily: font.body, fontSize: 30, color: '#B8AE9C', align: 'center', wordWrap: { width: 1300 },
+            fontFamily: font.body, fontSize: isPhone() ? 46 : 30, color: '#B8AE9C', align: 'center', wordWrap: { width: isPhone() ? 1640 : 1300 },
         }).setOrigin(0.5, 0).setAlpha(0);
         this.tweens.add({
             targets: [title, place], alpha: 1, duration: motion.normal, hold: 900, yoyo: true,

@@ -129,12 +129,14 @@ export function briefingCard(scene: Scene, run: Run, beat: string, cta: string, 
     return c;
 }
 
-/** Full-frame card for a phone: steps stack, type is large enough to read after FIT scales the canvas down. */
+/** Full-frame card for a phone. FIT scales the canvas to about a third, so type starts large and each
+ * block shrinks until it fits its box rather than running off it. Steps sit side by side, like the
+ * desktop card, and a legend says where the side-rail controls are. */
 function phoneBriefing(scene: Scene, run: Run, beat: string, cta: string, onGo: () => void): GameObjects.Container {
     const info = howTo(run, beat)!;
     const head = beatTitle(beat);
     const phase = runs[run].clock?.[beat];
-    const CARD = { w: 1840, h: 1020 };
+    const CARD = { w: 1872, h: 1044 };
     const left = -CARD.w / 2, top = -CARD.h / 2;
     const c = scene.add.container(FRAME.width / 2, FRAME.height / 2);
     const add = <T extends GameObjects.GameObject>(o: T) => (c.add(o), o);
@@ -142,58 +144,77 @@ function phoneBriefing(scene: Scene, run: Run, beat: string, cta: string, onGo: 
     g.fillStyle(hud.shadow, 0.4).fillRoundedRect(left + 6, top + 12, CARD.w, CARD.h, 22);
     drawCard(g, left, top, CARD.w, CARD.h, run === 1 ? colour.cost : colour.income);
 
-    const by = top + 78;
-    g.fillStyle(colour.pay, 1).fillCircle(left + 78, by, 40).lineStyle(4, colour.ink, 1).strokeCircle(left + 78, by, 40);
-    add(scene.add.text(left + 78, by + 2, head.badge, { fontFamily: font.display, fontSize: head.badge.length > 2 ? 28 : 36, fontStyle: '800', color: css.ink }).setOrigin(0.5));
-    add(scene.add.text(left + 140, by - 16, head.title, { fontFamily: font.display, fontSize: 48, fontStyle: '800', color: css.ink }).setOrigin(0, 0.5));
-    const place = add(scene.add.text(left + 142, by + 28, head.place, { fontFamily: font.body, fontSize: 30, color: css.muted }).setOrigin(0, 0.5));
+    // header: badge, title, place · phase, run chip
+    const by = top + 84;
+    g.fillStyle(colour.pay, 1).fillCircle(left + 84, by, 48).lineStyle(4, colour.ink, 1).strokeCircle(left + 84, by, 48);
+    add(scene.add.text(left + 84, by + 2, head.badge, { fontFamily: font.display, fontSize: head.badge.length > 2 ? 32 : 46, fontStyle: '800', color: css.ink }).setOrigin(0.5));
+    const runText = add(scene.add.text(0, by - 20, runs[run].title, { fontFamily: font.display, fontSize: 36, fontStyle: '700', color: css.cream }).setOrigin(1, 0.5));
+    const chipW = runText.width + 44, chipX = -left - 36 - chipW;
+    drawChip(g, chipX, by - 50, chipW, 60, run === 1 ? colour.cost : colour.income);
+    runText.setX(chipX + chipW - 22);
+    const title = add(scene.add.text(left + 152, by - 22, head.title, { fontFamily: font.display, fontSize: 62, fontStyle: '800', color: css.ink }).setOrigin(0, 0.5));
+    fitWidth(title, chipX - 30 - title.x);
+    const place = add(scene.add.text(left + 154, by + 34, head.place, { fontFamily: font.body, fontSize: 38, color: css.muted }).setOrigin(0, 0.5));
     if (phase) {
-        const px = place.x + place.width + 24;
-        drawPhaseIcon(g, px + 16, by + 36, phase, 16, colour.ink, colour.card);
-        add(scene.add.text(px + 44, by + 28, phaseLabel(phase), { fontFamily: font.body, fontSize: 30, color: css.muted }).setOrigin(0, 0.5));
+        const px = place.x + place.width + 28;
+        drawPhaseIcon(g, px + 18, by + 44, phase, 18, colour.ink, colour.card);
+        add(scene.add.text(px + 50, by + 34, phaseLabel(phase), { fontFamily: font.body, fontSize: 38, color: css.muted }).setOrigin(0, 0.5));
     }
-    const runText = add(scene.add.text(0, by - 16, runs[run].title, { fontFamily: font.display, fontSize: 28, fontStyle: '700', color: css.cream }).setOrigin(1, 0.5));
-    const chipW = runText.width + 40, chipX = -left - 36 - chipW;
-    drawChip(g, chipX, by - 40, chipW, 48, run === 1 ? colour.cost : colour.income);
-    runText.setX(chipX + chipW - 20);
 
-    const gy = top + 168;
-    const goalLabel = add(scene.add.text(left + 56, gy, howToText.briefing.goal.toUpperCase(), { fontFamily: font.display, fontSize: 26, fontStyle: '800', color: css.cream }).setOrigin(0, 0.5).setLetterSpacing(2));
-    drawChip(g, left + 36, gy - 24, goalLabel.width + 44, 48, colour.ink);
-    add(scene.add.text(left + 36 + goalLabel.width + 64, gy, touchText(info.goal), { fontFamily: font.display, fontSize: 40, fontStyle: '700', color: css.ink }).setOrigin(0, 0.5));
-    if (info.tip) add(scene.add.text(left + 40, gy + 44, touchText(info.tip), { fontFamily: font.body, fontSize: 30, color: css.muted }).setOrigin(0, 0.5));
+    // goal, and the tip under it
+    let y = top + 176;
+    const goalLabel = add(scene.add.text(left + 58, y + 30, howToText.briefing.goal.toUpperCase(), { fontFamily: font.display, fontSize: 32, fontStyle: '800', color: css.cream }).setOrigin(0, 0.5).setLetterSpacing(2));
+    drawChip(g, left + 36, y + 2, goalLabel.width + 44, 56, colour.ink);
+    const goalX = left + 36 + goalLabel.width + 66;
+    const goal = add(scene.add.text(goalX, y, touchText(info.goal), { fontFamily: font.display, fontSize: 50, fontStyle: '700', color: css.ink, wordWrap: { width: -left - 40 - goalX } }));
+    fitBox(goal, -left - 40 - goalX, 130, 36);
+    y += Math.max(64, goal.height) + 10;
+    if (info.tip) {
+        const tip = add(scene.add.text(left + 40, y, touchText(info.tip), { fontFamily: font.body, fontSize: 40, color: css.muted, wordWrap: { width: CARD.w - 80 } }));
+        fitBox(tip, CARD.w - 80, 100, 30);
+        y += tip.height + 10;
+    }
 
-    const n = info.steps.length;
-    const gap = 14;
-    const areaTop = top + (info.tip ? 250 : 214);
-    const areaBot = -top - 148;
-    const th = (areaBot - areaTop - gap * (n - 1)) / n;
+    // step tiles, side by side
+    const n = info.steps.length, gap = 22;
+    const tw = (CARD.w - 72 - gap * (n - 1)) / n;
+    const ty = y + 8, th = -top - 150 - ty;
     info.steps.forEach((st, i) => {
-        const tx = left + 36, ty = areaTop + i * (th + gap);
-        g.fillStyle(colour.cream, 1).fillRoundedRect(tx, ty, CARD.w - 72, th, 16);
-        g.lineStyle(2.5, colour.ink, 0.45).strokeRoundedRect(tx, ty, CARD.w - 72, th, 16);
-        g.fillStyle(colour.ink, 1).fillCircle(tx + 40, ty + 40, 24);
-        add(scene.add.text(tx + 40, ty + 41, String(i + 1), { fontFamily: font.display, fontSize: 28, fontStyle: '800', color: css.pay }).setOrigin(0.5));
-        add(scene.add.text(tx + 78, ty + 40, st.label, { fontFamily: font.display, fontSize: 40, fontStyle: '800', color: css.ink }).setOrigin(0, 0.5));
+        const tx = left + 36 + i * (tw + gap);
+        g.fillStyle(colour.cream, 1).fillRoundedRect(tx, ty, tw, th, 16);
+        g.lineStyle(2.5, colour.ink, 0.45).strokeRoundedRect(tx, ty, tw, th, 16);
+        g.fillStyle(colour.ink, 1).fillCircle(tx + 46, ty + 50, 30);
+        add(scene.add.text(tx + 46, ty + 51, String(i + 1), { fontFamily: font.display, fontSize: 36, fontStyle: '800', color: css.pay }).setOrigin(0.5));
+        const label = add(scene.add.text(tx + 92, ty + 50, st.label, { fontFamily: font.display, fontSize: 52, fontStyle: '800', color: css.ink }).setOrigin(0, 0.5));
+        // the touch chip sits beside the label, or under it when a narrow tile can't hold both
+        let right = tx + tw - 20, bodyY = ty + 100;
         if (st.keys.length || st.mouse) {
-            const row = inputRow(scene, st.keys, st.mouse, 64, true);
-            row.setPosition(tx + CARD.w - 72 - 36 - row.width / 2, ty + 40);
-            add(row);
+            const row = add(inputRow(scene, st.keys, st.mouse, 64, true));
+            if (label.x + label.width + 16 + row.width <= right) {
+                row.setPosition(right - row.width / 2, ty + 50);
+                right -= row.width + 16;
+            } else {
+                row.setPosition(tx + 26 + row.width / 2, ty + 128);
+                bodyY = ty + 176;
+            }
         }
-        const body = touchText(st.text);
-        add(scene.add.text(tx + 28, ty + 78, body, {
-            fontFamily: font.body, fontSize: 36, color: css.ink, wordWrap: { width: CARD.w - 140 }, lineSpacing: 4,
+        fitWidth(label, right - label.x);
+        const body = add(scene.add.text(tx + 26, bodyY, touchText(st.text), {
+            fontFamily: font.body, fontSize: 48, color: css.ink, wordWrap: { width: tw - 52 }, lineSpacing: 2,
         }));
+        fitBox(body, tw - 52, ty + th - 20 - bodyY, 28);
     });
 
+    // footer: where the controls are, and the button
     const fy = -top - 72;
-    add(scene.add.text(left + 40, fy, 'Blueprint, Evidence, How to play and Menu sit along the bottom.', {
-        fontFamily: font.body, fontSize: 28, color: css.muted,
+    const bt = scene.add.text(0, 0, `${cta}  ▶`, { fontFamily: font.display, fontSize: 52, fontStyle: '800', color: css.cream }).setOrigin(0, 0.5);
+    const bw = bt.width + 96, bh = 112;
+    const legend = add(scene.add.text(left + 40, fy, 'Controls sit beside the picture: the stick on the left, the big button on the right. It is named for what it does.', {
+        fontFamily: font.body, fontSize: 36, color: css.muted, wordWrap: { width: CARD.w - 120 - bw }, lineSpacing: 0,
     }).setOrigin(0, 0.5));
+    fitBox(legend, CARD.w - 120 - bw, 120, 26);
 
-    const bt = scene.add.text(0, 0, `${cta}  ▶`, { fontFamily: font.display, fontSize: 42, fontStyle: '800', color: css.cream }).setOrigin(0, 0.5);
-    const bw = bt.width + 80, bh = 100;
-    const btn = scene.add.container(-left - 40 - bw / 2, fy);
+    const btn = scene.add.container(-left - 36 - bw / 2, fy);
     const bg = scene.add.graphics();
     const draw = (hover: boolean) => {
         bg.clear().fillStyle(hud.shadow, 0.3).fillRoundedRect(-bw / 2, -bh / 2 + 6, bw, bh, bh / 2);
@@ -211,4 +232,18 @@ function phoneBriefing(scene: Scene, run: Run, beat: string, cta: string, onGo: 
         scene.tweens.add({ targets: c, alpha: 1, y: c.y - 24, duration: motion.normal + 80, ease: 'Cubic.easeOut' });
     }
     return c;
+}
+
+/** Step the font down until a one-line text is no wider than `w`. */
+function fitWidth(t: GameObjects.Text, w: number) {
+    let size = parseInt(String(t.style.fontSize), 10);
+    while (t.width > w && size > 24) t.setFontSize(size -= 2);
+}
+
+/** Step the font down until wrapped text fits `w` × `h`; below `min` it stays put and is cropped as a last resort. */
+function fitBox(t: GameObjects.Text, w: number, h: number, min: number) {
+    let size = parseInt(String(t.style.fontSize), 10);
+    t.setWordWrapWidth(w);
+    while (t.height > h && size > min) t.setFontSize(size -= 2);
+    if (t.height > h) t.setCrop(0, 0, w, h);
 }

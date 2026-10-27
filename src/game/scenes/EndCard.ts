@@ -50,7 +50,7 @@ export class EndCard extends Scene {
         }).setOrigin(0.5).setLetterSpacing(3);
 
         endcard.beliefs.forEach((b, i) => this.beliefs.push(this.beliefRow(i + 1, b.before, b.after, BELIEF_Y + i * BELIEF_STEP)));
-        setControlHint('Space');
+        setControlHint('Space', undefined, 'Tap for the next line');
         this.nextHint = this.keyHint('Space');
         this.replay = this.button(endcard.replay, FRAME.width / 2, 985, () => this.playAgain());
         this.replay.setVisible(false);

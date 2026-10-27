@@ -2,11 +2,12 @@
 // now in big type with its keys (and the mouse, when the step takes one), and one dot per step of the
 // beat's how-to (howto.json) so the player sees how far through the minigame they are. Stations call
 // show(text, key) as before; the dots move on when the text is one of a later step's prompts.
+// On a phone the card hides and publishes the same things to the side rails (rails.ts).
 import { GameObjects, Scene } from 'phaser';
 import type { ClockPhase, MouseHint } from '../content';
-import { getState } from '../state';
 import { setControlHint } from '../controls';
 import { isPhone } from '../device';
+import { getState } from '../state';
 import { colour, css, font, hud, motion } from '../theme';
 import { drawPhaseIcon, phaseLabel } from './Clock';
 import { drawPanel, inputRow } from './keys';
@@ -14,11 +15,10 @@ import { drawPanel, inputRow } from './keys';
 export interface PromptStep { label: string; match: string[]; mouse?: MouseHint }
 export interface PromptInfo { badge?: string; title?: string; phase?: ClockPhase; steps?: PromptStep[] }
 
-const phone = () => isPhone();
-const PAD = () => phone() ? 28 : 22;
-const HEAD_Y = () => phone() ? 50 : 30;          // header row centre
-const ROW_Y = () => phone() ? 150 : 88;          // objective row centre (with a header)
-const KEY_H = () => phone() ? 78 : 38;
+const PAD = 22;
+const HEAD_Y = 30;          // header row centre
+const ROW_Y = 88;           // objective row centre (with a header)
+const KEY_H = 38;
 
 /** "Arrows" → the four arrow keys, "← →" → two keys, "Space" → one. */
 function keysFor(hint?: string): string[] {
@@ -41,22 +41,21 @@ export class Prompt extends GameObjects.Container {
     /** Called when the step dots move on: (step, of n). The owner shows "Level complete" on the last. */
     onStep?: (step: number, n: number) => void;
     private readonly rowY: number;
-    private h: number;
+    private readonly h: number;
 
     constructor(scene: Scene, x: number, y: number, private info: PromptInfo = {}) {
         super(scene, x, y);
         this.bg = scene.add.graphics();
         this.add(this.bg);
-        this.rowY = info.title ? ROW_Y() : (phone() ? 58 : 33);
-        this.h = info.title ? (phone() ? 230 : 122) : (phone() ? 116 : 66);
+        this.rowY = info.title ? ROW_Y : 33;
+        this.h = info.title ? 122 : 66;
         if (info.title) this.buildHeader();
-        this.chevron = scene.add.text(PAD(), this.rowY, '▶', { fontFamily: font.display, fontSize: phone() ? 34 : 22, color: css.pay }).setOrigin(0, 0.5);
-        this.label = scene.add.text(PAD() + (phone() ? 46 : 30), this.rowY, '', {
-            fontFamily: font.display, fontSize: phone() ? 52 : 34, fontStyle: '700', color: css.cream,
-            wordWrap: phone() ? { width: 1080 } : undefined,
-        }).setOrigin(0, 0.5);
+        this.chevron = scene.add.text(PAD, this.rowY, '▶', { fontFamily: font.display, fontSize: 22, color: css.pay }).setOrigin(0, 0.5);
+        this.label = scene.add.text(PAD + 30, this.rowY, '', { fontFamily: font.display, fontSize: 34, fontStyle: '700', color: css.cream }).setOrigin(0, 0.5);
         this.add([this.chevron, this.label]);
         this.setDepth(50);
+        // on a phone the side rails carry the objective, so the card stays off the picture
+        if (isPhone()) this.setVisible(false);
         scene.add.existing(this);
     }
 
@@ -69,44 +68,39 @@ export class Prompt extends GameObjects.Container {
         const s = this.scene, { badge, title, phase, steps } = this.info;
         const head = s.add.container(0, 0);
         const g = s.add.graphics();
-        const headY = HEAD_Y();
-        const badgeR = phone() ? 28 : 19;
-        let x = PAD();
+        let x = PAD;
         if (badge) {
-            g.fillStyle(colour.pay, 1).fillCircle(x + badgeR, headY, badgeR).lineStyle(2.5, colour.ink, 1).strokeCircle(x + badgeR, headY, badgeR);
+            g.fillStyle(colour.pay, 1).fillCircle(x + 19, HEAD_Y, 19).lineStyle(2.5, colour.ink, 1).strokeCircle(x + 19, HEAD_Y, 19);
             head.add(g);
-            head.add(s.add.text(x + badgeR, headY + 1, badge, { fontFamily: font.display, fontSize: badge.length > 2 ? (phone() ? 22 : 15) : (phone() ? 30 : 21), fontStyle: '800', color: css.ink }).setOrigin(0.5));
-            x += badgeR * 2 + 14;
+            head.add(s.add.text(x + 19, HEAD_Y + 1, badge, { fontFamily: font.display, fontSize: badge.length > 2 ? 15 : 21, fontStyle: '800', color: css.ink }).setOrigin(0.5));
+            x += 50;
         } else head.add(g);
-        const t = s.add.text(x, headY + 1, title!.toUpperCase(), { fontFamily: font.display, fontSize: phone() ? 34 : 21, fontStyle: '700', color: css.cream })
-            .setOrigin(0, 0.5).setLetterSpacing(phone() ? 1 : 1.5);
+        const t = s.add.text(x, HEAD_Y + 1, title!.toUpperCase(), { fontFamily: font.display, fontSize: 21, fontStyle: '700', color: css.cream })
+            .setOrigin(0, 0.5).setLetterSpacing(1.5);
         head.add(t);
         x += t.width;
         if (phase) {
-            x += phone() ? 28 : 22;
-            const icon = phone() ? 18 : 12;
-            drawPhaseIcon(g, x + icon + 4, headY + (phone() ? 10 : 7), phase, icon, colour.cream, hud.panel);
-            const pl = s.add.text(x + icon * 2 + 16, headY + 1, phaseLabel(phase), { fontFamily: font.body, fontSize: phone() ? 30 : 20, color: hud.dim }).setOrigin(0, 0.5);
+            x += 22;
+            drawPhaseIcon(g, x + 16, HEAD_Y + 7, phase, 12, colour.cream, hud.panel);
+            const pl = s.add.text(x + 38, HEAD_Y + 1, phaseLabel(phase), { fontFamily: font.body, fontSize: 20, color: hud.dim }).setOrigin(0, 0.5);
             head.add(pl);
-            x += icon * 2 + 16 + pl.width;
+            x += 38 + pl.width;
         }
         if (steps?.length) {
-            x += phone() ? 36 : 30;
-            this.stepCount = s.add.text(x, headY + 1, '', { fontFamily: font.display, fontSize: phone() ? 28 : 18, fontStyle: '700', color: hud.dim }).setOrigin(0, 0.5).setLetterSpacing(1);
+            x += 30;
+            this.stepCount = s.add.text(x, HEAD_Y + 1, '', { fontFamily: font.display, fontSize: 18, fontStyle: '700', color: hud.dim }).setOrigin(0, 0.5).setLetterSpacing(1);
             head.add(this.stepCount);
-            x += phone() ? 150 : 84;
-            const dotR = phone() ? 13 : 8;
-            const dotGap = phone() ? 40 : 26;
+            x += 84;
             steps.forEach((_, i) => {
-                const d = s.add.circle(x + dotR + i * dotGap, headY, dotR).setStrokeStyle(phone() ? 3.5 : 2.5, colour.cream, 0.35);
-                const tick = s.add.text(d.x, headY, '✓', { fontFamily: font.display, fontSize: phone() ? 20 : 13, fontStyle: '800', color: css.ink }).setOrigin(0.5).setVisible(false);
+                const d = s.add.circle(x + 10 + i * 26, HEAD_Y, 8).setStrokeStyle(2.5, colour.cream, 0.35);
+                const tick = s.add.text(d.x, HEAD_Y, '✓', { fontFamily: font.display, fontSize: 13, fontStyle: '800', color: css.ink }).setOrigin(0.5).setVisible(false);
                 this.dots.push(d);
                 this.ticks.push(tick);
                 head.add([d, tick]);
             });
-            x += steps.length * (phone() ? 40 : 26);
+            x += steps.length * 26;
         }
-        g.lineStyle(1.5, colour.cream, 0.12).lineBetween(PAD(), headY + (phone() ? 40 : 26), x, headY + (phone() ? 40 : 26));
+        g.lineStyle(1.5, colour.cream, 0.12).lineBetween(PAD, HEAD_Y + 26, x, HEAD_Y + 26);
         this.headerW = x;
         this.add(head);
     }
@@ -119,28 +113,24 @@ export class Prompt extends GameObjects.Container {
         const at = steps.findIndex((st) => st.match.includes(text));
         if (at >= 0) this.setStep(at);
         const mouse = steps[this.step]?.mouse;
-        setControlHint(keyHint, mouse);
+        const { badge, title } = this.info;
+        const step = steps[this.step] ? { label: steps[this.step].label, at: this.step, of: steps.length } : undefined;
+        setControlHint(keyHint, mouse, text, { badge, title, step });
 
         this.keys?.destroy();
         // "Wait" (s02, the handcart) is not a key: the objective says it all
         const keys = keysFor(keyHint);
-        this.keys = keyHint !== 'Wait' && (keys.length || mouse) ? inputRow(this.scene, keys, mouse, KEY_H()) : undefined;
+        this.keys = keyHint !== 'Wait' && (keys.length || mouse) ? inputRow(this.scene, keys, mouse, KEY_H) : undefined;
         let right = this.label.x + this.label.width;
-        const gap = phone() ? 36 : 28;
         if (this.keys) {
-            this.keys.setPosition(right + gap + this.keys.width / 2, this.rowY - 2);
+            this.keys.setPosition(right + 28 + this.keys.width / 2, this.rowY - 2);
             this.add(this.keys);
-            right += gap + this.keys.width;
+            right += 28 + this.keys.width;
         }
-        if (phone()) {
-            const below = this.rowY + Math.max(this.label.height, this.keys ? KEY_H() : 0) / 2 + 28;
-            this.h = Math.max(below, this.info.title ? 200 : 100);
-        }
-        const w = Math.max(right, this.headerW) + PAD();
+        const w = Math.max(right, this.headerW) + PAD;
         this.bg.clear();
         drawPanel(this.bg, 0, 0, w, this.h);
-        const bar = phone() ? Math.max(72, this.label.height * 0.7) : 44;
-        this.bg.fillStyle(colour.pay, 1).fillRoundedRect(0, this.rowY - bar / 2, 6, bar, { tl: 0, bl: 0, tr: 3, br: 3 });
+        this.bg.fillStyle(colour.pay, 1).fillRoundedRect(0, this.rowY - 22, 6, 44, { tl: 0, bl: 0, tr: 3, br: 3 });
 
         if (!changed || getState(this.scene).reducedMotion) return;
         const row = [this.chevron, this.label, ...(this.keys ? [this.keys] : [])];

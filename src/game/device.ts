@@ -23,6 +23,13 @@ export function isPhone() {
     return phone;
 }
 
+let onChange: () => void = () => {};
+
+/** Side rails listen so they can show or hide when the phone rotates. */
+export function onDeviceChange(fn: () => void) {
+    onChange = fn;
+}
+
 /** Mark <html> with data-device and data-orient, and keep `isPhone()` current across rotation. */
 export function installDevice() {
     const apply = () => {
@@ -30,8 +37,14 @@ export function installDevice() {
         const root = document.documentElement;
         root.dataset.device = phone ? 'phone' : 'desktop';
         root.dataset.orient = window.innerHeight > window.innerWidth ? 'portrait' : 'landscape';
+        onChange();
     };
     apply();
     window.addEventListener('resize', apply);
     window.addEventListener('orientationchange', apply);
+}
+
+/** Phone held sideways: the 16:9 scene leaves room on both sides for the controls. */
+export function phoneLandscape() {
+    return phone && document.documentElement.dataset.orient === 'landscape';
 }

@@ -42,15 +42,58 @@ export function controlMode(key?: string, mouse?: MouseHint): ControlMode {
     return { stick: null };
 }
 
-let hint: { key?: string; mouse?: MouseHint } = {};
+/** What the objective card says right now: the station, the step, the sentence and its control. */
+export interface RailHint {
+    key?: string;
+    mouse?: MouseHint;
+    text?: string;
+    badge?: string;
+    title?: string;
+    /** The how-to step this sentence belongs to, by its label ("Chop"), and how far through the beat it is. */
+    step?: { label: string; at: number; of: number };
+}
 
-/** The objective card publishes the current key here; the phone dock reads it. */
-export function setControlHint(key?: string, mouse?: MouseHint) {
-    hint = { key, mouse };
+let hint: RailHint = {};
+
+/** The objective card publishes itself here; on a phone the side rails show it instead of the card. */
+export function setControlHint(key?: string, mouse?: MouseHint, text?: string, extra: Omit<RailHint, 'key' | 'mouse' | 'text'> = {}) {
+    hint = { key, mouse, text, ...extra };
 }
 
 export function currentControl() {
     return controlMode(hint.key, hint.mouse);
+}
+
+export function currentHint(): Readonly<RailHint> {
+    return hint;
+}
+
+export interface ControlHelp {
+    stick?: { title: string; body: string };
+    tap?: { label: string; body: string };
+    /** When the picture itself is the control. */
+    screen?: string;
+}
+
+/** What each on-screen control does for this step, in a few words, so the rails can say it next to it. */
+export function controlHelp(): ControlHelp {
+    const mode = currentControl();
+    const out: ControlHelp = {};
+    if (hint.key === 'Wait') out.stick = { title: 'Wait', body: 'Let it pass. Use the stick only to step aside.' };
+    else if (mode.stick === 'swipe') out.stick = { title: 'Sort', body: 'Flick the stick left or right, the way the arrows on the picture point.' };
+    else if (mode.stick === 'move') out.stick = { title: 'Walk', body: 'Drag the stick, or hold a finger on the street.' };
+    if (mode.tapKey) {
+        const label = hint.step?.label;
+        const name = label && label.length <= 12 ? label : 'Tap';
+        const arrow = mode.tapKey === 'RIGHT' ? ' →' : mode.tapKey === 'LEFT' ? '← ' : '';
+        out.tap = {
+            label: mode.tapKey === 'LEFT' ? arrow + name : name + arrow,
+            body: mode.verb === 'drag' ? 'Tap here, or drag the piece on the picture.' : 'Tap here to do it.',
+        };
+    } else if (mode.verb === 'drag') out.screen = 'Drag the piece on the picture with your finger.';
+    else if (mode.verb === 'tap') out.screen = 'Tap the highlighted spot on the picture.';
+    else if (!mode.stick) out.screen = 'Nothing to press. Watch.';
+    return out;
 }
 
 /** English how-to sentences, rewritten for a finger. Other languages keep their translation. */
@@ -62,6 +105,8 @@ export function touchText(text: string) {
         .replace(/Each press/g, 'Each tap')
         .replace(/Space for each line/g, 'Tap for each line')
         .replace(/1 · 2 · 3 switch the map lens: waste, money, power\./g, 'Tap a lens: waste, money, power.')
+        .replace(/\(←\)/g, '(flick left)')
+        .replace(/\(→\)/g, '(flick right)')
         .replace(/\bPress\b/g, 'Tap')
         .replace(/\bClick\b/g, 'Tap')
         .replace(/hold the mouse/g, 'hold a finger');
